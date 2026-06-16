@@ -1,0 +1,40 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Data validation
+pydantic==2.11.9
+pydantic-settings==2.10.1
+
+# CrewAI v2 (latest — native MCP, multi-provider LLM support)
+crewai==1.14.7
+crewai-tools[mcp]==1.14.7
+
+# Market data — ccxt for Binance OHLCV
+ccxt==4.4.26
+
+# Technical analysis
+pandas
+pandas-ta==0.4.71b0
+numpy==2.2.6
+
+# LLM provider SDKs (CrewAI native integrations — no LiteLLM needed)
+anthropic==0.39.0
+
+httpx==0.28.1
+
+# Web Search (fallback for news)
+duckduckgo-search>=5.2.2
+
+# Cache Serialization
+pyarrow>=15.0.0
+
+# Telemetry Pub/Sub
+redis>=5.0.0
+
+# Async utilities
+anyio==4.6.2
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
