@@ -21,6 +21,7 @@ COPY . .
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
+ENV HOME=/app
 USER appuser
 
 EXPOSE 8000

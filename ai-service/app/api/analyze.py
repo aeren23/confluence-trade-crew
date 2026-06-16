@@ -34,7 +34,8 @@ async def analyze(
         response = await orchestrator.run_analysis(request)
         return response
     except Exception as exc:
-        # In a production setting, you'd log the exception stack trace here
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Analysis pipeline failed: {str(exc)}",

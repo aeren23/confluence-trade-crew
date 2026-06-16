@@ -20,6 +20,8 @@ numpy==2.2.6
 
 # LLM provider SDKs (CrewAI native integrations — no LiteLLM needed)
 anthropic==0.39.0
+openai
+litellm
 
 httpx==0.28.1
 
