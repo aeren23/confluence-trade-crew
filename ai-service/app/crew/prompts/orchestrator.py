@@ -20,12 +20,29 @@ TASK_DESCRIPTION = (
     "1. Review the detailed text reports from the Data, TA, News, and Risk agents.\n"
     "2. Calculate overall sentiment: overall_sentiment_score = (TA_score * 0.6) + (News_score * 0.4).\n"
     "   - Do NOT include the Risk agent's score in the directional sentiment average.\n"
-    "3. Check for conflicts. ONLY set conflicts_detected to true if one agent is explicitly 'bullish' (score > 0.3) "
-    "   and the other is explicitly 'bearish' (score < -0.3). Neutral vs Bullish/Bearish is NOT a conflict.\n"
-    "4. Write a comprehensive summary explaining the synthesis. Explicitly mention "
-    "   the Risk agent's leverage range and risk assessment.\n"
+    "3. Check for conflicts using STRICT numerical rules:\n"
+    "   conflicts_detected = true ONLY IF: (TA_score > +0.35 AND News_score < -0.35) OR (TA_score < -0.35 AND News_score > +0.35).\n"
+    "   ALL other combinations = conflicts_detected: false.\n"
+    "   CONCRETE EXAMPLES (memorize these):\n"
+    "     TA=-0.30, News= 0.00 → FALSE  (-0.30 does not exceed -0.35 threshold)\n"
+    "     TA=-0.40, News= 0.00 → FALSE  (neutral partner = no conflict)\n"
+    "     TA=-0.40, News=+0.50 → TRUE   (bearish vs bullish, both exceed ±0.35)\n"
+    "     TA=+0.50, News=-0.40 → TRUE   (bullish vs bearish, both exceed ±0.35)\n"
+    "     TA=-0.40, News=-0.10 → FALSE  (same direction, no conflict)\n"
+    "4. Write a comprehensive summary explaining the synthesis. Explicitly mention "  
+    "   the Risk agent's leverage range, trade direction, and risk assessment.\n"
     "5. Extract 1-sentence summaries and scores for each agent to populate the agents dictionary.\n"
-    "6. Prepare a list of chart annotations based on TA levels, divergence, and Risk SL/TP.\n\n"
+    "6. IMPORTANT — Extract ALL numeric indicator values from the TA agent's text report and populate "
+    "   the technical_analysis.details.indicators block:\n"
+    "   - RSI: look for 'RSI' followed by a number → rsi.value\n"
+    "   - MACD: look for 'MACD line', 'signal line', 'histogram' values → macd fields\n"
+    "   - Bollinger: look for 'upper band', 'middle band', 'lower band' values → bollinger fields\n"
+    "   - EMA 20: look for 'EMA(20)', 'EMA 20', '20-period EMA' → ema_20.value\n"
+    "   - EMA 50: look for 'EMA(50)', 'EMA 50', '50-period EMA' → ema_50.value\n"
+    "   - ADX: look for 'ADX' followed by a number → adx.value + trend_strength\n"
+    "   - ATR: look for 'ATR' followed by a number → atr.value + atr_pct\n"
+    "   If the TA agent did not report a value, set that field to null (not zero, not omit).\n"
+    "7. Prepare a list of chart annotations based on TA levels, divergence, and Risk SL/TP.\n\n"
     "Your output MUST be valid JSON matching this schema exactly:\n"
     '{{\n'
     '  "agents": {{\n'
@@ -43,7 +60,25 @@ TASK_DESCRIPTION = (
     '      "sentiment_score": <-1.0 to 1.0>,\n'
     '      "confidence": <0.0 to 1.0>,\n'
     '      "summary": "<1-sentence summary of TA>",\n'
-    '      "details": {{"trend": "...", "momentum": "...", "support_resistance": {{}}}}\n'
+    '      "details": {{\n'
+    '        "trend": "...",\n'
+    '        "momentum": "...",\n'
+    '        "volatility": "low | medium | high",\n'
+    '        "support_resistance": {{\n'
+    '          "support": [<price_level>, ...],\n'
+    '          "resistance": [<price_level>, ...]\n'
+    '        }},\n'
+    '        "indicators": {{\n'
+    '          "rsi": {{"value": <float>, "state": "oversold | neutral | overbought"}},\n'
+    '          "macd": {{"macd_line": <float>, "signal_line": <float>, "histogram": <float>, "cross": "bullish_cross | bearish_cross | none"}},\n'
+    '          "bollinger": {{"upper": <float>, "middle": <float>, "lower": <float>, "price_position": "upper_band | inside | lower_band"}},\n'
+    '          "ema_20": {{"value": <float>, "price_vs_ema": "above | below"}},\n'
+    '          "ema_50": {{"value": <float>, "price_vs_ema": "above | below"}},\n'
+    '          "adx": {{"value": <float>, "trend_strength": "weak | moderate | strong"}},\n'
+    '          "atr": {{"value": <float>, "atr_pct": <float>}}\n'
+    '        }},\n'
+    '        "divergences": []\n'
+    '      }}\n'
     '    }},\n'
     '    "news": {{\n'
     '      "agent": "news",\n'
@@ -59,7 +94,12 @@ TASK_DESCRIPTION = (
     '      "sentiment_score": <-1.0 to 1.0>,\n'
     '      "confidence": <0.0 to 1.0>,\n'
     '      "summary": "<1-sentence summary of risk>",\n'
-    '      "details": {{"position_sizing": {{}}, "leverage": {{}}, "levels": {{}}}}\n'
+    '      "details": {{\n'
+    '        "position_direction": "long | short | neutral",\n'
+    '        "position_sizing": {{}},\n'
+    '        "leverage": {{}},\n'
+    '        "levels": {{}}\n'
+    '      }}\n'
     '    }}\n'
     '  }},\n'
     '  "synthesis": {{\n'

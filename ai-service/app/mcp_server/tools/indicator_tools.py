@@ -36,10 +36,10 @@ async def calculate_indicator(
 
     Args:
         ohlcv_ref: UUID from get_ohlcv.
-        indicators: List of {"name": "rsi", "params": {"length": 14}}.
+        indicators: List of {"name": "rsi", "id": "rsi_14", "params": {"length": 14}}.
 
     Returns:
-        Dict with results keyed by indicator name.
+        Dict with results keyed by indicator id (or name if id is omitted).
     """
     df = _get_cached_df(ohlcv_ref)
     if df is None:
@@ -49,13 +49,14 @@ async def calculate_indicator(
 
     for ind in indicators:
         name = ind.get("name", "").lower()
+        key_id = ind.get("id", name)
         params = ind.get("params", {})
 
         try:
             result = _compute_indicator(df, name, params)
-            results[name] = result
+            results[key_id] = result
         except Exception as exc:
-            results[name] = {"error": str(exc)}
+            results[key_id] = {"error": str(exc)}
 
     return {"ohlcv_ref": ohlcv_ref, "results": results}
 

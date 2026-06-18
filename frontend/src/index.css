@@ -1,0 +1,272 @@
+/* ============================================================
+   CONFLUENCE TRADE CREW — Global Design System
+   
+   Design tokens, resets, typography, and utility classes.
+   All CSS Modules in components reference these variables.
+   ============================================================ */
+
+/* Google Fonts are loaded in index.html */
+
+/* ============================================================
+   DESIGN TOKENS — CSS Custom Properties
+   ============================================================ */
+:root {
+  /* --- Color Palette (Dark Trading Theme) --- */
+  --color-bg-primary:     #0d1117;   /* Page background — deep near-black */
+  --color-bg-secondary:   #161b22;   /* Card / panel background */
+  --color-bg-tertiary:    #21262d;   /* Input, table row hover */
+  --color-bg-glass:       rgba(22, 27, 34, 0.8); /* Glassmorphism cards */
+
+  --color-border:         #30363d;   /* Standard border */
+  --color-border-subtle:  #21262d;   /* Subtle separator */
+
+  /* --- Accent Colors --- */
+  --color-accent-blue:    #4a9eff;   /* Primary CTA, active states */
+  --color-accent-blue-dim: rgba(74, 158, 255, 0.15);
+
+  /* --- Semantic Colors --- */
+  --color-bullish:        #3fb950;   /* Green — bullish, profit */
+  --color-bullish-dim:    rgba(63, 185, 80, 0.12);
+  --color-bearish:        #f85149;   /* Red — bearish, loss */
+  --color-bearish-dim:    rgba(248, 81, 73, 0.12);
+  --color-neutral:        #d29922;   /* Amber — neutral, warning */
+  --color-neutral-dim:    rgba(210, 153, 34, 0.12);
+
+  /* --- Text Colors --- */
+  --color-text-primary:   #e6edf3;   /* Main content */
+  --color-text-secondary: #8b949e;   /* Labels, captions */
+  --color-text-muted:     #484f58;   /* Placeholder text */
+  --color-text-inverse:   #0d1117;   /* Text on colored backgrounds */
+
+  /* --- Chart Colors (for lightweight-charts) --- */
+  --color-candle-up:      #3fb950;
+  --color-candle-down:    #f85149;
+  --color-chart-grid:     #21262d;
+  --color-chart-cross:    #8b949e;
+
+  /* --- Annotation Colors --- */
+  --color-support:        #4a9eff;
+  --color-resistance:     #f85149;
+  --color-stop-loss:      #f85149;
+  --color-take-profit:    #3fb950;
+
+  /* --- Typography --- */
+  --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+
+  --font-size-xs:   0.75rem;   /* 12px */
+  --font-size-sm:   0.875rem;  /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg:   1.125rem;  /* 18px */
+  --font-size-xl:   1.25rem;   /* 20px */
+  --font-size-2xl:  1.5rem;    /* 24px */
+  --font-size-3xl:  1.875rem;  /* 30px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:    700;
+
+  --line-height-tight:  1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* --- Spacing Scale --- */
+  --space-1:  0.25rem;   /* 4px */
+  --space-2:  0.5rem;    /* 8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+
+  /* --- Border Radius --- */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow-blue:    0 0 20px rgba(74, 158, 255, 0.2);
+  --shadow-glow-green:   0 0 20px rgba(63, 185, 80, 0.2);
+  --shadow-glow-red:     0 0 20px rgba(248, 81, 73, 0.2);
+
+  /* --- Transitions --- */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* --- Z-index Scale --- */
+  --z-base:    0;
+  --z-raised:  10;
+  --z-overlay: 100;
+  --z-modal:   200;
+  --z-toast:   300;
+
+  /* --- Layout --- */
+  --header-height: 56px;
+  --sidebar-width: 240px;
+}
+
+/* ============================================================
+   RESET & BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+}
+
+h1 { font-size: var(--font-size-3xl); }
+h2 { font-size: var(--font-size-2xl); }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+h5 { font-size: var(--font-size-base); }
+h6 { font-size: var(--font-size-sm); }
+
+p {
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+a {
+  color: var(--color-accent-blue);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* --- Code & monospace --- */
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+/* --- Form elements reset --- */
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* --- Lists --- */
+ul, ol {
+  list-style: none;
+}
+
+/* --- Images & media --- */
+img, video {
+  max-width: 100%;
+  display: block;
+}
+
+/* --- Scrollbar styling (webkit) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* --- Focus visible (accessibility) --- */
+:focus-visible {
+  outline: 2px solid var(--color-accent-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   (Use sparingly — prefer CSS Modules in components)
+   ============================================================ */
+
+/* Sentiment colors */
+.text-bullish  { color: var(--color-bullish); }
+.text-bearish  { color: var(--color-bearish); }
+.text-neutral  { color: var(--color-neutral); }
+
+/* Price / number display */
+.price {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.02em;
+}
+
+/* Glassmorphism card utility */
+.glass-card {
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Visually hidden (accessibility) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

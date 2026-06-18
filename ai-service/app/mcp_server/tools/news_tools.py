@@ -166,36 +166,50 @@ def _parse_rss(xml_text: str, source: str, max_results: int) -> list[dict]:
 async def _fetch_rss_news(topic: str, max_results: int) -> list[dict]:
     """
     Try each RSS feed in order, return results from the first that succeeds.
-    Filters articles whose title contains any word from the topic query.
+    Filters articles whose title or snippet contains any word from the topic query.
+    Returns an empty list if no keyword matches are found — does NOT fall back to
+    unrelated articles (that caused repetitive generic headlines across different assets).
     """
-    topic_keywords = {w.lower() for w in topic.split() if len(w) > 3}
+    # Build keyword set. Use >= 2 chars so short tickers like BTC/ETH/SOL are included.
+    # Also split on '/' to handle 'BTC/USDT' style topics.
+    raw_words = topic.replace('/', ' ').replace('-', ' ').split()
+    topic_keywords = {w.lower() for w in raw_words if len(w) >= 2}
 
     async with httpx.AsyncClient(
         timeout=15.0,
         headers={"User-Agent": "Mozilla/5.0 (compatible; confluence-trade-bot/1.0)"},
         follow_redirects=True,
     ) as client:
+        all_unfiltered: list[dict] = []
+
         for source_name, feed_url in _RSS_FEEDS:
             try:
                 response = await client.get(feed_url)
                 response.raise_for_status()
-                all_items = _parse_rss(response.text, source_name, max_results * 3)
+                all_items = _parse_rss(response.text, source_name, max_results * 5)
 
-                # Filter by keyword relevance (best effort)
+                # Filter by keyword relevance (strict — no fallback to all items)
                 filtered = [
                     item for item in all_items
-                    if any(kw in item["title"].lower() for kw in topic_keywords)
-                ] or all_items  # Fallback: return all items if nothing matches
+                    if any(kw in (item["title"] + item.get("snippet", "")).lower()
+                           for kw in topic_keywords)
+                ]
 
-                result = filtered[:max_results]
-                if result:
-                    logger.debug("RSS fetch from %s returned %d items", source_name, len(result))
+                if filtered:
+                    result = filtered[:max_results]
+                    logger.debug("RSS fetch from %s: %d relevant items for '%s'",
+                                 source_name, len(result), topic)
                     return result
+
+                # Keep unfiltered as last-resort pool (across feeds)
+                all_unfiltered.extend(all_items[:max_results])
 
             except (httpx.HTTPError, Exception) as exc:
                 logger.warning("RSS fetch from %s failed: %s", source_name, exc)
                 continue
 
+    # If absolutely no matches anywhere, return empty (agent will report low confidence)
+    logger.info("RSS: no keyword-relevant articles found for '%s'", topic)
     return []
 
 

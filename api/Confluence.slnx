@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Confluence.API/Confluence.API.csproj" />
+    <Project Path="src/Confluence.Application/Confluence.Application.csproj" />
+    <Project Path="src/Confluence.Domain/Confluence.Domain.csproj" />
+    <Project Path="src/Confluence.Infrastructure/Confluence.Infrastructure.csproj" />
+  </Folder>
+</Solution>

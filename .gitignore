@@ -1,0 +1,80 @@
+# ========================
+# .NET / C#
+# ========================
+api/bin/
+api/obj/
+api/**/.vs/
+api/**/*.user
+api/**/*.suo
+api/**/bin/
+api/**/obj/
+*.nupkg
+*.snupkg
+
+# ========================
+# Python
+# ========================
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.venv/
+ai-service/venv/
+ai-service/.env
+ai-service/**/*.pyc
+ai-service/**/*.pyo
+ai-service/.mypy_cache/
+ai-service/.pytest_cache/
+ai-service/.ruff_cache/
+ai-service/htmlcov/
+ai-service/.coverage
+ai-service/coverage.xml
+
+# ========================
+# Node / React
+# ========================
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ========================
+# Environment files (root)
+# ========================
+.env
+.env.local
+.env.*.local
+
+# ========================
+# Docker
+# ========================
+.docker/
+
+# ========================
+# IDEs & editors
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Misc
+# ========================
+*.tmp
+*.bak
+.cache/

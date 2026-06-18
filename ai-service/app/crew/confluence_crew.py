@@ -9,7 +9,6 @@ LLMs are dynamically provided via the LLMFactory (Strategy Pattern),
 allowing each agent to use a different provider/model if configured.
 """
 
-import asyncio
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.mcp import MCPServerStdio
@@ -41,31 +40,81 @@ class ConfluenceTradeCrew:
             args=["-m", "app.mcp_server.server"],
         )
 
+    @staticmethod
+    def _truncate(text: str, max_len: int = 600) -> str:
+        """Truncate long text to prevent UI overflow."""
+        if not text:
+            return ""
+        text = text.strip()
+        return text[:max_len] + "..." if len(text) > max_len else text
+
     def _make_step_callback(self, agent_name: str):
+        """Return a step_callback function for the given agent.
+
+        CrewAI v2 step_callbacks receive either:
+        - An AgentAction-like object: has .tool, .tool_input, .log (full ReAct trace)
+        - An AgentFinish-like object: has .output or .return_values
+        - A plain string (some CrewAI versions)
+
+        The `.thought` attribute does NOT exist directly — the reasoning text is
+        embedded inside `.log` before the `Action:` line.
+        """
         def callback(step):
             if not self._session_id:
                 return
-            
-            # Extract thought or tool from step
-            message = "Processing..."
+
             step_type = "thought"
-            
-            if hasattr(step, "thought") and step.thought:
-                message = step.thought
-            elif hasattr(step, "tool") and step.tool:
-                message = f"Calling tool: {step.tool}"
+            message = ""
+
+            # ── Case 1: Tool call (AgentAction) ───────────────────────────────
+            # Check tool first because .log also exists on AgentAction objects.
+            tool_name = getattr(step, "tool", None)
+            if tool_name and isinstance(tool_name, str) and tool_name not in ("", "None"):
+                tool_input = getattr(step, "tool_input", "") or ""
+                # tool_input can be a dict or string
+                if isinstance(tool_input, dict):
+                    import json as _json
+                    tool_input = _json.dumps(tool_input, ensure_ascii=False)
                 step_type = "tool"
+                message = f"{tool_name}({self._truncate(str(tool_input), 200)})"
+
+                # Also publish the thought/reasoning that preceded this tool call.
+                # It's embedded in .log before the "Action:" line.
+                log_text = getattr(step, "log", "") or ""
+                thought_part = log_text.split("\nAction:")[0].strip()
+                if thought_part:
+                    telemetry.publish_sync(
+                        self._session_id, agent_name,
+                        self._truncate(thought_part), "thought"
+                    )
+
+            # ── Case 2: Final output (AgentFinish) ────────────────────────────
+            elif hasattr(step, "output") and step.output:
+                step_type = "finished"
+                message = self._truncate(str(step.output))
+
+            elif hasattr(step, "return_values") and step.return_values:
+                step_type = "finished"
+                output = step.return_values.get("output", step.return_values)
+                message = self._truncate(str(output))
+
+            # ── Case 3: Plain thought/log with no tool call ───────────────────
+            elif hasattr(step, "log") and step.log:
+                message = self._truncate(step.log)
+
+            # ── Case 4: Plain string ──────────────────────────────────────────
             elif isinstance(step, str):
-                message = step
-                
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(telemetry.publish(self._session_id, agent_name, message, step_type))
-            except RuntimeError:
-                # No running event loop
-                asyncio.run(telemetry.publish(self._session_id, agent_name, message, step_type))
-                
+                message = self._truncate(step)
+
+            else:
+                # Fallback: show whatever repr we can find
+                message = self._truncate(repr(step))
+
+            if message:
+                telemetry.publish_sync(self._session_id, agent_name, message, step_type)
+
         return callback
+
 
     # ── Agents ─────────────────────────────────────────────────────────────
 

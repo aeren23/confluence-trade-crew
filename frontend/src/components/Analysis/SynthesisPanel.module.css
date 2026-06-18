@@ -1,0 +1,453 @@
+/* ── Animation ────────────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Panel shell ──────────────────────────────────────────────────────── */
+.panel {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  animation: slideUp 0.45s ease-out forwards;
+}
+
+/* ── Conflict banner ──────────────────────────────────────────────────── */
+.conflictBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius-md);
+  color: #fbbf24;
+  font-size: 0.88rem;
+}
+
+/* ── Header row ───────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.sentimentBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.sentimentBox h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Sentiment colors */
+.bullish { color: #4ade80; }
+.bearish { color: #f87171; }
+.neutral { color: #fbbf24; }
+
+/* ── Metrics row ──────────────────────────────────────────────────────── */
+.metricsRow {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.metricBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metricValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* ── Score / Confidence bars ──────────────────────────────────────────── */
+.scoreBarTrack,
+.confBarTrack {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  width: 100%;
+  min-width: 80px;
+}
+
+.scoreBarFill,
+.confBarFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+.confBarFill {
+  background: var(--accent-primary);
+}
+
+/* ── Summary paragraph ────────────────────────────────────────────────── */
+.summary {
+  font-size: 0.97rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-6) 0;
+}
+
+/* ── Agent grid ───────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+/* ── Agent card ───────────────────────────────────────────────────────── */
+.agentCard {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.agentCard h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* ── Per-agent sentiment / score / confidence mini-block ──────────────── */
+.agentMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sentiment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.miniBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+}
+
+.miniLabel {
+  color: var(--text-muted);
+  min-width: 64px;
+}
+
+.miniVal {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── Card summary text ────────────────────────────────────────────────── */
+.cardSummary {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Detail grid (key-value pairs) ───────────────────────────────────── */
+.detailGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.detailKey {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.detailVal {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+/* ── Support / Resistance pills row ──────────────────────────────────── */
+.srRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Macro environment box ────────────────────────────────────────────── */
+.macroBox {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.82rem;
+}
+
+/* ── Headlines list ───────────────────────────────────────────────────── */
+.headlines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.headlines li {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid rgba(0, 240, 255, 0.4);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.4;
+}
+
+/* ── Level row (SL / TP) ──────────────────────────────────────────────── */
+.levelRow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.levelBox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+}
+
+.levelLabel {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.levelVal {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hypotheticalGrid {
+  display: flex;
+  width: 100%;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.hypoColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: rgba(255, 255, 255, 0.02);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+
+.hypoTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
+  text-align: center;
+}
+
+/* ── Trade direction badge ────────────────────────────────────────────── */
+.directionBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.directionRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.directionHint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.directionBadge {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  padding: 3px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.dirLong {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.dirShort {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.dirNeutral {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* ── Generic pill ─────────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.pill_default {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.pill_green {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.pill_red {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.pill_amber {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.pill_cyan {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+/* ── Indicators table ─────────────────────────────────────────────────── */
+.indicatorsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+}
+
+.indicatorsHeader {
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+}
+
+.indRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex-wrap: wrap;
+}
+
+.indRow:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.indName {
+  color: var(--text-muted);
+  min-width: 72px;
+  flex-shrink: 0;
+  font-size: 0.73rem;
+}
+
+.indVal {
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+  min-width: 80px;
+}
+
+.indNote {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}

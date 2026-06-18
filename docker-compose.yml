@@ -1,0 +1,89 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      BINANCE_API_KEY: ${BINANCE_API_KEY:-}
+      BINANCE_API_SECRET: ${BINANCE_API_SECRET:-}
+      CRYPTOPANIC_API_KEY: ${CRYPTOPANIC_API_KEY:-}
+      REDIS_URL: "redis://redis:6379/0"
+      # Route Binance/crypto API traffic through Cloudflare WARP SOCKS5 proxy.
+      # WARP must have Proxy Mode enabled (Settings → Advanced → Proxy port 40000).
+      # host.docker.internal resolves to the Windows host machine from inside Docker.
+      # HTTPS_PROXY: "socks5://host.docker.internal:40000"
+      # HTTP_PROXY: "socks5://host.docker.internal:40000"
+      # Do not proxy internal Docker service-to-service calls
+      # NO_PROXY: "localhost,127.0.0.1,redis,db,api,ai-service,frontend"
+    ports:
+      - "${AI_SERVICE_PORT:-8000}:8000"
+    # NOTE: The internal MCP server runs as a subprocess inside this container
+    # (stdio transport) — it is NOT a separate service. See architecture.md § 3.4.
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__Redis: "redis:6379"
+      AiService__BaseUrl: "http://ai-service:8000"
+      ASPNETCORE_ENVIRONMENT: Production
+      # Route Binance/crypto API traffic through Cloudflare WARP SOCKS5 proxy.
+      # HTTPS_PROXY: "socks5://host.docker.internal:40000"
+      # HTTP_PROXY: "socks5://host.docker.internal:40000"
+      # NO_PROXY: "localhost,127.0.0.1,redis,db,api,ai-service,frontend"
+    ports:
+      - "${API_PORT:-5000}:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      VITE_API_BASE_URL: "http://localhost:${API_PORT:-5000}"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  pgdata:

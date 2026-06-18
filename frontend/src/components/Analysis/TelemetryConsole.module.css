@@ -1,0 +1,225 @@
+/* ── Empty state ──────────────────────────────────────────────────────── */
+.emptyConsole {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 260px;
+  color: var(--text-muted);
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  border: 1px dashed var(--border-color);
+}
+
+.emptyIcon { opacity: 0.4; }
+
+.emptyHint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ── Console shell ────────────────────────────────────────────────────── */
+.console {
+  display: flex;
+  flex-direction: column;
+  height: 460px;
+  margin-bottom: var(--space-6);
+  padding: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid var(--border-color);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.blinkingCursor {
+  width: 7px;
+  height: 13px;
+  background-color: var(--accent-primary);
+  animation: blink 1s step-end infinite;
+  margin-left: var(--space-1);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-3);
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Log container ────────────────────────────────────────────────────── */
+.logContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+
+  /* Slim scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+
+.logContainer::-webkit-scrollbar { width: 4px; }
+.logContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+/* ── Log entry row ────────────────────────────────────────────────────── */
+.logEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  transition: background 0.15s;
+  word-break: break-word;
+}
+
+.logEntry:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Pipeline events get a highlighted row */
+.pipeline {
+  background: rgba(245, 158, 11, 0.06) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.finished {
+  background: rgba(52, 211, 153, 0.05) !important;
+  border-color: rgba(52, 211, 153, 0.15) !important;
+}
+
+/* ── Timestamp ────────────────────────────────────────────────────────── */
+.ts {
+  color: var(--text-muted);
+  min-width: 62px;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  padding-top: 1px;
+}
+
+/* ── Agent tag ────────────────────────────────────────────────────────── */
+.agentTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 148px;
+  flex-shrink: 0;
+  color: var(--agent-color, var(--accent-primary));
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding-top: 1px;
+}
+
+/* ── Step type badge ──────────────────────────────────────────────────── */
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.badgeThought {
+  background: rgba(161, 161, 170, 0.15);
+  color: #a1a1aa;
+  border: 1px solid rgba(161, 161, 170, 0.25);
+}
+
+.badgeTool {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.badgeFinished {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.badgePipeline {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badgeSystem {
+  background: rgba(161, 161, 170, 0.1);
+  color: #71717a;
+  border: 1px solid rgba(161, 161, 170, 0.2);
+}
+
+/* ── Message text ─────────────────────────────────────────────────────── */
+.msg {
+  flex: 1;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.thought .msg   { color: #c4c4c4; }
+.pipeline .msg  { color: #fbbf24; font-weight: 500; }
+.finished .msg  { color: #6ee7b7; }
+.tool .msg      { color: #e4e4e7; }
+
+/* ── Expand/collapse button ───────────────────────────────────────────── */
+.expandBtn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 0.15s;
+}
+
+.expandBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}

@@ -35,6 +35,12 @@ class AnalysisOrchestrator:
         Returns:
             The structured AnalysisResponse.
         """
+        from app.services.telemetry_publisher import telemetry
+
+        # Connect telemetry Redis client so step_callbacks can publish logs.
+        # Both sync (step_callback) and async (this method) clients are initialized here.
+        await telemetry.connect()
+
         try:
             # 1. Initialize Crew with LLM Factory and optional session_id
             crew_wrapper = ConfluenceTradeCrew(
@@ -42,6 +48,13 @@ class AnalysisOrchestrator:
                 session_id=request.session_id,
             )
             crew_instance = crew_wrapper.crew()
+
+            # Broadcast pipeline start event
+            await telemetry.publish(
+                request.session_id, "System",
+                f"🚀 Analysis pipeline started for {request.symbol} ({request.timeframe})",
+                step_type="pipeline", status="started"
+            )
 
             # 2. Kickoff execution
             # CrewAI v2 kickoff accepts a dict of inputs that get interpolated into prompts
@@ -53,6 +66,13 @@ class AnalysisOrchestrator:
                     "risk_percentage": request.risk_percentage,
                     "limit": 100,
                 }
+            )
+
+            # Broadcast pipeline finished event
+            await telemetry.publish(
+                request.session_id, "System",
+                f"✅ All agents completed. Synthesizing final report...",
+                step_type="pipeline", status="finished"
             )
 
             # 3. Parse the final output from Orchestrator
@@ -96,3 +116,6 @@ class AnalysisOrchestrator:
             # 4. Critical: Always clear the in-memory cache to prevent memory leaks
             # and ensure fresh data on the next run.
             ohlcv_cache.clear()
+            # 5. Close async telemetry Redis connection.
+            await telemetry.close()
+

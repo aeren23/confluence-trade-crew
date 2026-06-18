@@ -45,6 +45,17 @@ async def get_ohlcv(
         exchange_config["apiKey"] = settings.binance_api_key
         exchange_config["secret"] = settings.binance_api_secret
 
+    # Route through Cloudflare WARP SOCKS5 proxy if configured.
+    # This allows Docker containers to reach Binance via the VPN tunnel.
+    # HTTPS_PROXY env var is set in docker-compose.yml pointing to host.docker.internal:40000
+    import os
+    proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+    if proxy_url:
+        exchange_config["proxies"] = {
+            "http": proxy_url,
+            "https": proxy_url,
+        }
+
     exchange = ccxt.binance(exchange_config)
 
     try:
