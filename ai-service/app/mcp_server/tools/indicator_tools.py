@@ -9,8 +9,23 @@ See mcp_tools.md § 4 for full schema documentation.
 import numpy as np
 import pandas as pd
 import pandas_ta as ta
+from pydantic import BaseModel, Field
 
 from app.mcp_server.cache import ohlcv_cache
+
+
+# ── Schemas ──────────────────────────────────────────────────────────────
+
+class IndicatorRequest(BaseModel):
+    name: str = Field(description="Name of the indicator (e.g., 'rsi', 'ema', 'macd')")
+    id: str = Field(
+        default="",
+        description="Unique ID to prevent overwrites (e.g., 'ema_20', 'ema_50'). Auto-generated if empty.",
+    )
+    params: dict = Field(
+        default_factory=dict,
+        description="Parameters for the indicator (e.g., {'length': 20}). Provide {} if none.",
+    )
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -25,21 +40,30 @@ def _ref_error() -> dict:
     return {"isError": True, "content": "Unknown ohlcv_ref, call get_ohlcv first"}
 
 
+def _generate_indicator_id(name: str, params: dict) -> str:
+    """Build a stable result key when the caller omits the id field."""
+    length = params.get("length")
+    if length is not None:
+        return f"{name}_{length}"
+    if name == "macd":
+        return "macd_default"
+    if name == "bollinger":
+        return "bb_20"
+    return f"{name}_default"
+
+
 # ── calculate_indicator ─────────────────────────────────────────────────
 
 async def calculate_indicator(
     ohlcv_ref: str,
-    indicators: list[dict],
+    indicators: list[IndicatorRequest],
 ) -> dict:
     """
     Calculate one or more technical indicators on cached OHLCV data.
 
     Args:
         ohlcv_ref: UUID from get_ohlcv.
-        indicators: List of {"name": "rsi", "id": "rsi_14", "params": {"length": 14}}.
-
-    Returns:
-        Dict with results keyed by indicator id (or name if id is omitted).
+        indicators: List of indicators to calculate.
     """
     df = _get_cached_df(ohlcv_ref)
     if df is None:
@@ -48,9 +72,16 @@ async def calculate_indicator(
     results = {}
 
     for ind in indicators:
-        name = ind.get("name", "").lower()
-        key_id = ind.get("id", name)
-        params = ind.get("params", {})
+        try:
+            if isinstance(ind, dict):
+                ind = IndicatorRequest(**ind)
+        except Exception as exc:
+            results[f"invalid_{len(results)}"] = {"error": f"Invalid indicator spec: {exc}"}
+            continue
+
+        name = ind.name.lower()
+        params = ind.params or {}
+        key_id = ind.id or _generate_indicator_id(name, params)
 
         try:
             result = _compute_indicator(df, name, params)
@@ -425,4 +456,65 @@ async def get_volatility_metrics(
         "atr_pct_of_price": round(atr_pct, 2),
         "volatility_classification": classification,
         "current_price": round(current_price, 2),
+    }
+
+
+# ── analyze_volume_profile ─────────────────────────────────────────────
+
+_VOLUME_SPIKE_MULTIPLIER = 2.0
+_DEFAULT_VOLUME_LOOKBACK = 20
+
+
+async def analyze_volume_profile(
+    ohlcv_ref: str,
+    lookback: int = _DEFAULT_VOLUME_LOOKBACK,
+) -> dict:
+    """
+    Analyze volume characteristics: VWAP, spikes, and trend direction.
+
+    Args:
+        ohlcv_ref: UUID from get_ohlcv.
+        lookback: Number of recent candles for volume analysis (default 20).
+
+    Returns:
+        Dict with VWAP, volume spike detection, and volume trend classification.
+    """
+    df = _get_cached_df(ohlcv_ref)
+    if df is None:
+        return _ref_error()
+
+    if len(df) < lookback:
+        return {"isError": True, "content": "Insufficient data for volume profile analysis"}
+
+    recent = df.tail(lookback).copy()
+    typical_price = (recent["high"] + recent["low"] + recent["close"]) / 3
+    cumulative_tp_vol = (typical_price * recent["volume"]).sum()
+    cumulative_vol = recent["volume"].sum()
+    vwap = float(cumulative_tp_vol / cumulative_vol) if cumulative_vol > 0 else 0.0
+
+    current_price = float(df["close"].iloc[-1])
+    avg_volume = float(recent["volume"].mean())
+    latest_volume = float(recent["volume"].iloc[-1])
+    volume_spike = latest_volume > (avg_volume * _VOLUME_SPIKE_MULTIPLIER)
+
+    half = max(lookback // 2, 1)
+    recent_half_avg = float(recent["volume"].tail(half).mean())
+    older_half_avg = float(recent["volume"].head(half).mean())
+    if recent_half_avg > older_half_avg * 1.1:
+        volume_trend = "increasing"
+    elif recent_half_avg < older_half_avg * 0.9:
+        volume_trend = "decreasing"
+    else:
+        volume_trend = "flat"
+
+    return {
+        "ohlcv_ref": ohlcv_ref,
+        "vwap": round(vwap, 2),
+        "current_price": round(current_price, 2),
+        "price_vs_vwap": "above" if current_price > vwap else "below",
+        "latest_volume": round(latest_volume, 2),
+        "average_volume": round(avg_volume, 2),
+        "volume_spike": volume_spike,
+        "volume_trend": volume_trend,
+        "lookback_candles": lookback,
     }

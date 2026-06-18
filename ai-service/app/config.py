@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Optional — for GitHub Models / Copilot token support
     github_api_key: str = ""
 
+    # Optional — for Google Gemini provider support
+    gemini_api_key: str = ""
+
     # Optional — raises Binance rate limits (public endpoints work without it)
     binance_api_key: str = ""
     binance_api_secret: str = ""

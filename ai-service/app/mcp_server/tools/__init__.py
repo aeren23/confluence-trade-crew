@@ -8,8 +8,9 @@ from app.mcp_server.tools.indicator_tools import (
     detect_divergence,
     get_support_resistance,
     get_volatility_metrics,
+    analyze_volume_profile,
 )
-from app.mcp_server.tools.news_tools import get_market_news, get_pair_news
+from app.mcp_server.tools.news_tools import get_market_news, get_pair_news, scrape_article
 
 __all__ = [
     "get_ohlcv",
@@ -17,6 +18,8 @@ __all__ = [
     "detect_divergence",
     "get_support_resistance",
     "get_volatility_metrics",
+    "analyze_volume_profile",
     "get_pair_news",
     "get_market_news",
+    "scrape_article",
 ]

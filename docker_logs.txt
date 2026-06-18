@@ -1,0 +1,30 @@
+﻿INFO:     127.0.0.1:59146 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38984 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60802 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52332 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56904 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46110 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38452 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49922 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56796 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58052 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47190 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48370 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53422 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35594 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39442 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47088 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33370 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54074 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35242 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46364 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38982 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38442 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36500 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46336 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33686 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43338 - "GET /health HTTP/1.1" 200 OK
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

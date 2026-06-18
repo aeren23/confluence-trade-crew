@@ -23,8 +23,10 @@ from app.mcp_server.tools import (
     detect_divergence,
     get_support_resistance,
     get_volatility_metrics,
+    analyze_volume_profile,
     get_pair_news,
     get_market_news,
+    scrape_article,
 )
 
 # Create MCP server instance
@@ -35,7 +37,7 @@ server = Server("confluence-trade-tools")
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
-    """Register all 7 MCP tools with their JSON schemas."""
+    """Register all MCP tools with their JSON schemas."""
     return [
         Tool(
             name="get_ohlcv",
@@ -63,7 +65,8 @@ async def list_tools() -> list[Tool]:
                             "type": "object",
                             "properties": {
                                 "name": {"type": "string", "description": "Indicator name: rsi, macd, bollinger, ema, sma, adx, atr, stochastic"},
-                                "params": {"type": "object", "description": "Indicator-specific parameters"},
+                                "id": {"type": "string", "description": "Unique ID to prevent overwrites (e.g., 'ema_20', 'ema_50'). Optional."},
+                                "params": {"type": "object", "description": "Indicator-specific parameters (e.g. {'length': 20}). Omit or use {} for defaults."},
                             },
                             "required": ["name"],
                         },
@@ -111,8 +114,20 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="analyze_volume_profile",
+            description="Analyze volume profile: VWAP, volume spikes (>2x avg), and volume trend (increasing/decreasing/flat).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ohlcv_ref": {"type": "string", "description": "UUID reference from get_ohlcv"},
+                    "lookback": {"type": "integer", "default": 20, "description": "Candles to analyze"},
+                },
+                "required": ["ohlcv_ref"],
+            },
+        ),
+        Tool(
             name="get_pair_news",
-            description="Fetch pair-specific crypto news from CryptoPanic with sentiment scoring.",
+            description="Fetch pair-specific crypto news from CryptoPanic, CoinGecko, RSS with multi-factor scoring.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -124,7 +139,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="get_market_news",
-            description="Search for general crypto market news (regulation, macro events) via web search.",
+            description="Search for general crypto market news (regulation, macro events) via RSS, CoinGecko, and web search.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -132,6 +147,18 @@ async def list_tools() -> list[Tool]:
                     "max_results": {"type": "integer", "default": 5},
                 },
                 "required": ["topic"],
+            },
+        ),
+        Tool(
+            name="scrape_article",
+            description="Fetch and extract full readable text content from a news article URL for deep analysis.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "Full article URL to scrape"},
+                    "max_chars": {"type": "integer", "default": 4000, "description": "Max characters to return"},
+                },
+                "required": ["url"],
             },
         ),
     ]
@@ -148,8 +175,10 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         "detect_divergence": detect_divergence,
         "get_support_resistance": get_support_resistance,
         "get_volatility_metrics": get_volatility_metrics,
+        "analyze_volume_profile": analyze_volume_profile,
         "get_pair_news": get_pair_news,
         "get_market_news": get_market_news,
+        "scrape_article": scrape_article,
     }
 
     handler = tool_map.get(name)

@@ -64,7 +64,7 @@ class AnalysisOrchestrator:
                     "timeframe": request.timeframe,
                     "balance": request.balance,
                     "risk_percentage": request.risk_percentage,
-                    "limit": 100,
+                    "limit": 200,
                 }
             )
 

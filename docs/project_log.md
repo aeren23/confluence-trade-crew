@@ -32,3 +32,26 @@
 | 2026-06-18 | 02:47:00 | Fix: Repetitive Generic News Headlines | `news_tools.py`, `news_agent.py` | Removed `or all_items` RSS fallback that caused same generic headlines for every asset. Empty list now returned when no keyword match. Improved news_agent.py scoring rules for pair-specific vs macro separation. Fixed len(w) > 3 filter that excluded BTC/ETH. |
 | 2026-06-18 | 02:47:00 | Fix: EMA-50/ADX/ATR Extraction | `orchestrator.py` | Added per-indicator pattern examples to Step 6 extraction instructions. Added 'id' field support to calculate_indicator to prevent EMA 20 and EMA 50 from overwriting each other. |
 | 2026-06-18 | 03:13:00 | Fix: SynthesisPanel Neutral Levels UI | `SynthesisPanel.jsx`, `SynthesisPanel.module.css` | Updated the Risk card to display both Hypothetical Long and Hypothetical Short Stop-Loss/Take-Profit levels in a side-by-side grid when the trade direction is WAIT (neutral). |
+| 2026-06-18 | 13:21:00 | Fix: Orchestrator extraction | `orchestrator.py` | Added 'hypothetical_scenarios' to the orchestrator JSON schema and prompt so that the frontend actually receives the hypotheticals calculated by the Risk agent. |
+| 2026-06-18 | 13:21:00 | Fix: Pydantic MCP Tool Schema | `indicator_tools.py` | Changed calculate_indicator from taking raw `dict` to a strict Pydantic `IndicatorRequest` model to explicitly enforce 'id' field to LLM, fixing the EMA-50 overwrite bug. |
+| 2026-06-18 | 14:14:00 | Fix: MCP Indicator dict parsing | `indicator_tools.py` | Fixed `AttributeError: 'dict' object has no attribute 'name'` by explicitly instantiating `IndicatorRequest(**ind)` in the processing loop since FastMCP/Pydantic list parsing passed raw dicts at runtime. |
+| 2026-06-18 | 14:30:00 | Fix: RSS Keyword Expansion | `news_tools.py` | Mapped common crypto tickers (btc -> bitcoin, eth -> ethereum, etc.) in `topic_keywords` so RSS feeds match articles using full names, fixing the 'empty news' issue for BTC/ETH. |
+| 2026-06-18 | 14:30:00 | Fix: Hypothetical Chart Annotations | `orchestrator.py` | Added explicit instructions to Orchestrator Step 7 to create horizontal line annotations for BOTH Hypothetical Long and Short SL/TP levels when the trade direction is WAIT, so they render on the frontend chart. |
+| 2026-06-18 | 14:53:00 | Fix: MCP Server Schema Definition | `server.py` | Added missing `id` property to the hardcoded `inputSchema` for `calculate_indicator` in `server.py`. The LLM was stripping the `id` param because it was missing from the strict JSON Schema definition, causing the EMA 50 overwrite bug to persist despite previous Pydantic fixes. |
+| 2026-06-18 | 15:03:00 | Feature: Unified News Engine | `news_tools.py`, `news_agent.py` | Overhauled `get_pair_news` to merge CryptoPanic premium data with free generic RSS/DuckDuckGo sources. The news agent is no longer artificially restricted when an API key is missing. |
+
+---
+### 2026-06-18 16:30:00 — Cursor Agent
+* **Action/Task:** Implemented modular multi-provider LLM configuration and GitHub Models distribution to resolve rate limit.
+* **Files Affected:** `ai-service/app/config.py`, `ai-service/app/llm/factory.py`, `ai-service/requirements.txt`, `.env.example`, `docs/state.md`, `docs/project_log.md`
+* **Details/Decisions:** Added `gemini_api_key` to `Settings`. Added `google-generativeai>=0.8.0` to requirements for native `gemini/` provider. Enhanced `LLMFactory` with a `_PROVIDER_KEY_MAP` that automatically resolves the correct API key env var from the model string prefix — enabling zero-code provider switching. Rewrote `.env.example` with a comprehensive quick-switch reference (Anthropic, OpenAI, Gemini, GitHub Models, Ollama) and the recommended 5-model GitHub distribution (gpt-4.1-nano / Mistral-Small-3.1 / Meta-Llama-3.1-8B / Llama-3.3-70B / gpt-4.1-mini) that spreads 750 Low-tier requests/day across all agents.
+* **Issues & Resolutions:** GitHub Models enforces per-model `UserByModelByDay` quotas (150 req/day per Low-tier model on Copilot Pro/Student). Distributing one model per agent multiplies effective daily capacity by 5×.
+
+---
+### 2026-06-18 16:10:00 — Cursor Agent
+* **Action/Task:** Implemented pipeline fixes for empty indicators, deep news analysis, and trading advisor reliability improvements per approved plan.
+* **Files Affected:** `ta_agent.py`, `indicator_tools.py`, `analysis_orchestrator.py`, `orchestrator.py`, `news_tools.py`, `news_agent.py`, `server.py`, `tools/__init__.py`, `docs/state.md`
+* **Details/Decisions:** Fixed TA prompt to require `id` on all indicators; added auto-id fallback in `IndicatorRequest`; increased candle limit to 200; added INDICATOR_DATA JSON block for Orchestrator parsing; added `analyze_volume_profile` tool; added `scrape_article` with multi-factor news scoring (recency/impact/credibility/relevance); expanded sources (CoinGecko, TheBlock); rewrote news agent for deep analysis; updated Orchestrator confidence weighting rules.
+* **Issues & Resolutions:** Root cause of empty indicators was MCP schema mismatch in TA prompt example — LLM omitted `id` for RSI/MACD/etc. Resolved via prompt fix + defensive auto-id generation.
+
+---

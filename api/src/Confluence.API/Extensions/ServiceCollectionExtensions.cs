@@ -32,7 +32,7 @@ public static class ServiceCollectionExtensions
         {
             var aiServiceUrl = configuration["AiService:BaseUrl"] ?? "http://ai-service:8000";
             client.BaseAddress = new Uri(aiServiceUrl);
-            client.Timeout = TimeSpan.FromMinutes(5); // CrewAI pipeline can take several minutes
+            client.Timeout = TimeSpan.FromMinutes(15); // CrewAI pipeline can take 5–10 minutes with multiple LLM calls
         });
 
         return services;

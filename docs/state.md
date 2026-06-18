@@ -6,9 +6,9 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 
 ## 1. Executive Summary & Current Status
 * **Current Phase:** Phase 6: Integration, Testing & Validation (In Progress)
-* **Last Execution Timestamp:** 2026-06-18T02:47:00Z
-* **Current Overall Progress:** 99% (4 logic errors fixed: direction-aware risk agent, false conflict, news quality, indicator extraction)
-* **Active Goal:** Final verification run and documentation.
+* **Last Execution Timestamp:** 2026-06-18T16:30:00Z
+* **Current Overall Progress:** 99% (Modular multi-provider LLM config: Anthropic, OpenAI, Gemini, GitHub Models)
+* **Active Goal:** E2E verification run after LLM provider modularity improvements.
 
 ---
 
@@ -88,7 +88,22 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 8. ✅ Fix: RSS news fallback removed (no more generic headlines for all assets).
 9. ✅ Fix: EMA-50/ADX/ATR extraction improved in orchestrator Step 6.
 10. ✅ Fix: SynthesisPanel Neutral State UI (Added hypothetical Long/Short SL/TP grids for WAIT direction).
-11. Finalize documentation and E2E walkthrough.
+11. ✅ Fix: Orchestrator JSON Schema extraction (Added 'hypothetical_scenarios' to the schema so frontend can receive it).
+12. ✅ Fix: MCP Tool Schema (Added Pydantic `IndicatorRequest` model to `calculate_indicator` to force LLM to use the `id` field, fixing EMA 50 overwriting).
+13. ✅ Fix: FastMCP Runtime AttributeError (Instantiate `IndicatorRequest` correctly in Python loops).
+14. ✅ Fix: News Expansion (Added ticker mapping like BTC -> Bitcoin to capture RSS news articles successfully).
+15. ✅ Fix: Hypothetical Chart Annotations (Updated Orchestrator to plot Hypo Long/Short levels on the chart during WAIT status).
+16. ✅ Fix: MCP Server Schema Definition (Added 'id' parameter to hardcoded `server.py` schema to prevent LLM from stripping it, definitively solving EMA-50 missing bug).
+17. ✅ Feature: Unified News Engine (Combined CryptoPanic with RSS/DDG so the news agent gets pair-specific news even without an API key).
+18. ✅ Fix: TA indicator `id` fields in prompt + auto-generate fallback in `IndicatorRequest`.
+19. ✅ Fix: Candle limit increased 100→200 for adequate indicator warmup.
+20. ✅ Feature: TA agent INDICATOR_DATA JSON block + Orchestrator structured extraction.
+21. ✅ Feature: `analyze_volume_profile` MCP tool (VWAP, spikes, volume trend).
+22. ✅ Feature: Deep news engine — `scrape_article`, CoinGecko/TheBlock sources, multi-factor scoring.
+23. ✅ Feature: News agent rewritten for article reading, classification, priced-in assessment.
+24. ✅ Fix: Orchestrator dynamic confidence weighting (0.8/0.2 TA/News when news confidence low).
+25. ✅ Feature: Modular multi-provider LLM config — Gemini SDK, API key passthrough, GitHub Models distribution.
+26. Finalize documentation and E2E walkthrough.
 
 ---
 
@@ -113,6 +128,9 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 | **2026-06-18** | **Bearish analysis recommending Long SL/TP (direction bug)** | Risk agent prompts only described 'long position' calculations. Rewrote `risk_agent.py` to be direction-aware: reads TA sentiment_score, determines LONG/SHORT/NEUTRAL, applies correct SL/TP rules (SHORT: SL above resistance, TP above support). Added self-check step. Added `position_direction` to orchestrator schema and frontend badge. | `risk_agent.py`, `orchestrator.py`, `SynthesisPanel.jsx`, `SynthesisPanel.module.css` |
 | **2026-06-18** | **False conflict detection (neutral+bearish triggered conflict)** | Orchestrator LLM ignored the rule that Neutral vs Bearish is not a conflict. Added strict numerical examples (TA=-0.40, News=0.00 → FALSE) and explicit logical formula to the conflict detection instruction. | `orchestrator.py` |
 | **2026-06-18** | **Repetitive generic news headlines across different assets** | RSS fallback in `_fetch_rss_news` returned all items when no keyword match found, causing same generic crypto headlines for any asset. Removed `or all_items` fallback — now returns empty list, triggering low-confidence report from news agent. | `news_tools.py`, `news_agent.py` |
+| **2026-06-18** | **Empty TA indicator values in pipeline output** | TA prompt example omitted required `id` field for non-EMA indicators, causing MCP validation failures. Fixed prompt, added auto-id fallback in `IndicatorRequest`, INDICATOR_DATA JSON block, candle limit 100→200. | `ta_agent.py`, `indicator_tools.py`, `orchestrator.py`, `analysis_orchestrator.py` |
+| **2026-06-18** | **Shallow news agent analysis** | News tools returned headlines only with no article depth. Added `scrape_article`, CoinGecko/TheBlock sources, multi-factor scoring, and deep news agent prompt with classification and priced-in logic. | `news_tools.py`, `news_agent.py`, `server.py` |
+| **2026-06-18** | **GitHub Models rate limit hit (`gpt-4o-mini`)** | `UserByModelByDay` quota (150 req/day) exhausted for single model. Fixed by distributing agents across 5 separate Low-tier GitHub Models (750 total req/day). Added Gemini provider support (SDK + API key). Added explicit API key passthrough in `LLMFactory` via provider→env-var map. Updated `.env.example` with full multi-provider cheat-sheet. | `config.py`, `factory.py`, `requirements.txt`, `.env.example` |
 
 ---
 

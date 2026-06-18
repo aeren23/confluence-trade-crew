@@ -18,7 +18,9 @@ BACKSTORY = (
 
 TASK_DESCRIPTION = (
     "1. Review the detailed text reports from the Data, TA, News, and Risk agents.\n"
-    "2. Calculate overall sentiment: overall_sentiment_score = (TA_score * 0.6) + (News_score * 0.4).\n"
+    "2. Calculate overall sentiment with dynamic weighting:\n"
+    "   - Default: overall_sentiment_score = (TA_score * 0.6) + (News_score * 0.4)\n"
+    "   - If News confidence < 0.30 (poor/no news data): use (TA_score * 0.8) + (News_score * 0.2)\n"
     "   - Do NOT include the Risk agent's score in the directional sentiment average.\n"
     "3. Check for conflicts using STRICT numerical rules:\n"
     "   conflicts_detected = true ONLY IF: (TA_score > +0.35 AND News_score < -0.35) OR (TA_score < -0.35 AND News_score > +0.35).\n"
@@ -29,20 +31,26 @@ TASK_DESCRIPTION = (
     "     TA=-0.40, News=+0.50 → TRUE   (bearish vs bullish, both exceed ±0.35)\n"
     "     TA=+0.50, News=-0.40 → TRUE   (bullish vs bearish, both exceed ±0.35)\n"
     "     TA=-0.40, News=-0.10 → FALSE  (same direction, no conflict)\n"
-    "4. Write a comprehensive summary explaining the synthesis. Explicitly mention "  
+    "4. Confidence rules for synthesis.confidence and per-agent confidence:\n"
+    "   - Base floor when tools succeeded: minimum 0.50 per agent (unless agent explicitly reported tool failure)\n"
+    "   - Signal confluence bonus: +0.10 to +0.30 when TA and News agree in direction\n"
+    "   - synthesis.confidence = weighted average of TA and News confidence, capped at 0.95\n"
+    "5. Write a comprehensive summary explaining the synthesis. Explicitly mention "
     "   the Risk agent's leverage range, trade direction, and risk assessment.\n"
-    "5. Extract 1-sentence summaries and scores for each agent to populate the agents dictionary.\n"
-    "6. IMPORTANT — Extract ALL numeric indicator values from the TA agent's text report and populate "
-    "   the technical_analysis.details.indicators block:\n"
-    "   - RSI: look for 'RSI' followed by a number → rsi.value\n"
-    "   - MACD: look for 'MACD line', 'signal line', 'histogram' values → macd fields\n"
-    "   - Bollinger: look for 'upper band', 'middle band', 'lower band' values → bollinger fields\n"
-    "   - EMA 20: look for 'EMA(20)', 'EMA 20', '20-period EMA' → ema_20.value\n"
-    "   - EMA 50: look for 'EMA(50)', 'EMA 50', '50-period EMA' → ema_50.value\n"
-    "   - ADX: look for 'ADX' followed by a number → adx.value + trend_strength\n"
-    "   - ATR: look for 'ATR' followed by a number → atr.value + atr_pct\n"
-    "   If the TA agent did not report a value, set that field to null (not zero, not omit).\n"
-    "7. Prepare a list of chart annotations based on TA levels, divergence, and Risk SL/TP.\n\n"
+    "6. Extract 1-sentence summaries and scores for each agent to populate the agents dictionary.\n"
+    "7. IMPORTANT — Extract indicator values for technical_analysis.details.indicators:\n"
+    "   PRIMARY: Look for the TA agent's INDICATOR_DATA JSON block (fenced ```json block at end of TA report).\n"
+    "   Parse that JSON directly into the indicators schema — do NOT rely on regex from prose.\n"
+    "   FALLBACK: If INDICATOR_DATA is missing, parse numeric values from the TA text report.\n"
+    "   If a value is unavailable, set that field to null (not zero, not omit).\n"
+    "8. Prepare a list of chart annotations based on TA levels, divergence, and Risk SL/TP.\n"
+    "   - IMPORTANT: If Risk agent provided hypothetical Long and Short scenarios (WAIT direction), "
+    "YOU MUST create horizontal_line annotations for BOTH the Hypothetical Long SL/TP AND Hypothetical Short SL/TP, "
+    "using descriptive labels like 'Hypo Long SL', 'Hypo Short TP'.\n"
+    "9. If the Risk agent provided hypothetical Long and Short scenarios, "
+    "   extract them into the 'hypothetical_scenarios' block under 'risk.details'.\n"
+    "10. For news.details, include key_headlines as objects with title, sentiment, impact, and category "
+    "    when the News agent provided per-headline analysis.\n\n"
     "Your output MUST be valid JSON matching this schema exactly:\n"
     '{{\n'
     '  "agents": {{\n'
@@ -98,7 +106,8 @@ TASK_DESCRIPTION = (
     '        "position_direction": "long | short | neutral",\n'
     '        "position_sizing": {{}},\n'
     '        "leverage": {{}},\n'
-    '        "levels": {{}}\n'
+    '        "levels": {{}},\n'
+    '        "hypothetical_scenarios": {{}}\n'
     '      }}\n'
     '    }}\n'
     '  }},\n'

@@ -282,9 +282,22 @@ const SynthesisPanel = () => {
 
             {headlines.length > 0 && (
               <ul className={styles.headlines}>
-                {headlines.slice(0, 4).map((h, i) => (
-                  <li key={i}>{h}</li>
-                ))}
+                {headlines.slice(0, 4).map((h, i) => {
+                  const title    = typeof h === 'string' ? h : h?.title ?? JSON.stringify(h);
+                  const sentiment = typeof h === 'object' ? h?.sentiment : null;
+                  const impact    = typeof h === 'object' ? h?.impact    : null;
+                  return (
+                    <li key={i}>
+                      <span>{title}</span>
+                      {(sentiment || impact) && (
+                        <span className={styles.headlineMeta}>
+                          {sentiment && <span className={`${styles.hTag} ${styles[sentiment]}`}>{sentiment}</span>}
+                          {impact    && <span className={styles.hTag}>{impact}</span>}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
