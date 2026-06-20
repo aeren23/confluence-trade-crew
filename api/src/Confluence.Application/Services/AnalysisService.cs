@@ -36,7 +36,8 @@ public class AnalysisService : IAnalysisService
             request.Timeframe, 
             request.Balance, 
             request.RiskPercentage,
-            request.SessionId);
+            request.SessionId,
+            request.RiskProfile);
 
         // 3. Parse result
         var cleanJson = resultJson.Trim();

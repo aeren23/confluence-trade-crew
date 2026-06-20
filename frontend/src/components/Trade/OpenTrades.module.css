@@ -1,0 +1,186 @@
+/* ── Widget shell ────────────────────────────────────────────────────────── */
+.widget {
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.badge {
+  background: rgba(96, 165, 250, 0.2);
+  color: #93c5fd;
+  font-size: 0.68rem;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+/* ── Trade rows ─────────────────────────────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-sm, 6px);
+  flex-wrap: wrap;
+  transition: background 0.12s;
+}
+
+.row:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.rowClosed {
+  opacity: 0.55;
+}
+
+/* ── Left section (direction + symbol) ─────────────────────────────────── */
+.rowLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 130px;
+}
+
+.long, .short {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.long  { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+.short { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+
+.symbol {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lev {
+  font-size: 0.68rem;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ── Mid section (levels) ───────────────────────────────────────────────── */
+.rowMid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.levelText {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.sl {
+  font-size: 0.72rem;
+  color: #f87171;
+  font-family: var(--font-mono);
+}
+
+.tp {
+  font-size: 0.72rem;
+  color: #4ade80;
+  font-family: var(--font-mono);
+}
+
+/* ── PnL ────────────────────────────────────────────────────────────────── */
+.pnl {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.profit { color: #4ade80; }
+.loss   { color: #f87171; }
+
+.pnlPct {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* ── Actions ────────────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.closeTradeBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 4px;
+  color: #4ade80;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.closeTradeBtn:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.2);
+}
+
+.closeTradeBtn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 4px;
+  color: #f87171;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.deleteBtn:hover {
+  background: rgba(248, 113, 113, 0.18);
+}
+
+.spin {
+  animation: spinAnim 0.7s linear infinite;
+}
+
+@keyframes spinAnim {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

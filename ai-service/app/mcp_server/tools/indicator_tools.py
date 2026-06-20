@@ -30,6 +30,16 @@ class IndicatorRequest(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 
+def _smart_round(value: float, sig_digits: int = 4) -> float:
+    """Round to N significant digits — preserves precision for micro-cap prices like 0.0000122."""
+    if value == 0:
+        return 0.0
+    from math import log10, floor
+    magnitude = floor(log10(abs(value)))
+    decimals = max(sig_digits - 1 - magnitude, 0)
+    return round(value, decimals)
+
+
 def _get_cached_df(ohlcv_ref: str) -> pd.DataFrame | None:
     """Retrieve DataFrame from cache or return None."""
     return ohlcv_cache.get(ohlcv_ref)
@@ -84,7 +94,7 @@ async def calculate_indicator(
         key_id = ind.id or _generate_indicator_id(name, params)
 
         try:
-            result = _compute_indicator(df, name, params)
+            result = _compute_indicator(df, name, params, key_id=key_id)
             results[key_id] = result
         except Exception as exc:
             results[key_id] = {"error": str(exc)}
@@ -92,14 +102,24 @@ async def calculate_indicator(
     return {"ohlcv_ref": ohlcv_ref, "results": results}
 
 
-def _compute_indicator(df: pd.DataFrame, name: str, params: dict) -> dict:
+def _infer_length_from_id(key_id: str, fallback: int) -> int:
+    """Extract numeric suffix from id (e.g. 'ema_50' -> 50, 'rsi_14' -> 14)."""
+    if key_id:
+        try:
+            return int(key_id.split("_")[-1])
+        except (ValueError, IndexError):
+            pass
+    return fallback
+
+
+def _compute_indicator(df: pd.DataFrame, name: str, params: dict, key_id: str = "") -> dict:
     """Compute a single indicator and return structured result."""
     close = df["close"]
     high = df["high"]
     low = df["low"]
 
     if name == "rsi":
-        length = params.get("length", 14)
+        length = params.get("length") or _infer_length_from_id(key_id, 14)
         rsi_series = ta.rsi(close, length=length)
         if rsi_series is None or rsi_series.empty:
             return {"insufficient_data_for_indicator": True}
@@ -129,9 +149,9 @@ def _compute_indicator(df: pd.DataFrame, name: str, params: dict) -> dict:
         elif prev_hist > 0 and histogram < 0:
             cross = "bearish_cross"
         return {
-            "macd_line": round(macd_line, 2),
-            "signal_line": round(signal_line, 2),
-            "histogram": round(histogram, 2),
+            "macd_line": _smart_round(macd_line),
+            "signal_line": _smart_round(signal_line),
+            "histogram": _smart_round(histogram),
             "cross": cross,
         }
 
@@ -151,38 +171,38 @@ def _compute_indicator(df: pd.DataFrame, name: str, params: dict) -> dict:
         elif price <= lower:
             position = "lower_band"
         return {
-            "upper": round(upper, 2),
-            "middle": round(middle, 2),
-            "lower": round(lower, 2),
+            "upper": _smart_round(upper),
+            "middle": _smart_round(middle),
+            "lower": _smart_round(lower),
             "price_position": position,
         }
 
     elif name == "ema":
-        length = params.get("length", 20)
+        length = params.get("length") or _infer_length_from_id(key_id, 20)
         ema_series = ta.ema(close, length=length)
         if ema_series is None or ema_series.empty:
             return {"insufficient_data_for_indicator": True}
         latest_ema = float(ema_series.iloc[-1])
         price = float(close.iloc[-1])
         return {
-            "latest_value": round(latest_ema, 2),
+            "latest_value": _smart_round(latest_ema),
             "price_vs_ema": "above" if price > latest_ema else "below",
         }
 
     elif name == "sma":
-        length = params.get("length", 50)
+        length = params.get("length") or _infer_length_from_id(key_id, 50)
         sma_series = ta.sma(close, length=length)
         if sma_series is None or sma_series.empty:
             return {"insufficient_data_for_indicator": True}
         latest_sma = float(sma_series.iloc[-1])
         price = float(close.iloc[-1])
         return {
-            "latest_value": round(latest_sma, 2),
+            "latest_value": _smart_round(latest_sma),
             "price_vs_sma": "above" if price > latest_sma else "below",
         }
 
     elif name == "adx":
-        length = params.get("length", 14)
+        length = params.get("length") or _infer_length_from_id(key_id, 14)
         adx_df = ta.adx(high, low, close, length=length)
         if adx_df is None or adx_df.empty:
             return {"insufficient_data_for_indicator": True}
@@ -194,7 +214,7 @@ def _compute_indicator(df: pd.DataFrame, name: str, params: dict) -> dict:
         }
 
     elif name == "atr":
-        length = params.get("length", 14)
+        length = params.get("length") or _infer_length_from_id(key_id, 14)
         atr_series = ta.atr(high, low, close, length=length)
         if atr_series is None or atr_series.empty:
             return {"insufficient_data_for_indicator": True}
@@ -202,7 +222,7 @@ def _compute_indicator(df: pd.DataFrame, name: str, params: dict) -> dict:
         price = float(close.iloc[-1])
         atr_pct = (latest_atr / price) * 100 if price > 0 else 0
         return {
-            "latest_value": round(latest_atr, 2),
+            "latest_value": _smart_round(latest_atr),
             "atr_pct_of_price": round(atr_pct, 2),
         }
 
@@ -275,8 +295,8 @@ async def detect_divergence(
                 "type": "bullish_divergence",
                 "indicator": indicator,
                 "price_points": [
-                    {"timestamp": str(p1["ts"]), "value": round(p1["price"], 2)},
-                    {"timestamp": str(p2["ts"]), "value": round(p2["price"], 2)},
+                    {"timestamp": str(p1["ts"]), "value": _smart_round(p1["price"])},
+                    {"timestamp": str(p2["ts"]), "value": _smart_round(p2["price"])},
                 ],
                 "indicator_points": [
                     {"timestamp": str(p1["ts"]), "value": round(p1["ind"], 2)},
@@ -295,8 +315,8 @@ async def detect_divergence(
                 "type": "bearish_divergence",
                 "indicator": indicator,
                 "price_points": [
-                    {"timestamp": str(p1["ts"]), "value": round(p1["price"], 2)},
-                    {"timestamp": str(p2["ts"]), "value": round(p2["price"], 2)},
+                    {"timestamp": str(p1["ts"]), "value": _smart_round(p1["price"])},
+                    {"timestamp": str(p2["ts"]), "value": _smart_round(p2["price"])},
                 ],
                 "indicator_points": [
                     {"timestamp": str(p1["ts"]), "value": round(p1["ind"], 2)},
@@ -390,11 +410,11 @@ async def get_support_resistance(
     return {
         "ohlcv_ref": ohlcv_ref,
         "method_used": method_used,
-        "support_levels": [round(s, 2) for s in support],
-        "resistance_levels": [round(r, 2) for r in resistance],
-        "current_price": round(current_price, 2),
-        "nearest_support": round(support[0], 2) if support else None,
-        "nearest_resistance": round(resistance[0], 2) if resistance else None,
+        "support_levels": [_smart_round(s) for s in support],
+        "resistance_levels": [_smart_round(r) for r in resistance],
+        "current_price": _smart_round(current_price),
+        "nearest_support": _smart_round(support[0]) if support else None,
+        "nearest_resistance": _smart_round(resistance[0]) if resistance else None,
     }
 
 
@@ -452,10 +472,10 @@ async def get_volatility_metrics(
 
     return {
         "ohlcv_ref": ohlcv_ref,
-        "atr": round(atr_value, 2),
+        "atr": _smart_round(atr_value),
         "atr_pct_of_price": round(atr_pct, 2),
         "volatility_classification": classification,
-        "current_price": round(current_price, 2),
+        "current_price": _smart_round(current_price),
     }
 
 
@@ -509,8 +529,8 @@ async def analyze_volume_profile(
 
     return {
         "ohlcv_ref": ohlcv_ref,
-        "vwap": round(vwap, 2),
-        "current_price": round(current_price, 2),
+        "vwap": _smart_round(vwap),
+        "current_price": _smart_round(current_price),
         "price_vs_vwap": "above" if current_price > vwap else "below",
         "latest_volume": round(latest_volume, 2),
         "average_volume": round(avg_volume, 2),

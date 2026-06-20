@@ -14,6 +14,13 @@ from app.mcp_server import ohlcv_cache
 from app.schemas.request import AnalysisRequest
 from app.schemas.response import AnalysisResponse, AgentOutput, SynthesisOutput, Annotation
 
+# Risk profile → R:R thresholds and TA neutral zone width
+_RISK_PROFILES = {
+    "conservative": {"rr_minimum": 1.0, "rr_ideal": 1.5, "neutral_lo": -0.2, "neutral_hi": 0.2},
+    "moderate":     {"rr_minimum": 0.8, "rr_ideal": 1.2, "neutral_lo": -0.3, "neutral_hi": 0.3},
+    "aggressive":   {"rr_minimum": 0.6, "rr_ideal": 1.0, "neutral_lo": -0.4, "neutral_hi": 0.4},
+}
+
 
 class AnalysisOrchestrator:
     """
@@ -58,6 +65,7 @@ class AnalysisOrchestrator:
 
             # 2. Kickoff execution
             # CrewAI v2 kickoff accepts a dict of inputs that get interpolated into prompts
+            profile = _RISK_PROFILES.get(request.risk_profile, _RISK_PROFILES["moderate"])
             result = await crew_instance.kickoff_async(
                 inputs={
                     "symbol": request.symbol,
@@ -65,6 +73,11 @@ class AnalysisOrchestrator:
                     "balance": request.balance,
                     "risk_percentage": request.risk_percentage,
                     "limit": 200,
+                    # Risk profile thresholds — interpolated into risk_agent.py prompt
+                    "rr_minimum": profile["rr_minimum"],
+                    "rr_ideal": profile["rr_ideal"],
+                    "neutral_lo": profile["neutral_lo"],
+                    "neutral_hi": profile["neutral_hi"],
                 }
             )
 
@@ -88,6 +101,20 @@ class AnalysisOrchestrator:
                 raw_json = raw_json[:-3]
 
             parsed_synthesis = json.loads(raw_json.strip())
+
+            # Server-side R:R gate: override direction to neutral if R:R is below
+            # the profile's minimum. Acts as a safety net when the LLM ignores the prompt.
+            _rr_gate = _RISK_PROFILES.get(request.risk_profile, _RISK_PROFILES["moderate"])["rr_minimum"]
+            _risk_details = parsed_synthesis.get("agents", {}).get("risk", {}).get("details", {})
+            _levels = _risk_details.get("levels", {})
+            _entry = _levels.get("entry")
+            _sl = _levels.get("stop_loss")
+            _tp = _levels.get("take_profit")
+            if _entry and _sl and _tp:
+                _sl_dist = abs(_entry - _sl)
+                _rr = abs(_tp - _entry) / _sl_dist if _sl_dist > 0 else 0
+                if _rr < _rr_gate and _risk_details.get("position_direction") in ("long", "short"):
+                    _risk_details["position_direction"] = "neutral"
 
             # The other tasks (Data, TA, News, Risk) output plain text now.
             # The Orchestrator converts their plain text into the 'agents' dictionary.

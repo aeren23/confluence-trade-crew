@@ -38,6 +38,12 @@ public class UserSettingsConfiguration : IEntityTypeConfiguration<UserSettings>
             .HasMaxLength(10)
             .HasDefaultValue("4h")
             .IsRequired();
+
+        builder.Property(u => u.RiskProfile)
+            .HasColumnName("risk_profile")
+            .HasMaxLength(20)
+            .HasDefaultValue("moderate")
+            .IsRequired();
             
         builder.Property(u => u.UpdatedAt)
             .HasColumnName("updated_at")

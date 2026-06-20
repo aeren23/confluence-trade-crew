@@ -1,0 +1,175 @@
+/* ── Page ───────────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Centered state ─────────────────────────────────────────────────────── */
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 300px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.spin {
+  animation: spinAnim 0.7s linear infinite;
+  color: var(--accent-primary, #00f0ff);
+}
+
+.errorIcon { color: #f87171; }
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent-primary, #00f0ff);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.backLink:hover { text-decoration: underline; }
+
+/* ── Header row ─────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.backBtn:hover { color: var(--text-primary); }
+
+.sep { color: rgba(255,255,255,0.2); }
+
+.breadLink {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.breadLink:hover { color: var(--text-primary); }
+
+.idLabel {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.headerRight { display: flex; align-items: center; gap: 8px; }
+
+/* ── Take Trade button ──────────────────────────────────────────────────── */
+.tradeBtn {
+  padding: 8px 18px;
+  background: rgba(74,222,128,0.12);
+  border: 1px solid rgba(74,222,128,0.3);
+  border-radius: var(--radius-md, 8px);
+  color: #4ade80;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tradeBtn:hover { background: rgba(74,222,128,0.22); }
+
+/* ── Meta card ──────────────────────────────────────────────────────────── */
+.metaCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md, 8px);
+}
+
+.metaLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metaSentiment {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.bullish { color: #4ade80; }
+.bearish { color: #f87171; }
+.neutral { color: #fbbf24; }
+
+.metaSep { color: rgba(255,255,255,0.2); }
+
+.metaSymbol {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metaTf {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.metaRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.metaStat {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.metaStat b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.metaDate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+@keyframes spinAnim {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

@@ -87,6 +87,11 @@ class ConfluenceTradeCrew:
                         self._session_id, agent_name,
                         self._truncate(thought_part), "thought"
                     )
+                # Heartbeat so user knows the tool was dispatched and agent is waiting.
+                telemetry.publish_sync(
+                    self._session_id, agent_name,
+                    f"Waiting for {tool_name} result...", "system"
+                )
 
             # ── Case 2: Final output (AgentFinish) ────────────────────────────
             elif hasattr(step, "output") and step.output:
@@ -115,6 +120,20 @@ class ConfluenceTradeCrew:
 
         return callback
 
+    def _make_task_callback(self):
+        """Return a task_callback fired when each CrewAI task finishes.
+
+        Publishes a brief "task complete" event so the user can see which
+        agent phase just finished, even between verbose step callbacks.
+        """
+        def callback(task_output):
+            if not self._session_id:
+                return
+            agent_name = getattr(task_output, "agent", None) or "Agent"
+            summary = self._truncate(str(getattr(task_output, "raw", "") or ""), 300)
+            telemetry.publish_sync(self._session_id, agent_name, summary, "finished")
+
+        return callback
 
     # ── Agents ─────────────────────────────────────────────────────────────
 
@@ -140,7 +159,7 @@ class ConfluenceTradeCrew:
             backstory=ta_prompts.BACKSTORY,
             llm=self._llm_factory.create("technical_analysis"),
             mcps=[self._mcp],
-            max_iter=15,
+            max_iter=10,
             max_retry_limit=3,
             verbose=True,
             step_callback=self._make_step_callback("Technical Analysis Agent"),
@@ -154,7 +173,7 @@ class ConfluenceTradeCrew:
             backstory=news_prompts.BACKSTORY,
             llm=self._llm_factory.create("news"),
             mcps=[self._mcp],
-            max_iter=15,
+            max_iter=10,
             max_retry_limit=3,
             verbose=True,
             step_callback=self._make_step_callback("News Agent"),
@@ -168,7 +187,7 @@ class ConfluenceTradeCrew:
             backstory=risk_prompts.BACKSTORY,
             llm=self._llm_factory.create("risk"),
             mcps=[self._mcp],
-            max_iter=15,
+            max_iter=10,
             max_retry_limit=3,
             verbose=True,
             step_callback=self._make_step_callback("Risk Agent"),
@@ -181,6 +200,7 @@ class ConfluenceTradeCrew:
             goal=orch_prompts.GOAL,
             backstory=orch_prompts.BACKSTORY,
             llm=self._llm_factory.create("orchestrator"),
+            max_iter=5,
             verbose=True,  # Orchestrator doesn't need MCP tools
             step_callback=self._make_step_callback("Orchestrator"),
         )
@@ -202,6 +222,7 @@ class ConfluenceTradeCrew:
             expected_output=ta_prompts.EXPECTED_OUTPUT,
             agent=self.ta_agent(),
             context=[self.data_task()],  # Depends on Data Agent output
+            async_execution=True,  # Runs in parallel with news_task
         )
 
     @task
@@ -211,6 +232,7 @@ class ConfluenceTradeCrew:
             expected_output=news_prompts.EXPECTED_OUTPUT,
             agent=self.news_agent(),
             context=[self.data_task()],  # Only needs symbol from data/request
+            async_execution=True,  # Runs in parallel with ta_task
         )
 
     @task
@@ -219,7 +241,8 @@ class ConfluenceTradeCrew:
             description=risk_prompts.TASK_DESCRIPTION,
             expected_output=risk_prompts.EXPECTED_OUTPUT,
             agent=self.risk_agent(),
-            context=[self.ta_task(), self.news_task()],  # Depends on TA and News
+            context=[self.ta_task(), self.news_task()],  # Waits for both TA and News
+            async_execution=False,
         )
 
     @task
@@ -246,4 +269,5 @@ class ConfluenceTradeCrew:
             tasks=self.tasks,    # Auto-gathered from @task
             process=Process.sequential,
             verbose=True,
+            task_callback=self._make_task_callback(),
         )

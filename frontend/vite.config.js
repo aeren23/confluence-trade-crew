@@ -19,6 +19,8 @@ export default defineConfig({
 
   preview: {
     port: 3000,
+    // Required for SPA routing — serve index.html for all unknown paths
+    historyApiFallback: true,
   },
 
   build: {

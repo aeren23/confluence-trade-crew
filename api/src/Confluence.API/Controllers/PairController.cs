@@ -26,6 +26,29 @@ public class PairController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> AddPair([FromBody] AddPairRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request?.Symbol))
+            return BadRequest("Symbol is required.");
+
+        var rawSymbol = request.Symbol.ToUpperInvariant().Trim();
+        var quoteAsset = (request.QuoteAsset ?? "USDT").ToUpperInvariant().Trim();
+        var compactSymbol = rawSymbol.Replace("/", "");
+
+        if (!compactSymbol.EndsWith(quoteAsset))
+            return BadRequest($"Symbol must end with {quoteAsset}. Example: ETH{quoteAsset} or ETH/{quoteAsset}.");
+
+        var baseAsset = compactSymbol[..^quoteAsset.Length];
+        if (string.IsNullOrWhiteSpace(baseAsset))
+            return BadRequest("Base asset is required. Example: ETHUSDT.");
+
+        var symbol = $"{baseAsset}/{quoteAsset}";
+
+        var pair = await _pairService.GetOrCreatePairAsync(symbol, baseAsset, quoteAsset);
+        return Ok(pair);
+    }
+
     [HttpGet("klines")]
     public async Task<IActionResult> GetKlines([FromQuery] string symbol, [FromQuery] string interval, [FromQuery] int limit = 100)
     {
@@ -109,3 +132,5 @@ public class PairController : ControllerBase
         return Content(mockJson, "application/json");
     }
 }
+
+public record AddPairRequest(string Symbol, string? QuoteAsset);

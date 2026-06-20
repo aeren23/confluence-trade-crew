@@ -6,5 +6,6 @@ public class UserSettings
     public decimal DefaultBalance { get; set; }
     public decimal DefaultRiskPercentage { get; set; }
     public string PreferredTimeframe { get; set; } = string.Empty;
+    public string RiskProfile { get; set; } = "moderate"; // conservative | moderate | aggressive
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

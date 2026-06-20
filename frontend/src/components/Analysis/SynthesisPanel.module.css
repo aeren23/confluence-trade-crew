@@ -474,3 +474,168 @@
   color: var(--text-muted);
   font-size: 0.7rem;
 }
+
+/* ── Analysis metadata bar ────────────────────────────────────────────── */
+.metaBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  margin-bottom: var(--space-4);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.metaSep {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 0.7rem;
+}
+
+.metaLinkBtn {
+  background: none;
+  border: none;
+  color: var(--accent-primary, #00f0ff);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.metaLinkBtn:hover { opacity: 0.75; }
+
+/* ── Position Sizing Card ─────────────────────────────────────────────── */
+.sizingRow_outer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.sizingCard {
+  flex: 1 1 320px;
+  background: rgba(96, 165, 250, 0.05);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.sizingHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: rgba(96, 165, 250, 0.08);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #93c5fd;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+}
+
+.sizingGrid {
+  padding: 4px 0;
+}
+
+.sizingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  gap: 8px;
+}
+
+.sizingRow:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sizingDivider {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-top: 3px;
+  padding-top: 8px;
+}
+
+.sizingLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.sizingVal {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+.sizingNote {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.dirBadgeSmall {
+  margin-left: auto;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+/* ── Take Trade button ─────────────────────────────────────────────────── */
+.takeTradBtn {
+  align-self: stretch;
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  border: 2px solid;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+/* Long = green */
+.takeTradLong {
+  background: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(74,222,128,0.08));
+  border-color: rgba(74,222,128,0.5);
+  color: #4ade80;
+}
+
+.takeTradLong:hover {
+  background: linear-gradient(135deg, rgba(74,222,128,0.32), rgba(74,222,128,0.18));
+  border-color: #4ade80;
+  box-shadow: 0 4px 20px rgba(74,222,128,0.25);
+  transform: translateY(-1px);
+}
+
+/* Short = red */
+.takeTradShort {
+  background: linear-gradient(135deg, rgba(248,113,113,0.18), rgba(248,113,113,0.08));
+  border-color: rgba(248,113,113,0.5);
+  color: #f87171;
+}
+
+.takeTradShort:hover {
+  background: linear-gradient(135deg, rgba(248,113,113,0.32), rgba(248,113,113,0.18));
+  border-color: #f87171;
+  box-shadow: 0 4px 20px rgba(248,113,113,0.25);
+  transform: translateY(-1px);
+}

@@ -7,4 +7,5 @@ public class AnalysisRequestDto
     public decimal Balance { get; set; }
     public decimal RiskPercentage { get; set; }
     public string SessionId { get; set; } = string.Empty;
+    public string RiskProfile { get; set; } = "moderate";
 }

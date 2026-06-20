@@ -48,7 +48,10 @@ TASK_DESCRIPTION = (
     "YOU MUST create horizontal_line annotations for BOTH the Hypothetical Long SL/TP AND Hypothetical Short SL/TP, "
     "using descriptive labels like 'Hypo Long SL', 'Hypo Short TP'.\n"
     "9. If the Risk agent provided hypothetical Long and Short scenarios, "
-    "   extract them into the 'hypothetical_scenarios' block under 'risk.details'.\n"
+    "   extract them into the 'hypothetical_scenarios' block under 'risk.details'. "
+    "   Use EXACTLY the keys: 'long' and 'short' at the top level, each containing "
+    "   'entry', 'stop_loss', and 'take_profit' as floats. "
+    "   NEVER use abbreviated keys like 'sl' or 'tp'.\n"
     "10. For news.details, include key_headlines as objects with title, sentiment, impact, and category "
     "    when the News agent provided per-headline analysis.\n\n"
     "Your output MUST be valid JSON matching this schema exactly:\n"
@@ -104,10 +107,13 @@ TASK_DESCRIPTION = (
     '      "summary": "<1-sentence summary of risk>",\n'
     '      "details": {{\n'
     '        "position_direction": "long | short | neutral",\n'
-    '        "position_sizing": {{}},\n'
-    '        "leverage": {{}},\n'
-    '        "levels": {{}},\n'
-    '        "hypothetical_scenarios": {{}}\n'
+    '        "position_sizing": {{"balance": <float>, "risk_percentage": <float>, "risk_amount_usdt": <float>, "suggested_position_size_usdt": <float>, "suggested_position_size_base": <float>}},\n'
+    '        "leverage": {{"recommended_range": <string>, "capped_maximum": <number>}},\n'
+    '        "levels": {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>, "risk_reward_ratio": <float>}},\n'
+    '        "hypothetical_scenarios": {{\n'
+    '          "long":  {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>}},\n'
+    '          "short": {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>}}\n'
+    '        }}\n'
     '      }}\n'
     '    }}\n'
     '  }},\n'

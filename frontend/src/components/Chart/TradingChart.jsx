@@ -9,6 +9,8 @@ const TradingChart = () => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candlestickSeriesRef = useRef(null);
+  // Track created price lines so we can remove them before drawing new ones
+  const priceLinesRef = useRef([]);
   const { symbol, timeframe, finalAnalysis } = useAppStore();
 
   // Custom hook fetching public OHLCV data via the .NET backend proxy
@@ -69,34 +71,37 @@ const TradingChart = () => {
     }
   }, [data]);
 
-  // Handle AI Annotations Overlay
+  // Handle AI Annotations Overlay — clear old lines first, then draw fresh
   useEffect(() => {
-    if (!candlestickSeriesRef.current || !finalAnalysis?.annotations) return;
+    const series = candlestickSeriesRef.current;
+    if (!series) return;
+
+    // Always remove all previous price lines (handles null/changed analysis too)
+    priceLinesRef.current.forEach(line => {
+      try { series.removePriceLine(line); } catch { /* already removed */ }
+    });
+    priceLinesRef.current = [];
+
+    if (!finalAnalysis?.annotations?.length) return;
 
     finalAnalysis.annotations.forEach(ann => {
       let color = '#a1a1aa';
       let lineStyle = 2; // Dashed
 
-      if (ann.style === 'support') {
-        color = '#4ade80';
-        lineStyle = 0;
-      } else if (ann.style === 'resistance') {
-        color = '#f87171';
-        lineStyle = 0;
-      } else if (ann.style === 'stop_loss') {
-        color = '#ef4444';
-      } else if (ann.style === 'take_profit') {
-        color = '#22c55e';
-      }
+      if (ann.style === 'support')     { color = '#4ade80'; lineStyle = 0; }
+      else if (ann.style === 'resistance') { color = '#f87171'; lineStyle = 0; }
+      else if (ann.style === 'stop_loss')  { color = '#ef4444'; }
+      else if (ann.style === 'take_profit'){ color = '#22c55e'; }
 
-      candlestickSeriesRef.current.createPriceLine({
+      const line = series.createPriceLine({
         price: ann.value,
-        color: color,
+        color,
         lineWidth: 2,
-        lineStyle: lineStyle,
+        lineStyle,
         axisLabelVisible: true,
         title: ann.label,
       });
+      priceLinesRef.current.push(line);
     });
   }, [finalAnalysis]);
 

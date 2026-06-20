@@ -1,8 +1,29 @@
 import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import styles from './MainLayout.module.css';
-import { Activity, LayoutDashboard, Settings } from 'lucide-react';
+import { LayoutDashboard, Clock, PieChart, ArrowLeftRight, Settings } from 'lucide-react';
+
+const NAV_ITEMS = [
+  { to: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+  { to: '/history',   icon: <Clock size={20} />,           label: 'History'   },
+  { to: '/portfolio', icon: <PieChart size={20} />,         label: 'Portfolio' },
+  { to: '/trades',    icon: <ArrowLeftRight size={20} />,   label: 'Trades'    },
+  { to: '/settings',  icon: <Settings size={20} />,         label: 'Settings'  },
+];
+
+const PAGE_TITLES = {
+  '/dashboard': 'AI Analysis Dashboard',
+  '/history':   'Analysis History',
+  '/portfolio': 'Portfolio',
+  '/trades':    'Trade Journal',
+  '/settings':  'Settings',
+};
 
 const MainLayout = ({ children }) => {
+  const { pathname } = useLocation();
+  const basePath = '/' + pathname.split('/')[1];
+  const title = PAGE_TITLES[basePath] || 'Confluence Trade Crew';
+
   return (
     <div className={styles.layout}>
       {/* Sidebar */}
@@ -12,26 +33,26 @@ const MainLayout = ({ children }) => {
           <span className={styles.logoText}>CTC</span>
         </div>
         <nav className={styles.nav}>
-          <button className={`${styles.navItem} ${styles.active}`}>
-            <LayoutDashboard size={20} />
-            <span>Dashboard</span>
-          </button>
-          <button className={styles.navItem}>
-            <Activity size={20} />
-            <span>History</span>
-          </button>
-          <button className={styles.navItem}>
-            <Settings size={20} />
-            <span>Settings</span>
-          </button>
+          {NAV_ITEMS.map(({ to, icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `${styles.navItem} ${isActive ? styles.active : ''}`
+              }
+            >
+              {icon}
+              <span>{label}</span>
+            </NavLink>
+          ))}
         </nav>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className={styles.mainWrapper}>
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <h1 className={styles.pageTitle}>AI Analysis Dashboard</h1>
+            <h1 className={styles.pageTitle}>{title}</h1>
             <div className={styles.statusBadge}>
               <span className={styles.pulseIndicator}></span>
               System Online

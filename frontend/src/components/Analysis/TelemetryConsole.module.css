@@ -223,3 +223,35 @@
   background: rgba(255, 255, 255, 0.14);
   color: var(--text-primary);
 }
+
+/* ── Thinking indicator ────────────────────────────────────────────────── */
+.thinkingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  border-radius: 4px;
+  background: rgba(96, 165, 250, 0.06);
+  border-left: 2px solid rgba(96, 165, 250, 0.4);
+}
+
+.thinkingPulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #60a5fa;
+  animation: thinkingPulseAnim 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes thinkingPulseAnim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.7); }
+}
+
+.thinkingText {
+  font-size: 11px;
+  color: #93c5fd;
+  font-style: italic;
+}

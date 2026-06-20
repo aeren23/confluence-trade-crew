@@ -3,12 +3,62 @@
   margin-bottom: var(--space-6);
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
 .title {
   font-family: var(--font-display);
   font-size: 1.1rem;
-  margin-bottom: var(--space-5);
+  margin: 0;
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.settingsLink {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.settingsLink:hover { color: var(--text-primary); }
+
+.titleActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileBadge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.profile_conservative {
+  color: #60a5fa;
+  border-color: rgba(96,165,250,0.35);
+  background: rgba(96,165,250,0.08);
+}
+
+.profile_moderate {
+  color: #a78bfa;
+  border-color: rgba(167,139,250,0.35);
+  background: rgba(167,139,250,0.08);
+}
+
+.profile_aggressive {
+  color: #f97316;
+  border-color: rgba(249,115,22,0.35);
+  background: rgba(249,115,22,0.08);
 }
 
 .grid {
@@ -52,4 +102,43 @@
   border-radius: var(--radius-md);
   color: #f87171;
   font-size: 0.9rem;
+}
+
+/* ── Risk hint ─────────────────────────────────────────────────────────── */
+.riskHint {
+  font-size: 0.72rem;
+  color: #60a5fa;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* ── Save defaults row ─────────────────────────────────────────────────── */
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-4);
+}
+
+.saveBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.saveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

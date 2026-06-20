@@ -23,15 +23,17 @@ public class PairService : IPairService
 
     public async Task<Pair> GetOrCreatePairAsync(string symbol, string baseAsset, string quoteAsset)
     {
-        var pair = await _context.Set<Pair>().FirstOrDefaultAsync(p => p.Symbol == symbol);
+        var normalizedSymbol = symbol.ToUpperInvariant().Replace("/", "");
+        var pair = await _context.Set<Pair>()
+            .FirstOrDefaultAsync(p => p.Symbol.ToUpper().Replace("/", "") == normalizedSymbol);
         
         if (pair == null)
         {
             pair = new Pair
             {
-                Symbol = symbol,
-                BaseAsset = baseAsset,
-                QuoteAsset = quoteAsset,
+                Symbol = symbol.ToUpperInvariant(),
+                BaseAsset = baseAsset.ToUpperInvariant(),
+                QuoteAsset = quoteAsset.ToUpperInvariant(),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };

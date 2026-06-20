@@ -22,7 +22,8 @@ public class UserSettingsService : IUserSettingsService
         {
             DefaultBalance = settings.DefaultBalance,
             DefaultRiskPercentage = settings.DefaultRiskPercentage,
-            PreferredTimeframe = settings.PreferredTimeframe
+            PreferredTimeframe = settings.PreferredTimeframe,
+            RiskProfile = settings.RiskProfile
         };
     }
 
@@ -33,6 +34,7 @@ public class UserSettingsService : IUserSettingsService
         settings.DefaultBalance = request.DefaultBalance;
         settings.DefaultRiskPercentage = request.DefaultRiskPercentage;
         settings.PreferredTimeframe = request.PreferredTimeframe;
+        settings.RiskProfile = request.RiskProfile;
         settings.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync();

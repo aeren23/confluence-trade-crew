@@ -55,6 +55,12 @@ _RSS_FEEDS = [
     ("theblock", "https://www.theblock.co/rss.xml"),
 ]
 
+# Minimum relevance score for pair_news items — filters out unrelated stories
+_RELEVANCE_THRESHOLD = 0.3
+
+# Generic words that should not count toward relevance scoring
+_GENERIC_WORDS = {"crypto", "cryptocurrency", "market", "news", "price", "coin", "token", "digital"}
+
 _TICKER_MAP = {
     "btc": "bitcoin",
     "eth": "ethereum",
@@ -126,9 +132,13 @@ def _score_relevance(text: str, keywords: set[str]) -> float:
 
 
 def _build_topic_keywords(topic: str) -> set[str]:
-    """Expand topic/ticker into keyword set for relevance filtering."""
+    """Expand topic/ticker into keyword set for relevance filtering.
+
+    Generic filler words (crypto, market, news, etc.) are excluded so they
+    don't inflate relevance scores for unrelated stories.
+    """
     raw_words = topic.replace("/", " ").replace("-", " ").split()
-    keywords = {w.lower() for w in raw_words if len(w) >= 2}
+    keywords = {w.lower() for w in raw_words if len(w) >= 2 and w.lower() not in _GENERIC_WORDS}
     for kw in list(keywords):
         if kw in _TICKER_MAP:
             keywords.add(_TICKER_MAP[kw])
@@ -458,8 +468,15 @@ async def get_pair_news(
     else:
         source_notes.append("RSS/DDG returned no items")
 
-    # Score and sort all items
+    # Score and sort all items, then apply relevance threshold
     items = _enrich_items_with_scores(items[:limit], keywords)
+    # Keep CryptoPanic items regardless (they are already asset-specific by API query),
+    # but filter out non-CryptoPanic items that score below relevance threshold.
+    items = [
+        item for item in items
+        if item.get("source") == "cryptopanic"
+        or item["scoring"]["relevance_score"] >= _RELEVANCE_THRESHOLD
+    ]
 
     total_weight = sum(abs(s) for s in sentiment_scores) or 1
     aggregate = sum(sentiment_scores) / total_weight if sentiment_scores else 0.0

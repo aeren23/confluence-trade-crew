@@ -16,3 +16,4 @@ class AnalysisRequest(BaseModel):
     balance: float = Field(default=1000.0, gt=0, description="User's portfolio balance in quote asset (USDT)")
     risk_percentage: float = Field(default=2.0, gt=0, le=100, description="Risk percentage per trade")
     session_id: str | None = Field(default=None, description="Optional UUID to broadcast live telemetry via Redis Pub/Sub")
+    risk_profile: str = Field(default="moderate", description="Trading risk appetite: conservative | moderate | aggressive")

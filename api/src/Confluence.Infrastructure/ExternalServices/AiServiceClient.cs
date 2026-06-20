@@ -12,7 +12,7 @@ public class AiServiceClient : IAiServiceClient
         _httpClient = httpClient;
     }
 
-    public async Task<string> AnalyzeAsync(string symbol, string timeframe, decimal balance, decimal riskPercentage, string sessionId)
+    public async Task<string> AnalyzeAsync(string symbol, string timeframe, decimal balance, decimal riskPercentage, string sessionId, string riskProfile = "moderate")
     {
         var payload = new
         {
@@ -20,7 +20,8 @@ public class AiServiceClient : IAiServiceClient
             timeframe = timeframe,
             balance = balance,
             risk_percentage = riskPercentage,
-            session_id = sessionId
+            session_id = sessionId,
+            risk_profile = riskProfile
         };
 
         var response = await _httpClient.PostAsJsonAsync("/analyze", payload);

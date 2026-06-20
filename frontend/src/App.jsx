@@ -1,32 +1,31 @@
 import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/Layout/MainLayout';
-import ControlPanel from './components/Analysis/ControlPanel';
-import TradingChart from './components/Chart/TradingChart';
-import TelemetryConsole from './components/Analysis/TelemetryConsole';
-import SynthesisPanel from './components/Analysis/SynthesisPanel';
+import TradeForm from './components/Trade/TradeForm';
+import DashboardPage from './pages/DashboardPage';
+import HistoryPage from './pages/HistoryPage';
+import AnalysisDetailPage from './pages/AnalysisDetailPage';
+import PortfolioPage from './pages/PortfolioPage';
+import TradesPage from './pages/TradesPage';
+import SettingsPage from './pages/SettingsPage';
 
-/**
- * App — Root application component.
- * Assembles the Clean Architecture presentation components.
- */
 function App() {
   return (
     <MainLayout>
-      {/* Top Section: Controls and Chart */}
-      <div style={{ display: 'flex', gap: 'var(--space-6)', marginBottom: 'var(--space-6)', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 300px' }}>
-          <ControlPanel />
-        </div>
-        <div style={{ flex: '2 1 600px' }}>
-          <TradingChart />
-        </div>
-      </div>
+      <Routes>
+        <Route path="/"              element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard"     element={<DashboardPage />} />
+        <Route path="/history"       element={<HistoryPage />} />
+        <Route path="/analysis/:id"  element={<AnalysisDetailPage />} />
+        <Route path="/portfolio"     element={<PortfolioPage />} />
+        <Route path="/trades"        element={<TradesPage />} />
+        <Route path="/settings"      element={<SettingsPage />} />
+        {/* Fallback: redirect unknown paths to dashboard */}
+        <Route path="*"              element={<Navigate to="/dashboard" replace />} />
+      </Routes>
 
-      {/* Middle Section: Telemetry Console */}
-      <TelemetryConsole />
-
-      {/* Bottom Section: Final Analysis Panel */}
-      <SynthesisPanel />
+      {/* TradeForm is a global modal, available from any route */}
+      <TradeForm />
     </MainLayout>
   );
 }

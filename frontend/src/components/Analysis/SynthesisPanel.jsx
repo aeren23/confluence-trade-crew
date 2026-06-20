@@ -4,7 +4,8 @@ import useAppStore from '../../store/useAppStore';
 import {
   ShieldCheck, TrendingUp, TrendingDown, Minus,
   Activity, Globe, Database, AlertTriangle, BarChart2,
-  ArrowDownRight, ArrowUpRight, Layers
+  ArrowDownRight, ArrowUpRight, Layers, DollarSign, Target,
+  Wallet, TrendingUp as TrendUp, Clock
 } from 'lucide-react';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -36,6 +37,132 @@ const Pill = ({ children, variant = 'default' }) => (
   <span className={`${styles.pill} ${styles[`pill_${variant}`]}`}>{children}</span>
 );
 
+// ── Position Sizing Card ────────────────────────────────────────────────────
+
+const fmt = (n, decimals) => {
+  if (n == null || n === '') return '—';
+  const num = typeof n === 'string' ? parseFloat(n) : n;
+  if (isNaN(num)) return '—';
+  // Auto-detect decimal places for small prices (e.g. SHIB 0.0000122, PEPE 0.000014)
+  if (decimals == null) {
+    if (num === 0 || Math.abs(num) >= 1) {
+      decimals = 2;
+    } else {
+      const mag = Math.floor(Math.log10(Math.abs(num)));
+      decimals = Math.max(4 - 1 - mag, 2);
+    }
+  }
+  return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+};
+
+const pctDiff = (entry, target) => {
+  if (!entry || !target) return null;
+  const diff = ((target - entry) / entry) * 100;
+  return diff.toFixed(2);
+};
+
+const PositionSizingCard = ({ riskDetails, meta }) => {
+  const sizing  = riskDetails?.position_sizing  || {};
+  const leverage = riskDetails?.leverage        || {};
+  const levels   = riskDetails?.levels          || {};
+
+  const entry = levels.entry || levels.entry_reference;
+  const sl    = levels.stop_loss;
+  const tp    = levels.take_profit;
+  const rr    = levels.risk_reward_ratio
+    ?? sizing.risk_reward_ratio
+    ?? (entry && sl && tp ? Math.abs(tp - entry) / Math.abs(entry - sl) : null);
+
+  const balance     = sizing.balance ?? meta?.requestedBalance;
+  const riskPct     = sizing.risk_percentage ?? meta?.requestedRiskPercentage;
+  const riskAmt     = sizing.risk_amount_usdt ?? (balance && riskPct ? (balance * riskPct / 100) : null);
+  const posUsdt     = sizing.suggested_position_size_usdt ?? sizing.position_size_usdt;
+  const posBase     = sizing.suggested_position_size_base ?? sizing.position_size_base;
+  const levMax      = leverage.capped_maximum ?? leverage.max ?? leverage.suggested_range ?? leverage.recommended_range;
+  const direction   = riskDetails?.position_direction;
+
+  if (!balance && !riskAmt && !entry) return null;
+
+  return (
+    <div className={styles.sizingCard}>
+      <div className={styles.sizingHeader}>
+        <DollarSign size={14} />
+        <span>Position Sizing</span>
+        {direction && direction !== 'neutral' && (
+          <span className={`${styles.dirBadgeSmall} ${direction === 'long' ? styles.dirLong : styles.dirShort}`}>
+            {direction === 'long' ? '▲ LONG' : '▼ SHORT'}
+          </span>
+        )}
+      </div>
+      <div className={styles.sizingGrid}>
+        {balance != null && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}><Wallet size={11}/> Portfolio</span>
+            <span className={styles.sizingVal}>{fmt(balance)} USDT</span>
+          </div>
+        )}
+        {riskPct != null && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}><Target size={11}/> Risk / Trade</span>
+            <span className={styles.sizingVal}>
+              {riskPct}%
+              {riskAmt != null && <span className={styles.sizingNote}> = {fmt(riskAmt)} USDT at risk</span>}
+            </span>
+          </div>
+        )}
+        {(posUsdt || posBase) && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}><Layers size={11}/> Position Size</span>
+            <span className={styles.sizingVal}>
+              {posUsdt ? `${fmt(posUsdt)} USDT` : '—'}
+              {posBase ? <span className={styles.sizingNote}> ({fmt(posBase, 5)} base)</span> : null}
+            </span>
+          </div>
+        )}
+        {levMax && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}><TrendUp size={11}/> Leverage</span>
+            <span className={styles.sizingVal}>{levMax}×</span>
+          </div>
+        )}
+
+        {entry && (
+          <div className={`${styles.sizingRow} ${styles.sizingDivider}`}>
+            <span className={styles.sizingLabel}>Entry</span>
+            <span className={styles.sizingVal}>{fmt(entry)}</span>
+          </div>
+        )}
+        {sl && (
+          <div className={styles.sizingRow}>
+            <span className={`${styles.sizingLabel} ${styles.bearish}`}><ArrowDownRight size={11}/> Stop Loss</span>
+            <span className={styles.sizingVal}>
+              {fmt(sl)}
+              {entry && <span className={styles.sizingNote}> ({pctDiff(entry, sl)}%)</span>}
+            </span>
+          </div>
+        )}
+        {tp && (
+          <div className={styles.sizingRow}>
+            <span className={`${styles.sizingLabel} ${styles.bullish}`}><ArrowUpRight size={11}/> Take Profit</span>
+            <span className={styles.sizingVal}>
+              {fmt(tp)}
+              {entry && <span className={styles.sizingNote}> ({pctDiff(entry, tp)}%)</span>}
+            </span>
+          </div>
+        )}
+        {rr != null && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}>R:R Ratio</span>
+            <span className={`${styles.sizingVal} ${parseFloat(rr) >= 1.5 ? styles.bullish : parseFloat(rr) >= 1.0 ? styles.neutral : styles.bearish}`}>
+              {typeof rr === 'number' ? rr.toFixed(2) : rr}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── Agent Section cards ────────────────────────────────────────────────────
 
 const AgentMeta = ({ agentData, label }) => {
@@ -61,12 +188,19 @@ const AgentMeta = ({ agentData, label }) => {
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────
-const SynthesisPanel = () => {
-  const { finalAnalysis, analysisStatus } = useAppStore();
+// `injectData` — when provided (from AnalysisDetailPage), the component uses
+// it directly and does NOT read from or write to the global store.
+const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
+  const store = useAppStore();
+  const { openTradeForm } = store;
+
+  const finalAnalysis   = injectData || store.finalAnalysis;
+  const analysisStatus  = injectData ? 'complete' : store.analysisStatus;
 
   if (analysisStatus !== 'complete' || !finalAnalysis) return null;
 
   const { synthesis, agents } = finalAnalysis;
+  const meta = finalAnalysis._meta || null;
   const ta   = agents?.technical_analysis;
   const news = agents?.news;
   const risk = agents?.risk;
@@ -83,8 +217,46 @@ const SynthesisPanel = () => {
   const levels        = riskDetails.levels          || {};
   const dataDetails   = data?.details || {};
 
+  const handleTakeTrade = () => {
+    const direction = riskDetails.position_direction;
+    if (direction === 'neutral') return;
+    openTradeForm({
+      symbol: meta?.symbol || '',
+      direction: direction === 'long' ? 'Long' : 'Short',
+      entryPrice: levels.entry || levels.entry_reference || '',
+      stopLoss: levels.stop_loss || '',
+      takeProfit: levels.take_profit || '',
+      leverage: leverage.capped_maximum || leverage.recommended_range || 1,
+      entryAmount: sizing.suggested_position_size_usdt || sizing.position_size_usdt || '',
+      analysisId: meta?.id || null,
+    });
+  };
+
   return (
     <div className={`glass-card ${styles.panel}`}>
+
+      {/* ── Analysis metadata bar ─────────────────────────────────────────── */}
+      {meta && (
+        <div className={styles.metaBar}>
+          <span className={styles.metaItem}>
+            <Clock size={11}/> {new Date(meta.createdAt).toLocaleString()}
+          </span>
+          <span className={styles.metaSep}>·</span>
+          <span className={styles.metaItem}>{meta.symbol} · {meta.timeframe}</span>
+          <span className={styles.metaSep}>·</span>
+          <span className={styles.metaItem}>Balance {fmt(meta.requestedBalance)} USDT</span>
+          <span className={styles.metaSep}>·</span>
+          <span className={styles.metaItem}>Risk {meta.requestedRiskPercentage}%</span>
+          {onViewAnalysis && meta.id && (
+            <>
+              <span className={styles.metaSep}>·</span>
+              <button className={styles.metaLinkBtn} onClick={onViewAnalysis}>
+                View full analysis →
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── Conflict Banner ──────────────────────────────────────────────── */}
       {synthesis.conflicts_detected && (
@@ -125,6 +297,22 @@ const SynthesisPanel = () => {
 
       {/* ── Summary ──────────────────────────────────────────────────────── */}
       <p className={styles.summary}>{synthesis.summary}</p>
+
+      {/* ── Position Sizing Card + Trade action ─────────────────────────── */}
+      {risk && (
+        <div className={styles.sizingRow_outer}>
+          <PositionSizingCard riskDetails={riskDetails} meta={meta} />
+          {riskDetails.position_direction && riskDetails.position_direction !== 'neutral' && (
+            <button
+              className={`${styles.takeTradBtn} ${riskDetails.position_direction === 'long' ? styles.takeTradLong : styles.takeTradShort}`}
+              onClick={handleTakeTrade}
+            >
+              {riskDetails.position_direction === 'long' ? '▲' : '▼'}
+              {' '}Open {riskDetails.position_direction === 'long' ? 'Long' : 'Short'} Trade
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Agent Grid ───────────────────────────────────────────────────── */}
       <div className={styles.grid}>
@@ -256,10 +444,10 @@ const SynthesisPanel = () => {
             {(sr.support?.length > 0 || sr.resistance?.length > 0) && (
               <div className={styles.srRow}>
                 {sr.support?.slice(0, 3).map((v, i) => (
-                  <Pill key={`s${i}`} variant="green">S {typeof v === 'number' ? v.toFixed(2) : v}</Pill>
+                  <Pill key={`s${i}`} variant="green">S {fmt(v)}</Pill>
                 ))}
                 {sr.resistance?.slice(0, 3).map((v, i) => (
-                  <Pill key={`r${i}`} variant="red">R {typeof v === 'number' ? v.toFixed(2) : v}</Pill>
+                  <Pill key={`r${i}`} variant="red">R {fmt(v)}</Pill>
                 ))}
               </div>
             )}
@@ -379,32 +567,47 @@ const SynthesisPanel = () => {
                 /* If direction is neutral, display hypothetical levels if available */
                 riskDetails.hypothetical_scenarios && (
                   <div className={styles.hypotheticalGrid}>
-                    <div className={styles.hypoColumn}>
-                      <span className={styles.hypoTitle}>Hypothetical Long</span>
-                      <div className={styles.levelBox}>
-                        <ArrowDownRight size={13} className={styles.bearish} />
-                        <span className={styles.levelLabel}>SL</span>
-                        <span className={styles.levelVal}>{riskDetails.hypothetical_scenarios.long?.stop_loss}</span>
-                      </div>
-                      <div className={styles.levelBox}>
-                        <ArrowUpRight size={13} className={styles.bullish} />
-                        <span className={styles.levelLabel}>TP</span>
-                        <span className={styles.levelVal}>{riskDetails.hypothetical_scenarios.long?.take_profit}</span>
-                      </div>
-                    </div>
-                    <div className={styles.hypoColumn}>
-                      <span className={styles.hypoTitle}>Hypothetical Short</span>
-                      <div className={styles.levelBox}>
-                        <ArrowUpRight size={13} className={styles.bearish} />
-                        <span className={styles.levelLabel}>SL</span>
-                        <span className={styles.levelVal}>{riskDetails.hypothetical_scenarios.short?.stop_loss}</span>
-                      </div>
-                      <div className={styles.levelBox}>
-                        <ArrowDownRight size={13} className={styles.bullish} />
-                        <span className={styles.levelLabel}>TP</span>
-                        <span className={styles.levelVal}>{riskDetails.hypothetical_scenarios.short?.take_profit}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      // Normalise keys: LLM may emit stop_loss/take_profit or sl/tp
+                      const hypoVal = (side, key) => {
+                        const s = riskDetails.hypothetical_scenarios[side];
+                        if (!s) return null;
+                        return key === 'sl'
+                          ? (s.stop_loss ?? s.sl ?? null)
+                          : (s.take_profit ?? s.tp ?? null);
+                      };
+                      const fmtHypo = (v) => (v != null ? fmt(v) : '—');
+                      return (
+                        <>
+                          <div className={styles.hypoColumn}>
+                            <span className={styles.hypoTitle}>Hypothetical Long</span>
+                            <div className={styles.levelBox}>
+                              <ArrowDownRight size={13} className={styles.bearish} />
+                              <span className={styles.levelLabel}>SL</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoVal('long', 'sl'))}</span>
+                            </div>
+                            <div className={styles.levelBox}>
+                              <ArrowUpRight size={13} className={styles.bullish} />
+                              <span className={styles.levelLabel}>TP</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoVal('long', 'tp'))}</span>
+                            </div>
+                          </div>
+                          <div className={styles.hypoColumn}>
+                            <span className={styles.hypoTitle}>Hypothetical Short</span>
+                            <div className={styles.levelBox}>
+                              <ArrowUpRight size={13} className={styles.bearish} />
+                              <span className={styles.levelLabel}>SL</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoVal('short', 'sl'))}</span>
+                            </div>
+                            <div className={styles.levelBox}>
+                              <ArrowDownRight size={13} className={styles.bullish} />
+                              <span className={styles.levelLabel}>TP</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoVal('short', 'tp'))}</span>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )
               )}

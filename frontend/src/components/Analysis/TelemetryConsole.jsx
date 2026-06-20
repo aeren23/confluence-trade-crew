@@ -78,6 +78,14 @@ const LogRow = ({ log }) => {
 const TelemetryConsole = () => {
   const { telemetryLogs, analysisStatus } = useAppStore();
   const bottomRef = useRef(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  // Tick every second while analysis is loading to update elapsed time.
+  useEffect(() => {
+    if (analysisStatus !== 'loading') return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [analysisStatus]);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -87,6 +95,14 @@ const TelemetryConsole = () => {
 
   const thoughtCount = telemetryLogs.filter(l => l.type === 'thought').length;
   const toolCount    = telemetryLogs.filter(l => l.type === 'tool').length;
+
+  // Derive last-event info for the "thinking" indicator.
+  const lastLog = telemetryLogs.length > 0 ? telemetryLogs[telemetryLogs.length - 1] : null;
+  const secondsSinceLast = lastLog
+    ? Math.floor((now - new Date(lastLog.timestamp).getTime()) / 1000)
+    : 0;
+  const lastAgent = lastLog?.agent || 'Agent';
+  const showThinking = analysisStatus === 'loading' && secondsSinceLast > 10;
 
   if (telemetryLogs.length === 0 && analysisStatus === 'idle') {
     return (
@@ -129,6 +145,17 @@ const TelemetryConsole = () => {
         {telemetryLogs.map((log, index) => (
           <LogRow key={index} log={log} />
         ))}
+
+        {/* Thinking indicator — shown when no events for >10s during loading */}
+        {showThinking && (
+          <div className={styles.thinkingRow}>
+            <span className={styles.thinkingPulse} />
+            <span className={styles.thinkingText}>
+              {lastAgent} is working... ({secondsSinceLast}s)
+            </span>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
     </div>
