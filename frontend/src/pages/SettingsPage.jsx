@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import styles from './SettingsPage.module.css';
 import { SettingsService, PairService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
-import { Save, CheckCircle2, Loader2, AlertTriangle, Plus } from 'lucide-react';
+import { Save, CheckCircle2, Loader2, AlertTriangle, Plus, Star, Power } from 'lucide-react';
 
 const TIMEFRAMES = ['1m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w'];
 
 const SettingsPage = () => {
   const { setSettings } = useAppStore();
 
-  const [form,       setForm]       = useState({ defaultBalance: 1000, defaultRiskPercentage: 1, preferredTimeframe: '4h', riskProfile: 'moderate' });
+  const [form,       setForm]       = useState({ defaultBalance: 1000, defaultRiskPercentage: 1, preferredTimeframe: '4h', preferredSymbol: 'BTC/USDT', riskProfile: 'moderate' });
   const [pairs,      setPairs]      = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [saving,     setSaving]     = useState(false);
@@ -22,13 +22,14 @@ const SettingsPage = () => {
   useEffect(() => {
     Promise.all([
       SettingsService.get(),
-      PairService.getAll(),
+      PairService.getAll({ includeInactive: true }),
     ])
       .then(([settings, pairList]) => {
         setForm({
           defaultBalance:         settings.defaultBalance         ?? 1000,
           defaultRiskPercentage:  settings.defaultRiskPercentage  ?? 1,
           preferredTimeframe:     settings.preferredTimeframe     ?? '4h',
+          preferredSymbol:        settings.preferredSymbol        ?? 'BTC/USDT',
           riskProfile:            settings.riskProfile            ?? 'moderate',
         });
         setPairs(pairList || []);
@@ -68,7 +69,9 @@ const SettingsPage = () => {
     setAddPairErr(null);
     try {
       const pair = await PairService.create(symbol);
-      setPairs(prev => prev.some(p => p.symbol === pair.symbol) ? prev : [...prev, pair]);
+      setPairs(prev => prev.some(p => p.symbol === pair.symbol)
+        ? prev.map(p => p.symbol === pair.symbol ? pair : p)
+        : [...prev, pair]);
       setNewSymbol('');
     } catch {
       setAddPairErr('Failed to add pair. Make sure the symbol is valid (e.g. ETHUSDT).');
@@ -76,6 +79,26 @@ const SettingsPage = () => {
       setAddingPair(false);
     }
   };
+
+  const handleToggleActive = async (pair) => {
+    try {
+      await PairService.setActive(pair.symbol, !pair.isActive);
+      setPairs(prev => prev.map(p => p.symbol === pair.symbol ? { ...p, isActive: !p.isActive } : p));
+    } catch {
+      setError('Failed to update pair status.');
+    }
+  };
+
+  const handleToggleFavorite = async (pair) => {
+    try {
+      await PairService.setFavorite(pair.symbol, !pair.isFavorite);
+      setPairs(prev => prev.map(p => p.symbol === pair.symbol ? { ...p, isFavorite: !p.isFavorite } : p));
+    } catch {
+      setError('Failed to update favorite pair.');
+    }
+  };
+
+  const activePairs = pairs.filter(p => p.isActive);
 
   if (loading) {
     return (
@@ -142,6 +165,19 @@ const SettingsPage = () => {
               >
                 {TIMEFRAMES.map(tf => (
                   <option key={tf} value={tf}>{tf}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Default Pair</label>
+              <select
+                value={form.preferredSymbol}
+                onChange={e => handleChange('preferredSymbol', e.target.value)}
+                className={styles.select}
+              >
+                {(activePairs.length > 0 ? activePairs : pairs).map(p => (
+                  <option key={p.symbol} value={p.symbol}>{p.symbol}</option>
                 ))}
               </select>
             </div>
@@ -216,11 +252,32 @@ const SettingsPage = () => {
           {pairs.length > 0 && (
             <div className={styles.pairList}>
               {pairs.map(p => (
-                <div key={p.symbol} className={styles.pairRow}>
-                  <span className={styles.pairSymbol}>{p.symbol}</span>
-                  <span className={`${styles.pairStatus} ${p.isActive ? styles.active : styles.inactive}`}>
-                    {p.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                <div key={p.symbol} className={`${styles.pairRow} ${!p.isActive ? styles.pairRowInactive : ''}`}>
+                  <div className={styles.pairMain}>
+                    <span className={styles.pairSymbol}>{p.symbol}</span>
+                    {form.preferredSymbol === p.symbol && <span className={styles.defaultBadge}>Default</span>}
+                  </div>
+                  <div className={styles.pairActions}>
+                    <button
+                      type="button"
+                      className={`${styles.iconBtn} ${p.isFavorite ? styles.favoriteOn : ''}`}
+                      onClick={() => handleToggleFavorite(p)}
+                      title={p.isFavorite ? 'Remove favorite' : 'Mark favorite'}
+                    >
+                      <Star size={13} />
+                    </button>
+                    <span className={`${styles.pairStatus} ${p.isActive ? styles.active : styles.inactive}`}>
+                      {p.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      onClick={() => handleToggleActive(p)}
+                      title={p.isActive ? 'Deactivate pair' : 'Activate pair'}
+                    >
+                      <Power size={13} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

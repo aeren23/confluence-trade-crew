@@ -3,6 +3,7 @@ using Confluence.Application.Interfaces;
 using Confluence.Domain.Entities;
 using Confluence.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Confluence.Application.Services;
 
@@ -49,6 +50,14 @@ public class PortfolioService : IPortfolioService
         var symbolPnl = BySymbolPnl(closedTrades);
         var bestSymbol  = symbolPnl.Count > 0 ? symbolPnl.MaxBy(kv => kv.Value).Key : null;
         var worstSymbol = symbolPnl.Count > 0 ? symbolPnl.MinBy(kv => kv.Value).Key : null;
+        var bestTrade = closedTrades.Count > 0 ? closedTrades.MaxBy(t => t.PnlQuote ?? 0m) : null;
+        var worstTrade = closedTrades.Count > 0 ? closedTrades.MinBy(t => t.PnlQuote ?? 0m) : null;
+        var dailyBreakdown = BuildDailyBreakdown(closedTrades);
+        var weeklyBreakdown = BuildWeeklyBreakdown(closedTrades);
+        var profitFactor = CalculateProfitFactor(winners, losers);
+        var riskOfRuin = CalculateRiskOfRuin(winRate, avgWin, avgLoss, totalPnl, maxDrawdown);
+        var sharpeRatio = CalculateSharpeRatio(dailyBreakdown);
+        var sortinoRatio = CalculateSortinoRatio(dailyBreakdown);
 
         return new PortfolioSummaryDto
         {
@@ -71,7 +80,19 @@ public class PortfolioService : IPortfolioService
             LongestLossStreak   = longestLoss,
             BestSymbol          = bestSymbol,
             WorstSymbol         = worstSymbol,
+            BestTradeId         = bestTrade?.Id,
+            BestTradeSymbol     = bestTrade?.Symbol,
+            BestTradePnl        = bestTrade?.PnlQuote is null ? null : Math.Round(bestTrade.PnlQuote.Value, 2),
+            WorstTradeId        = worstTrade?.Id,
+            WorstTradeSymbol    = worstTrade?.Symbol,
+            WorstTradePnl       = worstTrade?.PnlQuote is null ? null : Math.Round(worstTrade.PnlQuote.Value, 2),
+            RiskOfRuin          = riskOfRuin,
+            SharpeRatio         = sharpeRatio,
+            SortinoRatio        = sortinoRatio,
+            ProfitFactor        = profitFactor,
             MonthlyBreakdown    = BuildMonthlyBreakdown(closedTrades),
+            WeeklyBreakdown     = weeklyBreakdown,
+            DailyBreakdown      = dailyBreakdown,
             EquityCurve         = equityCurve,
         };
     }
@@ -152,5 +173,105 @@ public class PortfolioService : IPortfolioService
                 WinCount   = g.Count(t => (t.PnlQuote ?? 0) > 0),
             })
             .ToList();
+    }
+
+    private static List<DailyPnlDto> BuildDailyBreakdown(List<Trade> closedTrades)
+    {
+        return closedTrades
+            .GroupBy(t => DateOnly.FromDateTime(t.ExitAt ?? t.EntryAt))
+            .OrderBy(g => g.Key)
+            .Select(g => new DailyPnlDto
+            {
+                Date = DateTime.SpecifyKind(g.Key.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc),
+                Pnl = Math.Round(g.Sum(t => t.PnlQuote ?? 0m), 2),
+                TradeCount = g.Count(),
+                WinCount = g.Count(t => (t.PnlQuote ?? 0) > 0),
+            })
+            .ToList();
+    }
+
+    private static List<WeeklyPnlDto> BuildWeeklyBreakdown(List<Trade> closedTrades)
+    {
+        return closedTrades
+            .GroupBy(t =>
+            {
+                var date = DateOnly.FromDateTime(t.ExitAt ?? t.EntryAt);
+                return new
+                {
+                    Year = ISOWeek.GetYear(date.ToDateTime(TimeOnly.MinValue)),
+                    Week = ISOWeek.GetWeekOfYear(date.ToDateTime(TimeOnly.MinValue)),
+                };
+            })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Week)
+            .Select(g => new WeeklyPnlDto
+            {
+                Year = g.Key.Year,
+                Week = g.Key.Week,
+                Pnl = Math.Round(g.Sum(t => t.PnlQuote ?? 0m), 2),
+                TradeCount = g.Count(),
+                WinCount = g.Count(t => (t.PnlQuote ?? 0) > 0),
+            })
+            .ToList();
+    }
+
+    private static decimal CalculateProfitFactor(List<Trade> winners, List<Trade> losers)
+    {
+        var grossProfit = winners.Sum(t => t.PnlQuote ?? 0m);
+        var grossLoss = Math.Abs(losers.Sum(t => t.PnlQuote ?? 0m));
+        if (grossLoss == 0m) return grossProfit > 0m ? Math.Round(grossProfit, 2) : 0m;
+        return Math.Round(grossProfit / grossLoss, 2);
+    }
+
+    private static decimal CalculateRiskOfRuin(decimal winRatePct, decimal avgWin, decimal avgLoss, decimal totalPnl, decimal maxDrawdown)
+    {
+        if (avgWin <= 0m || avgLoss <= 0m) return 0m;
+
+        var winRate = winRatePct / 100m;
+        var lossRate = 1m - winRate;
+        var expectancy = (winRate * avgWin) - (lossRate * avgLoss);
+        if (expectancy <= 0m) return 100m;
+
+        var edge = Math.Clamp(expectancy / avgWin, 0.0001m, 0.9999m);
+        var capitalUnits = maxDrawdown > 0m
+            ? Math.Max(1m, Math.Abs(totalPnl) / maxDrawdown)
+            : 10m;
+
+        var ratio = (double)((1m - edge) / (1m + edge));
+        var risk = Math.Pow(ratio, (double)capitalUnits) * 100d;
+        return Math.Round((decimal)Math.Clamp(risk, 0d, 100d), 2);
+    }
+
+    private static decimal CalculateSharpeRatio(List<DailyPnlDto> dailyBreakdown)
+    {
+        var returns = dailyBreakdown.Select(d => (double)d.Pnl).ToList();
+        if (returns.Count < 2) return 0m;
+
+        var mean = returns.Average();
+        var stdDev = StdDev(returns);
+        if (stdDev == 0d) return 0m;
+
+        return Math.Round((decimal)((mean / stdDev) * Math.Sqrt(365)), 2);
+    }
+
+    private static decimal CalculateSortinoRatio(List<DailyPnlDto> dailyBreakdown)
+    {
+        var returns = dailyBreakdown.Select(d => (double)d.Pnl).ToList();
+        if (returns.Count < 2) return 0m;
+
+        var mean = returns.Average();
+        var downside = returns.Where(r => r < 0d).ToList();
+        if (downside.Count == 0) return mean > 0d ? Math.Round((decimal)mean, 2) : 0m;
+
+        var downsideDev = Math.Sqrt(downside.Select(r => Math.Pow(r, 2)).Average());
+        if (downsideDev == 0d) return 0m;
+
+        return Math.Round((decimal)((mean / downsideDev) * Math.Sqrt(365)), 2);
+    }
+
+    private static double StdDev(List<double> values)
+    {
+        var mean = values.Average();
+        var variance = values.Select(v => Math.Pow(v - mean, 2)).Average();
+        return Math.Sqrt(variance);
     }
 }

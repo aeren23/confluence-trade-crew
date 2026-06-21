@@ -10,9 +10,16 @@ export const AnalysisService = {
   triggerAnalysis: (payload) =>
     apiClient.post('/api/analysis', payload).then((r) => r.data),
 
-  getList: (page = 1, pageSize = 20, symbol = '') =>
+  getList: (page = 1, pageSize = 20, symbol = '', filters = {}) =>
     apiClient
-      .get('/api/analysis', { params: { page, pageSize, ...(symbol ? { symbol } : {}) } })
+      .get('/api/analysis', {
+        params: {
+          page,
+          pageSize,
+          ...(symbol ? { symbol } : {}),
+          ...filters,
+        },
+      })
       .then((r) => r.data),
 
   getById: (id) =>
@@ -30,11 +37,17 @@ export const SettingsService = {
 
 // ── Pairs ─────────────────────────────────────────────────────────────────────
 export const PairService = {
-  getAll: () =>
-    apiClient.get('/api/pair').then((r) => r.data),
+  getAll: (params = {}) =>
+    apiClient.get('/api/pair', { params }).then((r) => r.data),
 
   create: (symbol, quoteAsset = 'USDT') =>
     apiClient.post('/api/pair', { symbol, quoteAsset }).then((r) => r.data),
+
+  setActive: (symbol, isActive) =>
+    apiClient.patch(`/api/pair/${symbol.replace('/', '')}/active`, { isActive }).then((r) => r.data),
+
+  setFavorite: (symbol, isFavorite) =>
+    apiClient.patch(`/api/pair/${symbol.replace('/', '')}/favorite`, { isFavorite }).then((r) => r.data),
 };
 
 // ── Portfolio ─────────────────────────────────────────────────────────────────

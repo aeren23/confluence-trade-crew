@@ -23,9 +23,15 @@ public class AnalysisController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAnalyses([FromQuery] string? symbol, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAnalyses(
+        [FromQuery] string? symbol,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? direction = null,
+        [FromQuery] bool conflictsOnly = false,
+        [FromQuery] decimal? minConfidence = null)
     {
-        var result = await _analysisService.GetAnalysesAsync(symbol, page, pageSize);
+        var result = await _analysisService.GetAnalysesAsync(symbol, page, pageSize, direction, conflictsOnly, minConfidence);
         return Ok(result);
     }
 

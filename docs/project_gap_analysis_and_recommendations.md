@@ -12,9 +12,9 @@ Bu doküman, proje dokümantasyonu ve mevcut kod yapısı incelenerek çıkarıl
 | **UserSettings** | GET, PUT | SettingsPage | Tam kullanılıyor |
 | **Analysis** | GET list, GET by id, POST | HistoryPage, AnalysisDetailPage, DashboardPage | Tam kullanılıyor |
 | **Trade** | POST, GET list, GET by id, PUT close, DELETE | TradesPage, OpenTrades widget, TradeForm | Tam kullanılıyor |
-| **Portfolio** | GET summary | PortfolioPage | Kısmen kullanılıyor |
+| **Portfolio** | GET summary | PortfolioPage | DONE — gelişmiş metrikler, equity curve, breakdown ve heatmap ile tam kullanılıyor |
 
-### Portfolio Eksikleri
+### Portfolio Eksikleri — DONE
 
 `PortfolioService` şu anda yalnızca temel özetler sunuyor:
 
@@ -24,23 +24,27 @@ Bu doküman, proje dokümantasyonu ve mevcut kod yapısı incelenerek çıkarıl
 - win rate
 - toplam PnL
 
-Dokümantasyonda geçen performans katmanı daha zengin olabilir. Eksik görülen metrikler:
+Dokümantasyonda geçen performans katmanı eklendi. Çözülen metrikler:
 
-- günlük / haftalık / aylık performans
-- en kârlı pair
-- ortalama trade süresi
-- max drawdown
-- win/loss streak
-- expectancy
-- average R:R
+- DONE: günlük / haftalık / aylık performans
+- DONE: en kârlı pair
+- DONE: ortalama trade süresi
+- DONE: max drawdown
+- DONE: win/loss streak
+- DONE: expectancy
+- DONE: average R:R
+- DONE: best / worst trade
+- DONE: calendar heatmap
+- DONE: risk of ruin
+- DONE: Sharpe / Sortino benzeri oranlar
 
 ---
 
 ## 2. Dokümantasyonda Tanımlı Ama Eksik veya Yarım Özellikler
 
-### 2.1 `latest_price` Alanı
+### 2.1 `latest_price` Alanı — DONE
 
-`analyses.latest_price` dokümantasyonda gerçek analiz anı fiyatını tutmalı. Mevcut uygulamada bu alanın `0` kalma riski var; AI servis çıktısından veya Data Agent sonucundan parse edilip kaydedilmesi gerekir.
+DONE: `analyses.latest_price` artık AI servis çıktısından çok aşamalı fallback ile parse edilip kaydediliyor.
 
 ### 2.2 Phase 6 Doğrulamaları
 
@@ -51,14 +55,14 @@ Dokümantasyonda geçen performans katmanı daha zengin olabilir. Eksik görüle
 - uçtan uca walkthrough
 - final dokümantasyon güncellemesi
 
-### 2.3 `result_json` Sorgulanabilirliği
+### 2.3 `result_json` Sorgulanabilirliği — DONE
 
-`db_schema.md` içinde `result_json` için opsiyonel GIN index öneriliyor. Bu henüz kritik değil, fakat ileride şu sorgular için yararlı olur:
+DONE: `result_json` için GIN index initial migration içinde mevcut. Ek olarak analiz geçmişi API'sine direction/conflict/minConfidence filtreleri eklendi:
 
-- News risk threshold'a göre filtreleme
-- belirli agent confidence değerine göre analiz arama
-- conflict içeren analizleri listeleme
-- geçmişte LONG önerilen analizleri bulma
+- DONE: belirli agent confidence değerine göre analiz arama
+- DONE: conflict içeren analizleri listeleme
+- DONE: geçmişte LONG/SHORT/WAIT önerilen analizleri bulma
+- TODO (ileri): News risk threshold'a göre detaylı filtreleme
 
 ---
 
@@ -66,18 +70,18 @@ Dokümantasyonda geçen performans katmanı daha zengin olabilir. Eksik görüle
 
 | Özellik | Dokümantasyon / Entity | Mevcut Durum |
 |---|---|---|
-| Analizden açılan trade'ler | `trades.analysis_id` | AnalysisDetailPage'de gösterilmiyor |
-| Trade'den ilgili analize dönüş | `analysis_id` FK | TradesPage'de analiz link'i sınırlı / eksik |
-| İndikatör overlay'leri | `architecture.md` Chart View | RSI/MACD/Bollinger sub-pane yok |
-| Trade notes | `Trade.Notes` | TradeForm ve TradesPage'de daha görünür olmalı |
-| Pair deactivation | `Pair.IsActive` | UI'da pair pasifleştirme yok |
-| Portfolio analytics | Portfolio endpoint | Basit özet düzeyinde |
+| Analizden açılan trade'ler | `trades.analysis_id` | DONE — AnalysisDetailPage'de linked trades kartı var |
+| Trade'den ilgili analize dönüş | `analysis_id` FK | DONE — TradesPage'de analysis link'i var |
+| İndikatör overlay'leri | `architecture.md` Chart View | DONE — EMA/BB overlay, RSI/MACD sub-pane eklendi |
+| Trade notes | `Trade.Notes` | DONE — create notes, exit notes, list preview ve expand eklendi |
+| Pair deactivation | `Pair.IsActive` | DONE — SettingsPage activate/deactivate/favorite/default pair yönetimi eklendi |
+| Portfolio analytics | Portfolio endpoint | DONE — gelişmiş metrikler, heatmap ve breakdown görünümleri eklendi |
 
 ---
 
 ## 4. Kısa Vadeli Geliştirme Önerileri
 
-### 4.1 Analysis ↔ Trade İlişkisini UI'da Güçlendirme
+### 4.1 Analysis ↔ Trade İlişkisini UI'da Güçlendirme — DONE
 
 Analiz detay sayfasında:
 
@@ -93,16 +97,16 @@ Trade detayında:
 
 Bu, `.NET` tarafındaki `analysis_id` alanını gerçek bir kullanıcı deneyimine dönüştürür.
 
-### 4.2 Trade Notes Alanı
+### 4.2 Trade Notes Alanı — DONE
 
 `Trade.Notes` entity'de var fakat journal deneyimi için daha merkezi olmalı:
 
-- trade açarken not girme
-- trade kapatırken exit notu
-- trade listesinde kısa not preview
-- detayda tam not görünümü
+- DONE: trade açarken not girme
+- DONE: trade kapatırken exit notu
+- DONE: trade listesinde kısa not preview
+- DONE: listede tam not expand görünümü
 
-### 4.3 `latest_price` Kaydı
+### 4.3 `latest_price` Kaydı — DONE
 
 Analysis kayıtlarında gerçek fiyat tutulmalı. Bu sayede:
 
@@ -110,26 +114,30 @@ Analysis kayıtlarında gerçek fiyat tutulmalı. Bu sayede:
 - analiz sonrası fiyat performansı ölçülebilir
 - model accuracy tracking için altyapı hazırlanır
 
-### 4.4 Portfolio Detayları
+### 4.4 Portfolio Detayları — DONE
 
 PortfolioPage şunlarla güçlendirilebilir:
 
-- equity curve
-- monthly PnL
-- best / worst trade
-- best / worst symbol
-- average hold duration
-- average R:R
-- expectancy
+- DONE: equity curve
+- DONE: monthly PnL
+- DONE: daily / weekly PnL
+- DONE: best / worst trade
+- DONE: best / worst symbol
+- DONE: average hold duration
+- DONE: average R:R
+- DONE: expectancy
+- DONE: calendar heatmap
+- DONE: risk of ruin
+- DONE: Sharpe / Sortino
 
-### 4.5 Pair Yönetimi
+### 4.5 Pair Yönetimi — DONE
 
 SettingsPage içinde:
 
-- pair pasifleştirme
-- pair tekrar aktifleştirme
-- favori pair işaretleme
-- varsayılan pair seçimi
+- DONE: pair pasifleştirme
+- DONE: pair tekrar aktifleştirme
+- DONE: favori pair işaretleme
+- DONE: varsayılan pair seçimi
 
 ---
 
@@ -192,15 +200,15 @@ Kanallar:
 - email
 - Discord webhook
 
-### 5.5 Chart Indicator Sub-Panes
+### 5.5 Chart Indicator Sub-Panes — DONE
 
 AI çıktısında indikatörler zaten mevcut. Frontend'de bunlar görselleştirilebilir:
 
-- RSI sub-pane
-- MACD histogram
-- Bollinger band overlay
-- EMA 20 / EMA 50 overlay
-- ATR / volatility badge
+- DONE: RSI sub-pane
+- DONE: MACD histogram
+- DONE: Bollinger band overlay
+- DONE: EMA 20 / EMA 50 overlay
+- TODO: ATR / volatility badge
 
 ---
 
@@ -271,14 +279,14 @@ Mimari buna uygun. İleride sistem, Claude/Cursor gibi ajanlara public MCP serve
 
 Proje trading advisor + journal olarak konumlandığı için şu özellikler ürünü daha profesyonel hale getirir:
 
-- equity curve
-- calendar heatmap
-- average winner / average loser
-- expectancy
-- max drawdown
-- risk of ruin
-- Sharpe / Sortino benzeri oranlar
-- tag sistemi: breakout, reversal, trend-following, news-driven
+- DONE: equity curve
+- DONE: calendar heatmap
+- DONE: average winner / average loser
+- DONE: expectancy
+- DONE: max drawdown
+- DONE: risk of ruin
+- DONE: Sharpe / Sortino benzeri oranlar
+- DONE: tag sistemi: breakout, reversal, trend-following, news-driven
 - setup screenshot veya chart snapshot
 - execution quality: entry planlanan seviyeye göre iyi mi kötü mü?
 
@@ -288,11 +296,11 @@ Proje trading advisor + journal olarak konumlandığı için şu özellikler ür
 
 ### Öncelik 1 — Mevcut Entity'leri Tam Ürüne Dönüştürme
 
-1. `latest_price` gerçek değerle kaydedilsin
-2. Analysis ↔ Trade ilişkisi UI'da görünür olsun
-3. Trade notes alanı tam kullanılsın
-4. Portfolio metrikleri zenginleştirilsin
-5. Pair deactivation eklensin
+1. DONE: `latest_price` gerçek değerle kaydedilsin
+2. DONE: Analysis ↔ Trade ilişkisi UI'da görünür olsun
+3. DONE: Trade notes alanı tam kullanılsın
+4. DONE: Portfolio metrikleri zenginleştirilsin
+5. DONE: Pair deactivation eklensin
 
 ### Öncelik 2 — Trading Advisor Kalitesini Artırma
 
@@ -300,7 +308,7 @@ Proje trading advisor + journal olarak konumlandığı için şu özellikler ür
 2. model accuracy tracking
 3. analysis comparison
 4. alert sistemi
-5. indicator overlays
+5. DONE: indicator overlays
 
 ### Öncelik 3 — Farklılaştırıcı Özellikler
 
@@ -318,10 +326,10 @@ Proje mimarisi sağlam ve entity yapısı doğru kurulmuş durumda. `.NET` taraf
 
 En kritik eksikler:
 
-1. Analysis ↔ Trade ilişkisinin UI'da yeterince görünür olmaması
-2. Portfolio metriklerinin sığ kalması
-3. `latest_price` alanının gerçek değerle beslenmemesi
-4. indikatörlerin chart üzerinde sub-pane / overlay olarak sunulmaması
+1. DONE: Analysis ↔ Trade ilişkisinin UI'da yeterince görünür olmaması
+2. DONE: Portfolio metriklerinin sığ kalması
+3. DONE: `latest_price` alanının gerçek değerle beslenmemesi
+4. DONE: indikatörlerin chart üzerinde sub-pane / overlay olarak sunulmaması
 5. geçmiş analizlerin doğruluğunu ölçen model accuracy tracking'in olmaması
 
 Projeyi daha ilgi çekici hale getirecek en güçlü özellikler:

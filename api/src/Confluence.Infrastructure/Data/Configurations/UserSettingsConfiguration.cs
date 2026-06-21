@@ -39,6 +39,12 @@ public class UserSettingsConfiguration : IEntityTypeConfiguration<UserSettings>
             .HasDefaultValue("4h")
             .IsRequired();
 
+        builder.Property(u => u.PreferredSymbol)
+            .HasColumnName("preferred_symbol")
+            .HasMaxLength(20)
+            .HasDefaultValue("BTC/USDT")
+            .IsRequired();
+
         builder.Property(u => u.RiskProfile)
             .HasColumnName("risk_profile")
             .HasMaxLength(20)

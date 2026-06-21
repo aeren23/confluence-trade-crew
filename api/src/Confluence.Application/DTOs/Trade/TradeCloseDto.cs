@@ -4,4 +4,5 @@ public class TradeCloseDto
 {
     public decimal ExitPrice { get; set; }
     public DateTime ExitAt { get; set; } = DateTime.UtcNow;
+    public string? ExitNotes { get; set; }
 }

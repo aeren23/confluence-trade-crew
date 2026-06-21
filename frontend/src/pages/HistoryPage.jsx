@@ -52,6 +52,9 @@ const HistoryPage = () => {
 
   const currentPage   = parseInt(searchParams.get('page') || '1', 10);
   const currentSymbol = searchParams.get('symbol') || '';
+  const currentDirection = searchParams.get('direction') || '';
+  const currentConflictsOnly = searchParams.get('conflictsOnly') === 'true';
+  const currentMinConfidence = searchParams.get('minConfidence') || '';
 
   const [items,      setItems]      = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -60,17 +63,20 @@ const HistoryPage = () => {
   const [error,      setError]      = useState(null);
   const [pairs,      setPairs]      = useState([]);
   const [filterInput, setFilterInput] = useState(currentSymbol);
+  const [directionFilter, setDirectionFilter] = useState(currentDirection);
+  const [conflictsOnly, setConflictsOnly] = useState(currentConflictsOnly);
+  const [minConfidence, setMinConfidence] = useState(currentMinConfidence);
 
   // Load pair options for the dropdown
   useEffect(() => {
     PairService.getAll().then(setPairs).catch(() => {});
   }, []);
 
-  const fetchPage = useCallback(async (page, symbol) => {
+  const fetchPage = useCallback(async (page, symbol, filters = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await AnalysisService.getList(page, PAGE_SIZE, symbol);
+      const data = await AnalysisService.getList(page, PAGE_SIZE, symbol, filters);
       setItems(data.items || []);
       setTotalCount(data.totalCount || 0);
       setTotalPages(data.totalPages || 1);
@@ -82,13 +88,20 @@ const HistoryPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchPage(currentPage, currentSymbol);
-  }, [currentPage, currentSymbol, fetchPage]);
+    fetchPage(currentPage, currentSymbol, {
+      ...(currentDirection ? { direction: currentDirection } : {}),
+      ...(currentConflictsOnly ? { conflictsOnly: true } : {}),
+      ...(currentMinConfidence ? { minConfidence: currentMinConfidence } : {}),
+    });
+  }, [currentPage, currentSymbol, currentDirection, currentConflictsOnly, currentMinConfidence, fetchPage]);
 
   const goPage = (p) => {
     const params = {};
     if (p > 1) params.page = String(p);
     if (currentSymbol) params.symbol = currentSymbol;
+    if (currentDirection) params.direction = currentDirection;
+    if (currentConflictsOnly) params.conflictsOnly = 'true';
+    if (currentMinConfidence) params.minConfidence = currentMinConfidence;
     setSearchParams(params);
   };
 
@@ -96,13 +109,21 @@ const HistoryPage = () => {
     e.preventDefault();
     const params = {};
     if (filterInput) params.symbol = filterInput;
+    if (directionFilter) params.direction = directionFilter;
+    if (conflictsOnly) params.conflictsOnly = 'true';
+    if (minConfidence) params.minConfidence = minConfidence;
     setSearchParams(params);
   };
 
   const handleClear = () => {
     setFilterInput('');
+    setDirectionFilter('');
+    setConflictsOnly(false);
+    setMinConfidence('');
     setSearchParams({});
   };
+
+  const hasActiveFilters = currentSymbol || currentDirection || currentConflictsOnly || currentMinConfidence;
 
   const relativeTime = (iso) => {
     const diff = Date.now() - new Date(iso).getTime();
@@ -134,15 +155,52 @@ const HistoryPage = () => {
               <option key={p.symbol} value={p.symbol}>{p.symbol}</option>
             ))}
           </select>
+          <select
+            className={styles.selectInput}
+            value={directionFilter}
+            onChange={(e) => setDirectionFilter(e.target.value)}
+          >
+            <option value="">All directions</option>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+            <option value="neutral">Wait</option>
+          </select>
+          <select
+            className={styles.selectInput}
+            value={minConfidence}
+            onChange={(e) => setMinConfidence(e.target.value)}
+          >
+            <option value="">Any confidence</option>
+            <option value="0.5">≥ 50%</option>
+            <option value="0.7">≥ 70%</option>
+            <option value="0.85">≥ 85%</option>
+          </select>
+          <label className={styles.checkboxFilter}>
+            <input
+              type="checkbox"
+              checked={conflictsOnly}
+              onChange={(e) => setConflictsOnly(e.target.checked)}
+            />
+            Conflicts only
+          </label>
           <button type="submit" className={styles.filterBtn} disabled={loading}>
             <Search size={13} /> Search
           </button>
-          {currentSymbol && (
+          {hasActiveFilters && (
             <button type="button" className={styles.clearBtn} onClick={handleClear}>
               Clear
             </button>
           )}
-          <button type="button" className={styles.refreshBtn} onClick={() => fetchPage(currentPage, currentSymbol)} disabled={loading}>
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={() => fetchPage(currentPage, currentSymbol, {
+              ...(currentDirection ? { direction: currentDirection } : {}),
+              ...(currentConflictsOnly ? { conflictsOnly: true } : {}),
+              ...(currentMinConfidence ? { minConfidence: currentMinConfidence } : {}),
+            })}
+            disabled={loading}
+          >
             <RefreshCw size={13} className={loading ? styles.spin : ''} />
           </button>
         </form>

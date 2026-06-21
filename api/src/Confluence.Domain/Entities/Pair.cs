@@ -6,5 +6,6 @@ public class Pair
     public string BaseAsset { get; set; } = string.Empty;
     public string QuoteAsset { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public bool IsFavorite { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

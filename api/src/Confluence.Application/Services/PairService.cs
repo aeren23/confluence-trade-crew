@@ -15,9 +15,20 @@ public class PairService : IPairService
 
     public async Task<IEnumerable<Pair>> GetAllActivePairsAsync()
     {
-        return await _context.Set<Pair>()
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.Symbol)
+        return await GetAllPairsAsync(includeInactive: false);
+    }
+
+    public async Task<IEnumerable<Pair>> GetAllPairsAsync(bool includeInactive)
+    {
+        var query = _context.Set<Pair>().AsQueryable();
+        if (!includeInactive)
+        {
+            query = query.Where(p => p.IsActive);
+        }
+
+        return await query
+            .OrderByDescending(p => p.IsFavorite)
+            .ThenBy(p => p.Symbol)
             .ToListAsync();
     }
 
@@ -41,7 +52,38 @@ public class PairService : IPairService
             _context.Set<Pair>().Add(pair);
             await _context.SaveChangesAsync();
         }
+        else if (!pair.IsActive)
+        {
+            pair.IsActive = true;
+            await _context.SaveChangesAsync();
+        }
         
+        return pair;
+    }
+
+    public async Task SetPairActiveAsync(string symbol, bool isActive)
+    {
+        var pair = await GetPairBySymbolAsync(symbol);
+        pair.IsActive = isActive;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SetPairFavoriteAsync(string symbol, bool isFavorite)
+    {
+        var pair = await GetPairBySymbolAsync(symbol);
+        pair.IsFavorite = isFavorite;
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task<Pair> GetPairBySymbolAsync(string symbol)
+    {
+        var normalizedSymbol = symbol.ToUpperInvariant().Replace("/", "");
+        var pair = await _context.Set<Pair>()
+            .FirstOrDefaultAsync(p => p.Symbol.ToUpper().Replace("/", "") == normalizedSymbol);
+
+        if (pair == null)
+            throw new KeyNotFoundException($"Pair '{symbol}' was not found.");
+
         return pair;
     }
 }

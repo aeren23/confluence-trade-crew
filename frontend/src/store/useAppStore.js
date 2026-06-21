@@ -58,6 +58,7 @@ const useAppStore = create((set, get) => ({
 
   // ── Settings actions ─────────────────────────────────────────────────────
   applySettings: (settings) => set({
+    symbol: settings.preferredSymbol || get().symbol,
     balance: settings.defaultBalance ?? get().balance,
     riskPercentage: settings.defaultRiskPercentage ?? get().riskPercentage,
     timeframe: settings.preferredTimeframe || get().timeframe,

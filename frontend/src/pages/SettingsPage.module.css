@@ -245,10 +245,63 @@
   border: 1px solid rgba(255,255,255,0.05);
 }
 
+.pairRowInactive {
+  opacity: 0.62;
+}
+
+.pairMain {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
 .pairSymbol {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.defaultBadge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 99px;
+  color: var(--accent-primary, #00f0ff);
+  background: rgba(0,240,255,0.1);
+  border: 1px solid rgba(0,240,255,0.18);
+}
+
+.pairActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  width: 26px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+  color: var(--accent-primary, #00f0ff);
+  border-color: rgba(0,240,255,0.25);
+  background: rgba(0,240,255,0.06);
+}
+
+.favoriteOn {
+  color: #fbbf24;
+  border-color: rgba(251,191,36,0.28);
+  background: rgba(251,191,36,0.08);
 }
 
 .pairStatus {

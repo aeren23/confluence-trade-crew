@@ -33,6 +33,7 @@ const Pagination = ({ page, totalPages, onPage }) => {
 
 const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
   const [exitPrice, setExitPrice] = useState(String(trade?.entryPrice || ''));
+  const [exitNotes, setExitNotes] = useState('');
   if (!trade) return null;
   return (
     <div className={styles.modalOverlay} onClick={() => onClose()}>
@@ -43,11 +44,21 @@ const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
           <label>Exit Price</label>
           <input type="number" step="any" value={exitPrice} onChange={e => setExitPrice(e.target.value)} className={styles.modalInput} autoFocus />
         </div>
+        <div className={styles.modalField}>
+          <label>Exit Notes</label>
+          <textarea
+            value={exitNotes}
+            onChange={e => setExitNotes(e.target.value)}
+            className={`${styles.modalInput} ${styles.modalTextarea}`}
+            placeholder="Why are you closing this trade?"
+            rows={3}
+          />
+        </div>
         <div className={styles.modalActions}>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button
             className={styles.confirmCloseBtn}
-            onClick={() => onConfirm(trade.id, parseFloat(exitPrice))}
+            onClick={() => onConfirm(trade.id, parseFloat(exitPrice), exitNotes)}
             disabled={loading || !exitPrice}
           >
             {loading ? <><Loader2 size={12} className={styles.spin} /> Closing...</> : 'Close Position'}
@@ -75,6 +86,7 @@ const TradesPage = () => {
   const [closingLoading, setClosingLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
+  const [expandedNoteId, setExpandedNoteId] = useState(null);
 
   const fetchTrades = useCallback(async (tab, page) => {
     setLoading(true);
@@ -118,10 +130,10 @@ const TradesPage = () => {
     return trades.filter((t) => t.tags && t.tags.split(',').map((s) => s.trim()).includes(activeTagFilter));
   }, [trades, activeTagFilter]);
 
-  const handleCloseConfirm = async (id, exitPrice) => {
+  const handleCloseConfirm = async (id, exitPrice, exitNotes) => {
     setClosingLoading(true);
     try {
-      const updated = await TradeService.close(id, { exitPrice });
+      const updated = await TradeService.close(id, { exitPrice, exitNotes: exitNotes || null });
       setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
       updateOpenTrade(id, updated);
       setClosingTrade(null);
@@ -212,15 +224,16 @@ const TradesPage = () => {
               <th>Date</th>
               <th>PnL</th>
               <th>Tags</th>
+              <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={10} className={styles.loadingRow}><Loader2 size={15} className={styles.spin} /> Loading...</td></tr>
+              <tr><td colSpan={11} className={styles.loadingRow}><Loader2 size={15} className={styles.spin} /> Loading...</td></tr>
             )}
             {!loading && visibleTrades.length === 0 && (
-              <tr><td colSpan={10} className={styles.emptyRow}>No {activeTab.toLowerCase()} trades found.</td></tr>
+              <tr><td colSpan={11} className={styles.emptyRow}>No {activeTab.toLowerCase()} trades found.</td></tr>
             )}
             {!loading && visibleTrades.map(t => {
               const isLong  = t.direction === 0 || t.direction === 'Long';
@@ -228,8 +241,11 @@ const TradesPage = () => {
               const pnl     = t.pnlQuote;
               const profit  = pnl != null && pnl > 0;
               const loss    = pnl != null && pnl < 0;
+              const notePreview = t.notes && t.notes.length > 30 ? `${t.notes.slice(0, 30)}…` : t.notes;
+              const expanded = expandedNoteId === t.id;
               return (
-                <tr key={t.id} className={styles.row}>
+                <React.Fragment key={t.id}>
+                <tr className={styles.row}>
                   <td>
                     <span className={isLong ? styles.long : styles.short}>
                       {isLong ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
@@ -273,6 +289,18 @@ const TradesPage = () => {
                     </div>
                   </td>
                   <td>
+                    {t.notes ? (
+                      <button
+                        type="button"
+                        className={styles.notePreviewBtn}
+                        onClick={() => setExpandedNoteId(expanded ? null : t.id)}
+                        title="Toggle full notes"
+                      >
+                        {notePreview}
+                      </button>
+                    ) : '—'}
+                  </td>
+                  <td>
                     <div className={styles.rowActions}>
                       {isOpen && (
                         <button
@@ -294,6 +322,14 @@ const TradesPage = () => {
                     </div>
                   </td>
                 </tr>
+                {expanded && (
+                  <tr className={styles.notesRow}>
+                    <td colSpan={11}>
+                      <div className={styles.fullNotes}>{t.notes}</div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               );
             })}
           </tbody>

@@ -59,6 +59,61 @@ const MonthlyBreakdown = ({ data }) => {
   );
 };
 
+const BreakdownList = ({ data, mode }) => {
+  if (!data || data.length === 0) return <div className={styles.empty}>No {mode} data yet.</div>;
+  const max = Math.max(...data.map(d => Math.abs(d.pnl)));
+  return (
+    <div className={styles.monthlyGrid}>
+      {data.map((item) => {
+        const key = mode === 'weekly'
+          ? `${item.year}-W${item.week}`
+          : new Date(item.date).toISOString().slice(0, 10);
+        const label = mode === 'weekly'
+          ? `W${item.week} ${item.year}`
+          : new Date(item.date).toLocaleDateString();
+        const pct = max > 0 ? Math.abs(item.pnl) / max : 0;
+        const isPos = item.pnl >= 0;
+        return (
+          <div key={key} className={styles.monthCell}>
+            <div className={styles.monthLabel}>{label}</div>
+            <div
+              className={`${styles.monthBar} ${isPos ? styles.monthBarGreen : styles.monthBarRed}`}
+              style={{ width: `${Math.max(pct * 100, 4)}%` }}
+            />
+            <div className={`${styles.monthPnl} ${isPos ? styles.green : styles.red}`}>
+              {isPos ? '+' : ''}{fmt(item.pnl)}
+            </div>
+            <div className={styles.monthMeta}>{item.tradeCount} trades · {item.winCount}W</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const CalendarHeatmap = ({ data }) => {
+  if (!data || data.length === 0) return <div className={styles.empty}>No daily data for heatmap yet.</div>;
+  const sorted = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const maxAbs = Math.max(...sorted.map(d => Math.abs(d.pnl)));
+  return (
+    <div className={styles.heatmapGrid}>
+      {sorted.slice(-120).map((day) => {
+        const pnl = day.pnl ?? 0;
+        const intensity = maxAbs > 0 ? Math.min(Math.abs(pnl) / maxAbs, 1) : 0;
+        const cls = pnl > 0 ? styles.heatGreen : pnl < 0 ? styles.heatRed : styles.heatNeutral;
+        return (
+          <div
+            key={day.date}
+            className={`${styles.heatCell} ${cls}`}
+            style={{ opacity: 0.28 + intensity * 0.72 }}
+            title={`${new Date(day.date).toLocaleDateString()}: ${pnl >= 0 ? '+' : ''}${fmt(pnl)} USDT · ${day.tradeCount} trades`}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 const EquityCurveChart = ({ data }) => {
   const containerRef = useRef(null);
   const chartRef     = useRef(null);
@@ -108,6 +163,7 @@ const PortfolioPage = () => {
   const [recentTrades,  setRecentTrades]  = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
+  const [breakdownView, setBreakdownView] = useState('monthly');
 
   useEffect(() => {
     Promise.all([
@@ -220,6 +276,36 @@ const PortfolioPage = () => {
             value={summary?.worstSymbol ?? '—'}
             colorClass={styles.red}
           />
+          <StatCard
+            icon={<Award size={16} />}
+            label="Best Trade"
+            value={summary?.bestTradePnl != null ? `+${fmt(summary.bestTradePnl)} USDT` : '—'}
+            sub={summary?.bestTradeSymbol ?? ''}
+            colorClass={styles.green}
+          />
+          <StatCard
+            icon={<AlertTriangle size={16} />}
+            label="Worst Trade"
+            value={summary?.worstTradePnl != null ? `${fmt(summary.worstTradePnl)} USDT` : '—'}
+            sub={summary?.worstTradeSymbol ?? ''}
+            colorClass={styles.red}
+          />
+          <StatCard
+            icon={<BarChart2 size={16} />}
+            label="Profit Factor"
+            value={fmt(summary?.profitFactor)}
+          />
+          <StatCard
+            icon={<BarChart2 size={16} />}
+            label="Sharpe / Sortino"
+            value={`${fmt(summary?.sharpeRatio)} / ${fmt(summary?.sortinoRatio)}`}
+          />
+          <StatCard
+            icon={<AlertTriangle size={16} />}
+            label="Risk of Ruin"
+            value={`${fmt(summary?.riskOfRuin)}%`}
+            colorClass={(summary?.riskOfRuin ?? 0) > 25 ? styles.red : styles.green}
+          />
         </div>
       </div>
 
@@ -229,10 +315,31 @@ const PortfolioPage = () => {
         <EquityCurveChart data={summary?.equityCurve} />
       </div>
 
-      {/* ── Monthly Breakdown ────────────────────────────────────────────── */}
+      {/* ── PnL Breakdown ────────────────────────────────────────────────── */}
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Monthly PnL Breakdown</h3>
-        <MonthlyBreakdown data={summary?.monthlyBreakdown} />
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>PnL Breakdown</h3>
+          <div className={styles.viewToggle}>
+            {['monthly', 'weekly', 'daily'].map((view) => (
+              <button
+                key={view}
+                className={`${styles.viewToggleBtn} ${breakdownView === view ? styles.viewToggleBtnActive : ''}`}
+                onClick={() => setBreakdownView(view)}
+              >
+                {view}
+              </button>
+            ))}
+          </div>
+        </div>
+        {breakdownView === 'monthly' && <MonthlyBreakdown data={summary?.monthlyBreakdown} />}
+        {breakdownView === 'weekly' && <BreakdownList data={summary?.weeklyBreakdown} mode="weekly" />}
+        {breakdownView === 'daily' && <BreakdownList data={summary?.dailyBreakdown} mode="daily" />}
+      </div>
+
+      {/* ── Calendar Heatmap ─────────────────────────────────────────────── */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>Daily PnL Heatmap</h3>
+        <CalendarHeatmap data={summary?.dailyBreakdown} />
       </div>
 
       {/* ── Recent closed trades ─────────────────────────────────────────── */}

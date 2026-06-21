@@ -100,6 +100,14 @@ public class TradeService : ITradeService
         trade.Status = TradeStatus.Closed;
         trade.UpdatedAt = DateTime.UtcNow;
 
+        if (!string.IsNullOrWhiteSpace(request.ExitNotes))
+        {
+            var exitNote = $"[EXIT] {request.ExitNotes.Trim()}";
+            trade.Notes = string.IsNullOrWhiteSpace(trade.Notes)
+                ? exitNote
+                : $"{trade.Notes}{Environment.NewLine}{exitNote}";
+        }
+
         // Calculate PnL
         var positionValue = trade.EntryAmount * trade.EntryPrice;
 

@@ -119,7 +119,13 @@ public class AnalysisService : IAnalysisService
         };
     }
 
-    public async Task<PagedResult<AnalysisListItemDto>> GetAnalysesAsync(string? symbol, int page, int pageSize)
+    public async Task<PagedResult<AnalysisListItemDto>> GetAnalysesAsync(
+        string? symbol,
+        int page,
+        int pageSize,
+        string? direction = null,
+        bool conflictsOnly = false,
+        decimal? minConfidence = null)
     {
         var query = _context.Set<Analysis>().AsQueryable();
 
@@ -128,23 +134,55 @@ public class AnalysisService : IAnalysisService
             query = query.Where(a => a.Symbol == symbol);
         }
 
-        var totalCount = await query.CountAsync();
+        if (conflictsOnly)
+        {
+            query = query.Where(a => a.ConflictsDetected);
+        }
 
-        var items = await query
-            .OrderByDescending(a => a.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(a => new AnalysisListItemDto
-            {
-                Id = a.Id,
-                Symbol = a.Symbol,
-                Timeframe = a.Timeframe,
-                OverallSentiment = a.OverallSentiment,
-                OverallSentimentScore = a.OverallSentimentScore,
-                Confidence = a.Confidence,
-                CreatedAt = a.CreatedAt
-            })
-            .ToListAsync();
+        if (minConfidence.HasValue)
+        {
+            query = query.Where(a => a.Confidence >= minConfidence.Value);
+        }
+
+        var normalizedDirection = NormalizeDirectionFilter(direction);
+        int totalCount;
+        List<AnalysisListItemDto> items;
+
+        if (!string.IsNullOrWhiteSpace(normalizedDirection))
+        {
+            var filtered = (await query
+                    .OrderByDescending(a => a.CreatedAt)
+                    .ToListAsync())
+                .Where(a => ExtractPositionDirection(a.ResultJson) == normalizedDirection)
+                .ToList();
+
+            totalCount = filtered.Count;
+            items = filtered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(MapToListItem)
+                .ToList();
+        }
+        else
+        {
+            totalCount = await query.CountAsync();
+
+            items = await query
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new AnalysisListItemDto
+                {
+                    Id = a.Id,
+                    Symbol = a.Symbol,
+                    Timeframe = a.Timeframe,
+                    OverallSentiment = a.OverallSentiment,
+                    OverallSentimentScore = a.OverallSentimentScore,
+                    Confidence = a.Confidence,
+                    CreatedAt = a.CreatedAt
+                })
+                .ToListAsync();
+        }
 
         return new PagedResult<AnalysisListItemDto>
         {
@@ -152,6 +190,56 @@ public class AnalysisService : IAnalysisService
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
+        };
+    }
+
+    private static string? NormalizeDirectionFilter(string? direction)
+    {
+        if (string.IsNullOrWhiteSpace(direction)) return null;
+
+        var normalized = direction.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "long" => "long",
+            "short" => "short",
+            "neutral" => "neutral",
+            "wait" => "neutral",
+            _ => null
+        };
+    }
+
+    private static string? ExtractPositionDirection(string resultJson)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(resultJson);
+            if (document.RootElement.TryGetProperty("agents", out var agents) &&
+                agents.TryGetProperty("risk", out var risk) &&
+                risk.TryGetProperty("details", out var details) &&
+                details.TryGetProperty("position_direction", out var directionElem))
+            {
+                return directionElem.GetString()?.Trim().ToLowerInvariant();
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static AnalysisListItemDto MapToListItem(Analysis analysis)
+    {
+        return new AnalysisListItemDto
+        {
+            Id = analysis.Id,
+            Symbol = analysis.Symbol,
+            Timeframe = analysis.Timeframe,
+            OverallSentiment = analysis.OverallSentiment,
+            OverallSentimentScore = analysis.OverallSentimentScore,
+            Confidence = analysis.Confidence,
+            CreatedAt = analysis.CreatedAt
         };
     }
 

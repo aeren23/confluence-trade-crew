@@ -25,7 +25,19 @@ public class PortfolioSummaryDto
     public int LongestLossStreak { get; set; }
     public string? BestSymbol { get; set; }
     public string? WorstSymbol { get; set; }
+    public Guid? BestTradeId { get; set; }
+    public string? BestTradeSymbol { get; set; }
+    public decimal? BestTradePnl { get; set; }
+    public Guid? WorstTradeId { get; set; }
+    public string? WorstTradeSymbol { get; set; }
+    public decimal? WorstTradePnl { get; set; }
+    public decimal RiskOfRuin { get; set; }
+    public decimal SharpeRatio { get; set; }
+    public decimal SortinoRatio { get; set; }
+    public decimal ProfitFactor { get; set; }
 
     public List<MonthlyPnlDto> MonthlyBreakdown { get; set; } = [];
+    public List<WeeklyPnlDto> WeeklyBreakdown { get; set; } = [];
+    public List<DailyPnlDto> DailyBreakdown { get; set; } = [];
     public List<EquityPointDto> EquityCurve { get; set; } = [];
 }

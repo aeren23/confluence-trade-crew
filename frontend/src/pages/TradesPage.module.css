@@ -354,6 +354,12 @@
 
 .modalInput:focus { border-color: rgba(0,240,255,0.4); }
 
+.modalTextarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}
+
 .modalActions {
   display: flex;
   gap: 8px;
@@ -441,4 +447,39 @@
   border: 1px solid var(--border);
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* ── Notes preview ─────────────────────────────────────────────────────── */
+.notePreviewBtn {
+  max-width: 170px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notePreviewBtn:hover {
+  color: var(--accent-primary, #00f0ff);
+}
+
+.notesRow td {
+  padding: 0 12px 10px;
+  background: rgba(255,255,255,0.015);
+}
+
+.fullNotes {
+  white-space: pre-wrap;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }

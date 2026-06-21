@@ -31,6 +31,11 @@ public class PairConfiguration : IEntityTypeConfiguration<Pair>
             .HasColumnName("is_active")
             .HasDefaultValue(true)
             .IsRequired();
+
+        builder.Property(p => p.IsFavorite)
+            .HasColumnName("is_favorite")
+            .HasDefaultValue(false)
+            .IsRequired();
             
         builder.Property(p => p.CreatedAt)
             .HasColumnName("created_at")

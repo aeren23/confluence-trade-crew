@@ -7,5 +7,11 @@ public interface IAnalysisService
 {
     Task<AnalysisResponseDto> CreateAnalysisAsync(AnalysisRequestDto request);
     Task<AnalysisResponseDto?> GetAnalysisByIdAsync(Guid id);
-    Task<PagedResult<AnalysisListItemDto>> GetAnalysesAsync(string? symbol, int page, int pageSize);
+    Task<PagedResult<AnalysisListItemDto>> GetAnalysesAsync(
+        string? symbol,
+        int page,
+        int pageSize,
+        string? direction = null,
+        bool conflictsOnly = false,
+        decimal? minConfidence = null);
 }

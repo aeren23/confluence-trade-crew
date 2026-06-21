@@ -23,6 +23,7 @@ public class UserSettingsService : IUserSettingsService
             DefaultBalance = settings.DefaultBalance,
             DefaultRiskPercentage = settings.DefaultRiskPercentage,
             PreferredTimeframe = settings.PreferredTimeframe,
+            PreferredSymbol = settings.PreferredSymbol,
             RiskProfile = settings.RiskProfile
         };
     }
@@ -34,6 +35,9 @@ public class UserSettingsService : IUserSettingsService
         settings.DefaultBalance = request.DefaultBalance;
         settings.DefaultRiskPercentage = request.DefaultRiskPercentage;
         settings.PreferredTimeframe = request.PreferredTimeframe;
+        settings.PreferredSymbol = string.IsNullOrWhiteSpace(request.PreferredSymbol)
+            ? "BTC/USDT"
+            : request.PreferredSymbol.ToUpperInvariant();
         settings.RiskProfile = request.RiskProfile;
         settings.UpdatedAt = DateTime.UtcNow;
         

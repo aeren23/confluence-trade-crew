@@ -20,9 +20,9 @@ public class PairController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPairs()
+    public async Task<IActionResult> GetPairs([FromQuery] bool includeInactive = false)
     {
-        var result = await _pairService.GetAllActivePairsAsync();
+        var result = await _pairService.GetAllPairsAsync(includeInactive);
         return Ok(result);
     }
 
@@ -47,6 +47,20 @@ public class PairController : ControllerBase
 
         var pair = await _pairService.GetOrCreatePairAsync(symbol, baseAsset, quoteAsset);
         return Ok(pair);
+    }
+
+    [HttpPatch("{symbol}/active")]
+    public async Task<IActionResult> SetPairActive(string symbol, [FromBody] PairActiveRequest request)
+    {
+        await _pairService.SetPairActiveAsync(symbol, request.IsActive);
+        return NoContent();
+    }
+
+    [HttpPatch("{symbol}/favorite")]
+    public async Task<IActionResult> SetPairFavorite(string symbol, [FromBody] PairFavoriteRequest request)
+    {
+        await _pairService.SetPairFavoriteAsync(symbol, request.IsFavorite);
+        return NoContent();
     }
 
     [HttpGet("klines")]
@@ -134,3 +148,5 @@ public class PairController : ControllerBase
 }
 
 public record AddPairRequest(string Symbol, string? QuoteAsset);
+public record PairActiveRequest(bool IsActive);
+public record PairFavoriteRequest(bool IsFavorite);
