@@ -56,6 +56,9 @@ export const TradeService = {
 
   remove: (id) =>
     apiClient.delete(`/api/trade/${id}`).then((r) => r.data),
+
+  byAnalysis: (analysisId) =>
+    apiClient.get(`/api/trade/by-analysis/${analysisId}`).then((r) => r.data),
 };
 
 export default apiClient;

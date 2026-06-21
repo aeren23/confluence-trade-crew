@@ -61,25 +61,43 @@ const pctDiff = (entry, target) => {
   return diff.toFixed(2);
 };
 
+const toNum = (value) => {
+  if (value == null || value === '') return null;
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  return Number.isFinite(num) ? num : null;
+};
+
+const parseLeverage = (value) => {
+  if (value == null) return null;
+  if (typeof value === 'number') return value;
+  const match = String(value).match(/(\d+(\.\d+)?)/);
+  return match ? parseFloat(match[1]) : null;
+};
+
 const PositionSizingCard = ({ riskDetails, meta }) => {
   const sizing  = riskDetails?.position_sizing  || {};
   const leverage = riskDetails?.leverage        || {};
   const levels   = riskDetails?.levels          || {};
 
-  const entry = levels.entry || levels.entry_reference;
-  const sl    = levels.stop_loss;
-  const tp    = levels.take_profit;
+  const entry = toNum(levels.entry || levels.entry_reference);
+  const sl    = toNum(levels.stop_loss);
+  const tp    = toNum(levels.take_profit);
   const rr    = levels.risk_reward_ratio
     ?? sizing.risk_reward_ratio
     ?? (entry && sl && tp ? Math.abs(tp - entry) / Math.abs(entry - sl) : null);
 
-  const balance     = sizing.balance ?? meta?.requestedBalance;
-  const riskPct     = sizing.risk_percentage ?? meta?.requestedRiskPercentage;
-  const riskAmt     = sizing.risk_amount_usdt ?? (balance && riskPct ? (balance * riskPct / 100) : null);
-  const posUsdt     = sizing.suggested_position_size_usdt ?? sizing.position_size_usdt;
-  const posBase     = sizing.suggested_position_size_base ?? sizing.position_size_base;
+  const balance     = toNum(sizing.balance ?? meta?.requestedBalance);
+  const riskPct     = toNum(sizing.risk_percentage ?? meta?.requestedRiskPercentage);
+  const riskAmt     = toNum(sizing.risk_amount_usdt) ?? (balance && riskPct ? (balance * riskPct / 100) : null);
+  const rawPosUsdt  = toNum(sizing.suggested_position_size_usdt ?? sizing.position_size_usdt);
+  const posBase     = toNum(sizing.suggested_position_size_base ?? sizing.position_size_base);
   const levMax      = leverage.capped_maximum ?? leverage.max ?? leverage.suggested_range ?? leverage.recommended_range;
+  const levNum      = parseLeverage(levMax);
   const direction   = riskDetails?.position_direction;
+  const stopDistancePct = entry && sl ? (Math.abs(entry - sl) / entry) * 100 : null;
+  const notionalUsdt = rawPosUsdt ?? (posBase && entry ? posBase * entry : null);
+  const marginUsdt   = toNum(sizing.required_margin_usdt)
+    ?? (notionalUsdt && levNum ? notionalUsdt / levNum : null);
 
   if (!balance && !riskAmt && !entry) return null;
 
@@ -110,12 +128,12 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
             </span>
           </div>
         )}
-        {(posUsdt || posBase) && (
+        {(notionalUsdt || posBase) && (
           <div className={styles.sizingRow}>
-            <span className={styles.sizingLabel}><Layers size={11}/> Position Size</span>
+            <span className={styles.sizingLabel}><Layers size={11}/> Notional Position</span>
             <span className={styles.sizingVal}>
-              {posUsdt ? `${fmt(posUsdt)} USDT` : '—'}
-              {posBase ? <span className={styles.sizingNote}> ({fmt(posBase, 5)} base)</span> : null}
+              {notionalUsdt ? `${fmt(notionalUsdt)} USDT` : '—'}
+              {posBase ? <span className={styles.sizingNote}> ({fmt(posBase, 5)} base qty)</span> : null}
             </span>
           </div>
         )}
@@ -123,6 +141,17 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
           <div className={styles.sizingRow}>
             <span className={styles.sizingLabel}><TrendUp size={11}/> Leverage</span>
             <span className={styles.sizingVal}>{levMax}×</span>
+          </div>
+        )}
+        {marginUsdt != null && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}>Required Margin</span>
+            <span className={styles.sizingVal}>
+              {fmt(marginUsdt)} USDT
+              {balance && marginUsdt > balance && (
+                <span className={styles.sizingWarn}> exceeds portfolio</span>
+              )}
+            </span>
           </div>
         )}
 
@@ -139,6 +168,11 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
               {fmt(sl)}
               {entry && <span className={styles.sizingNote}> ({pctDiff(entry, sl)}%)</span>}
             </span>
+          </div>
+        )}
+        {stopDistancePct != null && riskAmt != null && (
+          <div className={styles.sizingHint}>
+            Notional is derived from risk: {fmt(riskAmt)} USDT / {fmt(stopDistancePct)}% stop distance.
           </div>
         )}
         {tp && (
@@ -390,7 +424,7 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                   <div className={styles.indRow}>
                     <span className={styles.indName}>Bollinger</span>
                     <span className={styles.indVal}>
-                      {taDetails.indicators.bollinger.lower ?? '—'} / {taDetails.indicators.bollinger.middle ?? '—'} / {taDetails.indicators.bollinger.upper ?? '—'}
+                      U {fmt(taDetails.indicators.bollinger.upper)} / M {fmt(taDetails.indicators.bollinger.middle)} / L {fmt(taDetails.indicators.bollinger.lower)}
                     </span>
                     <Pill variant={
                       taDetails.indicators.bollinger.price_position === 'upper_band' ? 'red'   :
@@ -528,7 +562,7 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
               )}
               {sizing.position_size_units && (
                 <div className={styles.detailItem}>
-                  <span className={styles.detailKey}>Position Size</span>
+                  <span className={styles.detailKey}>Position Units</span>
                   <span className={styles.detailVal}>{sizing.position_size_units}</span>
                 </div>
               )}

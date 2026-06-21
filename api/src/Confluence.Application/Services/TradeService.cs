@@ -38,7 +38,8 @@ public class TradeService : ITradeService
             StopLoss = request.StopLoss,
             TakeProfit = request.TakeProfit,
             EntryAt = request.EntryAt,
-            Notes = request.Notes
+            Notes = request.Notes,
+            Tags = request.Tags
         };
 
         _context.Set<Trade>().Add(trade);
@@ -129,6 +130,16 @@ public class TradeService : ITradeService
         await _context.SaveChangesAsync();
     }
 
+    public async Task<List<TradeResponseDto>> GetTradesByAnalysisAsync(Guid analysisId)
+    {
+        var trades = await _context.Set<Trade>()
+            .Where(t => t.AnalysisId == analysisId)
+            .OrderByDescending(t => t.EntryAt)
+            .ToListAsync();
+
+        return trades.Select(MapToDto).ToList();
+    }
+
     private static TradeResponseDto MapToDto(Trade trade)
     {
         return new TradeResponseDto
@@ -149,6 +160,7 @@ public class TradeService : ITradeService
             PnlQuote = trade.PnlQuote,
             PnlPercentage = trade.PnlPercentage,
             Notes = trade.Notes,
+            Tags = trade.Tags,
             CreatedAt = trade.CreatedAt,
             UpdatedAt = trade.UpdatedAt
         };

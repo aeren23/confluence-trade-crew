@@ -58,9 +58,8 @@ public class AnalysisService : IAnalysisService
         var confidence = synthesis.GetProperty("confidence").GetDecimal();
         var conflicts = synthesis.GetProperty("conflicts_detected").GetBoolean();
 
-        // 4. Extract latest price from annotations or default to 0 for now
-        // In a real scenario, this might come from the result JSON or a market data service.
-        var latestPrice = 0m; 
+        // 4. Extract latest price — try multiple locations in the AI response JSON
+        var latestPrice = ExtractLatestPrice(root);
 
         // 5. Save Analysis to DB
         var analysis = new Analysis
@@ -154,5 +153,50 @@ public class AnalysisService : IAnalysisService
             Page = page,
             PageSize = pageSize
         };
+    }
+
+    /// <summary>
+    /// Extracts the latest market price from the AI response JSON.
+    /// Tries: agents.data.details.latest_price → agents.risk.details.levels.entry → first annotation value.
+    /// </summary>
+    private static decimal ExtractLatestPrice(JsonElement root)
+    {
+        // Primary: Data Agent's latest_price field
+        if (root.TryGetProperty("agents", out var agents))
+        {
+            if (agents.TryGetProperty("data", out var dataAgent) &&
+                dataAgent.TryGetProperty("details", out var dataDetails) &&
+                dataDetails.TryGetProperty("latest_price", out var lpElem) &&
+                lpElem.ValueKind == JsonValueKind.Number)
+            {
+                return lpElem.GetDecimal();
+            }
+
+            // Fallback 1: Risk Agent entry level
+            if (agents.TryGetProperty("risk", out var riskAgent) &&
+                riskAgent.TryGetProperty("details", out var riskDetails) &&
+                riskDetails.TryGetProperty("levels", out var levels) &&
+                levels.TryGetProperty("entry", out var entryElem) &&
+                entryElem.ValueKind == JsonValueKind.Number)
+            {
+                return entryElem.GetDecimal();
+            }
+        }
+
+        // Fallback 2: First horizontal_line annotation value
+        if (root.TryGetProperty("annotations", out var annotations) &&
+            annotations.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var ann in annotations.EnumerateArray())
+            {
+                if (ann.TryGetProperty("value", out var valElem) &&
+                    valElem.ValueKind == JsonValueKind.Number)
+                {
+                    return valElem.GetDecimal();
+                }
+            }
+        }
+
+        return 0m;
     }
 }

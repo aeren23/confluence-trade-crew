@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import styles from './TradesPage.module.css';
 import { TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
-import { TrendingUp, TrendingDown, Plus, CheckCircle2, Trash2, Loader2, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, CheckCircle2, Trash2, Loader2, ChevronLeft, ChevronRight, ExternalLink, Tag } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
@@ -74,6 +74,7 @@ const TradesPage = () => {
   const [closingTrade, setClosingTrade] = useState(null);
   const [closingLoading, setClosingLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [activeTagFilter, setActiveTagFilter] = useState(null);
 
   const fetchTrades = useCallback(async (tab, page) => {
     setLoading(true);
@@ -102,6 +103,20 @@ const TradesPage = () => {
   const goPage = (p) => {
     setSearchParams({ tab: activeTab.toLowerCase(), ...(p > 1 ? { page: String(p) } : {}) });
   };
+
+  // Collect all unique tags from loaded trades for filter row
+  const allTags = useMemo(() => {
+    const set = new Set();
+    trades.forEach((t) => {
+      if (t.tags) t.tags.split(',').forEach((tag) => set.add(tag.trim()));
+    });
+    return [...set].sort();
+  }, [trades]);
+
+  const visibleTrades = useMemo(() => {
+    if (!activeTagFilter) return trades;
+    return trades.filter((t) => t.tags && t.tags.split(',').map((s) => s.trim()).includes(activeTagFilter));
+  }, [trades, activeTagFilter]);
 
   const handleCloseConfirm = async (id, exitPrice) => {
     setClosingLoading(true);
@@ -161,6 +176,28 @@ const TradesPage = () => {
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
+      {/* Tag filter row */}
+      {allTags.length > 0 && (
+        <div className={styles.tagFilterRow}>
+          <Tag size={12} className={styles.tagFilterIcon} />
+          <button
+            className={`${styles.tagFilterChip} ${activeTagFilter === null ? styles.tagFilterChipActive : ''}`}
+            onClick={() => setActiveTagFilter(null)}
+          >
+            All
+          </button>
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              className={`${styles.tagFilterChip} ${activeTagFilter === tag ? styles.tagFilterChipActive : ''}`}
+              onClick={() => setActiveTagFilter(activeTagFilter === tag ? null : tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Table */}
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
@@ -174,17 +211,18 @@ const TradesPage = () => {
               <th>Leverage</th>
               <th>Date</th>
               <th>PnL</th>
+              <th>Tags</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={9} className={styles.loadingRow}><Loader2 size={15} className={styles.spin} /> Loading...</td></tr>
+              <tr><td colSpan={10} className={styles.loadingRow}><Loader2 size={15} className={styles.spin} /> Loading...</td></tr>
             )}
-            {!loading && trades.length === 0 && (
-              <tr><td colSpan={9} className={styles.emptyRow}>No {activeTab.toLowerCase()} trades found.</td></tr>
+            {!loading && visibleTrades.length === 0 && (
+              <tr><td colSpan={10} className={styles.emptyRow}>No {activeTab.toLowerCase()} trades found.</td></tr>
             )}
-            {!loading && trades.map(t => {
+            {!loading && visibleTrades.map(t => {
               const isLong  = t.direction === 0 || t.direction === 'Long';
               const isOpen  = t.status === 0 || t.status === 'Open';
               const pnl     = t.pnlQuote;
@@ -226,6 +264,13 @@ const TradesPage = () => {
                     ) : (
                       <span className={styles.openBadge}>Open</span>
                     )}
+                  </td>
+                  <td>
+                    <div className={styles.tagCells}>
+                      {t.tags ? t.tags.split(',').map((tag) => (
+                        <span key={tag.trim()} className={styles.tagPill}>{tag.trim()}</span>
+                      )) : '—'}
+                    </div>
                   </td>
                   <td>
                     <div className={styles.rowActions}>

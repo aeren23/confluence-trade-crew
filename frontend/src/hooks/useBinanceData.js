@@ -33,7 +33,7 @@ export const useBinanceData = (symbol, timeframe) => {
           params: {
             symbol: formattedSymbol,
             interval: interval,
-            limit: 100
+            limit: 200
           }
         });
 

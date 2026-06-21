@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './AnalysisDetailPage.module.css';
-import { AnalysisService } from '../services/apiClient';
+import { AnalysisService, TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
 import SynthesisPanelStatic from '../components/Analysis/SynthesisPanelStatic';
 import {
   ArrowLeft, Clock, TrendingUp, TrendingDown, Minus,
-  Loader2, AlertTriangle, ExternalLink
+  Loader2, AlertTriangle, ExternalLink, Link2
 } from 'lucide-react';
 
 const AnalysisDetailPage = () => {
@@ -14,21 +14,26 @@ const AnalysisDetailPage = () => {
   const navigate = useNavigate();
   const { openTradeForm } = useAppStore();
 
-  const [analysis, setAnalysis] = useState(null); // raw AnalysisResponseDto
-  const [parsed,   setParsed]   = useState(null); // parsed resultJson + _meta
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
+  const [analysis,      setAnalysis]      = useState(null);
+  const [parsed,        setParsed]        = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+  const [linkedTrades,  setLinkedTrades]  = useState([]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    AnalysisService.getById(id)
-      .then((dto) => {
+    Promise.all([
+      AnalysisService.getById(id),
+      TradeService.byAnalysis(id).catch(() => []),
+    ])
+      .then(([dto, trades]) => {
         if (cancelled) return;
         const resultObj = JSON.parse(dto.resultJson);
         setAnalysis(dto);
+        setLinkedTrades(trades || []);
         setParsed({
           ...resultObj,
           _meta: {
@@ -149,6 +154,44 @@ const AnalysisDetailPage = () => {
 
       {/* Full synthesis panel (static, no store dependency) */}
       <SynthesisPanelStatic analysisData={parsed} />
+
+      {/* Linked trades */}
+      <div className={styles.linkedTradesCard}>
+        <div className={styles.linkedTradesHeader}>
+          <Link2 size={14} />
+          <span>Trades from this Analysis ({linkedTrades.length})</span>
+        </div>
+        {linkedTrades.length === 0 ? (
+          <p className={styles.linkedTradesEmpty}>No trades linked to this analysis yet.</p>
+        ) : (
+          <table className={styles.linkedTradesTable}>
+            <thead>
+              <tr>
+                <th>Direction</th>
+                <th>Entry</th>
+                <th>Exit</th>
+                <th>Status</th>
+                <th>PnL</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {linkedTrades.map((t) => (
+                <tr key={t.id}>
+                  <td className={t.direction === 'Long' ? styles.bullish : styles.bearish}>{t.direction}</td>
+                  <td>{t.entryPrice}</td>
+                  <td>{t.exitPrice ?? '—'}</td>
+                  <td>{t.status}</td>
+                  <td className={(t.pnlQuote ?? 0) >= 0 ? styles.profitCell : styles.lossCell}>
+                    {t.pnlQuote != null ? `${t.pnlQuote >= 0 ? '+' : ''}${t.pnlQuote.toFixed(2)} USDT` : '—'}
+                  </td>
+                  <td>{new Date(t.entryAt).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };

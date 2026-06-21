@@ -207,6 +207,11 @@ namespace Confluence.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("notes");
 
+                    b.Property<string>("Tags")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("tags");
+
                     b.Property<decimal?>("PnlPercentage")
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("pnl_percentage");

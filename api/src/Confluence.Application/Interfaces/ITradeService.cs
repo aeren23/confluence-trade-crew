@@ -10,4 +10,5 @@ public interface ITradeService
     Task<PagedResult<TradeResponseDto>> GetTradesAsync(string? status, string? symbol, int page, int pageSize);
     Task<TradeResponseDto> CloseTradeAsync(Guid id, TradeCloseDto request);
     Task DeleteTradeAsync(Guid id);
+    Task<List<TradeResponseDto>> GetTradesByAnalysisAsync(Guid analysisId);
 }

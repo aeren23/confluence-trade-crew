@@ -55,6 +55,13 @@ public class TradeController : ControllerBase
         }
     }
 
+    [HttpGet("by-analysis/{analysisId}")]
+    public async Task<IActionResult> GetTradesByAnalysis(Guid analysisId)
+    {
+        var result = await _tradeService.GetTradesByAnalysisAsync(analysisId);
+        return Ok(result);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTrade(Guid id)
     {

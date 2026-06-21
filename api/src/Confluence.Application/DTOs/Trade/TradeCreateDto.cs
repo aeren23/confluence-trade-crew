@@ -16,4 +16,5 @@ public class TradeCreateDto
     
     public Guid? AnalysisId { get; set; }
     public string? Notes { get; set; }
+    public string? Tags { get; set; }
 }

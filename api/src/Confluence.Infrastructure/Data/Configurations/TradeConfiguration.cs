@@ -88,6 +88,10 @@ public class TradeConfiguration : IEntityTypeConfiguration<Trade>
         builder.Property(t => t.Notes)
             .HasColumnName("notes")
             .HasColumnType("text");
+
+        builder.Property(t => t.Tags)
+            .HasColumnName("tags")
+            .HasMaxLength(200);
             
         builder.Property(t => t.CreatedAt)
             .HasColumnName("created_at")

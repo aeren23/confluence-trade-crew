@@ -19,8 +19,18 @@ BACKSTORY = (
 TASK_DESCRIPTION = (
     "1. Review the detailed text reports from the Data, TA, News, and Risk agents.\n"
     "2. Calculate overall sentiment with dynamic weighting:\n"
-    "   - Default: overall_sentiment_score = (TA_score * 0.6) + (News_score * 0.4)\n"
-    "   - If News confidence < 0.30 (poor/no news data): use (TA_score * 0.8) + (News_score * 0.2)\n"
+    "   STEP A — Choose the weighting formula:\n"
+    "   - If News confidence < 0.30 (poor/no news data): weight_ta = 0.80, weight_news = 0.20\n"
+    "   - Else if |TA_confidence - News_confidence| > 0.15 (one signal is clearly more reliable):\n"
+    "       weight_ta   = TA_confidence  / (TA_confidence + News_confidence)\n"
+    "       weight_news = News_confidence / (TA_confidence + News_confidence)\n"
+    "   - Default (confidences within 15%% of each other): weight_ta = 0.60, weight_news = 0.40\n"
+    "   STEP B — Compute the score:\n"
+    "       overall_sentiment_score = (TA_score * weight_ta) + (News_score * weight_news)\n"
+    "   STEP C — Map score to sentiment label using STRICT thresholds:\n"
+    "       overall_sentiment = 'bullish' if overall_sentiment_score > 0.25\n"
+    "       overall_sentiment = 'bearish' if overall_sentiment_score < -0.25\n"
+    "       overall_sentiment = 'neutral' if -0.25 <= overall_sentiment_score <= 0.25\n"
     "   - Do NOT include the Risk agent's score in the directional sentiment average.\n"
     "3. Check for conflicts using STRICT numerical rules:\n"
     "   conflicts_detected = true ONLY IF: (TA_score > +0.35 AND News_score < -0.35) OR (TA_score < -0.35 AND News_score > +0.35).\n"
@@ -107,7 +117,7 @@ TASK_DESCRIPTION = (
     '      "summary": "<1-sentence summary of risk>",\n'
     '      "details": {{\n'
     '        "position_direction": "long | short | neutral",\n'
-    '        "position_sizing": {{"balance": <float>, "risk_percentage": <float>, "risk_amount_usdt": <float>, "suggested_position_size_usdt": <float>, "suggested_position_size_base": <float>}},\n'
+    '        "position_sizing": {{"balance": <float>, "risk_percentage": <float>, "risk_amount_usdt": <float>, "suggested_position_size_usdt": <float>, "suggested_position_size_base": <float>, "required_margin_usdt": <float>}},\n'
     '        "leverage": {{"recommended_range": <string>, "capped_maximum": <number>}},\n'
     '        "levels": {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>, "risk_reward_ratio": <float>}},\n'
     '        "hypothetical_scenarios": {{\n'

@@ -1,7 +1,6 @@
 .chartWrapper {
   display: flex;
   flex-direction: column;
-  height: 420px;
   padding: 0;
   overflow: hidden;
   position: relative;
@@ -9,17 +8,14 @@
 }
 
 .header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
   padding: var(--space-3) var(--space-4);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
   z-index: 2;
-  background: linear-gradient(to bottom, rgba(9, 9, 11, 0.8), transparent);
-  pointer-events: none;
+  background: rgba(9,9,11,0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 .header h3 {
@@ -67,20 +63,14 @@
 }
 
 .mockBanner {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: rgba(245, 158, 11, 0.15);
-  border-top: 1px solid rgba(245, 158, 11, 0.4);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
   color: #f59e0b;
   font-size: 0.8rem;
-  pointer-events: none;
 }
 
 .mockBanner strong {
@@ -99,9 +89,56 @@
 }
 
 .chartContainer {
-  flex: 1;
   width: 100%;
-  height: 100%;
+  height: 400px;
+}
+
+/* ── Indicator toggles ─────────────────────────────────────────────────── */
+.indicatorToggles {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  pointer-events: all;
+}
+
+.indToggle {
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.indToggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.indToggleOn {
+  background: rgba(0,240,255,0.12);
+  border-color: var(--accent, #00f0ff);
+  color: var(--accent, #00f0ff);
+}
+
+/* ── Sub-panes ─────────────────────────────────────────────────────────── */
+.subPane {
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.subPaneLabel {
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.02);
+}
+
+.subChart {
+  width: 100%;
+  height: 120px;
 }
 
 .errorCenter {

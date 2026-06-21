@@ -25,6 +25,7 @@ public class Trade
     public decimal? PnlQuote { get; set; }
     public decimal? PnlPercentage { get; set; }
     
+    public string? Tags { get; set; }
     public string? Notes { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -580,12 +580,30 @@
   color: var(--text-primary);
   font-weight: 500;
   text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sizingNote {
   font-size: 0.7rem;
   color: var(--text-muted);
   font-weight: 400;
+}
+
+.sizingWarn {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+.sizingHint {
+  padding: 6px 12px 8px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .dirBadgeSmall {

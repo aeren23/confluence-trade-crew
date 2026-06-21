@@ -4,6 +4,8 @@ import useAppStore from '../../store/useAppStore';
 import { TradeService } from '../../services/apiClient';
 import { X, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 
+const PRESET_TAGS = ['breakout', 'reversal', 'trend', 'scalp', 'news-driven', 'support', 'resistance'];
+
 const TradeForm = () => {
   const { tradeFormOpen, pendingTradeDefaults, closeTradeForm, addOpenTrade } = useAppStore();
 
@@ -16,6 +18,7 @@ const TradeForm = () => {
     stopLoss: '',
     takeProfit: '',
     notes: '',
+    tags: [],
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -56,6 +59,7 @@ const TradeForm = () => {
         takeProfit: form.takeProfit ? parseFloat(form.takeProfit) : null,
         analysisId: pendingTradeDefaults?.analysisId || null,
         notes: form.notes || null,
+        tags: form.tags.length > 0 ? form.tags.join(',') : null,
       };
       const created = await TradeService.create(payload);
       addOpenTrade(created);
@@ -196,6 +200,30 @@ const TradeForm = () => {
               placeholder="Optional trade notes..."
               rows={2}
             />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label>Tags</label>
+            <div className={styles.tagChips}>
+              {PRESET_TAGS.map((tag) => {
+                const active = form.tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`${styles.tagChip} ${active ? styles.tagChipActive : ''}`}
+                    onClick={() =>
+                      handleChange(
+                        'tags',
+                        active ? form.tags.filter((t) => t !== tag) : [...form.tags, tag]
+                      )
+                    }
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {error && <div className={styles.errorMsg}>{error}</div>}

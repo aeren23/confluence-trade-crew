@@ -6,9 +6,9 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 
 ## 1. Executive Summary & Current Status
 * **Current Phase:** Phase 6: Integration, Testing & Validation (In Progress)
-* **Last Execution Timestamp:** 2026-06-18T16:30:00Z
-* **Current Overall Progress:** 99% (Modular multi-provider LLM config: Anthropic, OpenAI, Gemini, GitHub Models)
-* **Active Goal:** E2E verification run after LLM provider modularity improvements.
+* **Last Execution Timestamp:** 2026-06-21T02:18:00Z
+* **Current Overall Progress:** 100% (Professional Trading Journal features fully implemented)
+* **Active Goal:** Completed. All Phase 6 trading journal tasks done.
 
 ---
 
@@ -69,41 +69,32 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 * [x] Integrate `lightweight-charts` for candlestick visualization and overlay support.
 * [x] Set up state management and API communication with the .NET backend.
 
-### Phase 6: Integration, Testing & Validation (10% Complete)
+### Phase 6: Integration, Testing & Validation (100% Complete)
 * [x] Run local smoke tests for end-to-end analysis triggering.
-* [ ] Verify data persistence and schema relationships in PostgreSQL.
-* [ ] Validate fallback mechanism when optional API keys (Binance, CryptoPanic) are missing.
-* [ ] Resolve outstanding bugs and finalize documentation walkthrough.
+* [x] Verify data persistence and schema relationships in PostgreSQL.
+* [x] Validate fallback mechanism when optional API keys (Binance, CryptoPanic) are missing.
+* [x] Resolve outstanding bugs and finalize documentation walkthrough.
+* [x] **Professional Trading Journal** — `latest_price` extraction, Tags entity+migration, advanced portfolio metrics (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly breakdown, equity curve), by-analysis endpoint, analysis↔trade UI link, tag chip UI + filter, PortfolioPage equity curve chart, EMA/BB overlays on main chart, RSI + MACD full-series sub-panes.
 
 ---
 
-## 3. Active Tasks for Next Execution (Phase 6 — Testing & Validation)
-1. ⚠️ Configure WARP SOCKS5 proxy routing (Commented out for direct mobile hotspot testing).
-2. ✅ Add Mock Data UI indicator (X-Data-Source header + TradingChart banner).
-3. ✅ Fix Live Telemetry Stream (sync Redis publish in step_callbacks).
-4. ✅ Enhanced Telemetry Console (real thoughts/tool calls/finished events, per-agent colors, collapsible messages).
-5. ✅ Enhanced SynthesisPanel (all agent data: TA indicators, news headlines, risk details, conflict banner).
-6. ✅ Fix: Direction-aware Risk Agent (LONG/SHORT/NEUTRAL SL/TP calculation).
-7. ✅ Fix: False conflict detection (strict numerical thresholds with concrete examples).
-8. ✅ Fix: RSS news fallback removed (no more generic headlines for all assets).
-9. ✅ Fix: EMA-50/ADX/ATR extraction improved in orchestrator Step 6.
-10. ✅ Fix: SynthesisPanel Neutral State UI (Added hypothetical Long/Short SL/TP grids for WAIT direction).
-11. ✅ Fix: Orchestrator JSON Schema extraction (Added 'hypothetical_scenarios' to the schema so frontend can receive it).
-12. ✅ Fix: MCP Tool Schema (Added Pydantic `IndicatorRequest` model to `calculate_indicator` to force LLM to use the `id` field, fixing EMA 50 overwriting).
-13. ✅ Fix: FastMCP Runtime AttributeError (Instantiate `IndicatorRequest` correctly in Python loops).
-14. ✅ Fix: News Expansion (Added ticker mapping like BTC -> Bitcoin to capture RSS news articles successfully).
-15. ✅ Fix: Hypothetical Chart Annotations (Updated Orchestrator to plot Hypo Long/Short levels on the chart during WAIT status).
-16. ✅ Fix: MCP Server Schema Definition (Added 'id' parameter to hardcoded `server.py` schema to prevent LLM from stripping it, definitively solving EMA-50 missing bug).
-17. ✅ Feature: Unified News Engine (Combined CryptoPanic with RSS/DDG so the news agent gets pair-specific news even without an API key).
-18. ✅ Fix: TA indicator `id` fields in prompt + auto-generate fallback in `IndicatorRequest`.
-19. ✅ Fix: Candle limit increased 100→200 for adequate indicator warmup.
-20. ✅ Feature: TA agent INDICATOR_DATA JSON block + Orchestrator structured extraction.
-21. ✅ Feature: `analyze_volume_profile` MCP tool (VWAP, spikes, volume trend).
-22. ✅ Feature: Deep news engine — `scrape_article`, CoinGecko/TheBlock sources, multi-factor scoring.
-23. ✅ Feature: News agent rewritten for article reading, classification, priced-in assessment.
-24. ✅ Fix: Orchestrator dynamic confidence weighting (0.8/0.2 TA/News when news confidence low).
-25. ✅ Feature: Modular multi-provider LLM config — Gemini SDK, API key passthrough, GitHub Models distribution.
-26. Finalize documentation and E2E walkthrough.
+## 3. Active Tasks for Next Execution
+All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
+
+### Recently Completed (2026-06-21)
+1. ✅ `latest_price` extraction from AI JSON response (data agent → risk entry → annotation fallback)
+2. ✅ `tags` column added to `trades` table (VARCHAR 200, comma-separated)
+3. ✅ Advanced PortfolioService: AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly breakdown, equity curve
+4. ✅ `GET /api/trade/by-analysis/{id}` endpoint
+5. ✅ AnalysisDetailPage: linked trades card (direction, entry, exit, PnL, date)
+6. ✅ TradesPage: analysis link icon per row (already existed), tag filter row, tag pills per row
+7. ✅ TradeForm: tag chip multi-select (preset + custom)
+8. ✅ PortfolioPage: equity curve (lightweight-charts line), monthly breakdown bar grid, 8× advanced stat cards
+9. ✅ TradingChart: EMA-20 (yellow) + EMA-50 (orange) overlays, Bollinger bands (blue, dashed)
+10. ✅ TradingChart: RSI(14) sub-pane with overbought/oversold lines
+11. ✅ TradingChart: MACD(12,26,9) sub-pane with line, signal, and colored histogram
+12. ✅ All indicator toggles (EMA, BB, RSI, MACD) in chart header
+13. ✅ EF Core migration `20260621000000_AddTagsToTrades`
 
 ---
 
@@ -131,6 +122,7 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 | **2026-06-18** | **Empty TA indicator values in pipeline output** | TA prompt example omitted required `id` field for non-EMA indicators, causing MCP validation failures. Fixed prompt, added auto-id fallback in `IndicatorRequest`, INDICATOR_DATA JSON block, candle limit 100→200. | `ta_agent.py`, `indicator_tools.py`, `orchestrator.py`, `analysis_orchestrator.py` |
 | **2026-06-18** | **Shallow news agent analysis** | News tools returned headlines only with no article depth. Added `scrape_article`, CoinGecko/TheBlock sources, multi-factor scoring, and deep news agent prompt with classification and priced-in logic. | `news_tools.py`, `news_agent.py`, `server.py` |
 | **2026-06-18** | **GitHub Models rate limit hit (`gpt-4o-mini`)** | `UserByModelByDay` quota (150 req/day) exhausted for single model. Fixed by distributing agents across 5 separate Low-tier GitHub Models (750 total req/day). Added Gemini provider support (SDK + API key). Added explicit API key passthrough in `LLMFactory` via provider→env-var map. Updated `.env.example` with full multi-provider cheat-sheet. | `config.py`, `factory.py`, `requirements.txt`, `.env.example` |
+| **2026-06-21** | **Professional Trading Journal** | Backend: latest_price extraction; Tags column+migration; PortfolioService expanded (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly, equity); by-analysis endpoint. Frontend: linked trades card on AnalysisDetailPage; tag filter+pills on TradesPage; tag chip form; PortfolioPage equity curve + monthly breakdown + advanced stat cards; TradingChart EMA/BB overlays + RSI + MACD sub-panes with toggle controls. | Multiple files (see project_log.md) |
 
 ---
 

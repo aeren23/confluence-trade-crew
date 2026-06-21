@@ -55,3 +55,25 @@
 * **Issues & Resolutions:** Root cause of empty indicators was MCP schema mismatch in TA prompt example — LLM omitted `id` for RSI/MACD/etc. Resolved via prompt fix + defensive auto-id generation.
 
 ---
+
+## Execution Log Entry — 2026-06-21 02:18 UTC
+
+* **Phase:** Phase 6 — Professional Trading Journal Implementation
+* **Action/Task:** Implemented all 11 items of the Professional Trading Journal plan (Faz 1 Backend, Faz 2 Frontend UX, Faz 3 Chart Overlays).
+* **Files Affected:**
+  * Backend: `AnalysisService.cs`, `Trade.cs`, `TradeCreateDto.cs`, `TradeResponseDto.cs`, `TradeConfiguration.cs`, `TradeService.cs`, `ITradeService.cs`, `TradeController.cs`, `PortfolioService.cs`, `PortfolioSummaryDto.cs`, `MonthlyPnlDto.cs`, `EquityPointDto.cs`, `AppDbContextModelSnapshot.cs`, `20260621000000_AddTagsToTrades.cs` (new), `20260621000000_AddTagsToTrades.Designer.cs` (new)
+  * Frontend: `AnalysisDetailPage.jsx`, `AnalysisDetailPage.module.css`, `TradesPage.jsx`, `TradesPage.module.css`, `TradeForm.jsx`, `TradeForm.module.css`, `PortfolioPage.jsx`, `PortfolioPage.module.css`, `TradingChart.jsx`, `TradingChart.module.css`, `apiClient.js`
+  * Docs: `state.md`, `project_log.md`
+* **Details/Decisions:**
+  * `latest_price` now extracted from AI JSON via 3-level fallback (data agent → risk entry → first annotation).
+  * `tags` column (VARCHAR 200) added to `trades` via explicit EF migration.
+  * `PortfolioService` expanded with equity curve, monthly breakdown, MaxDrawdown, Expectancy, RecoveryFactor, AvgRR, streaks, best/worst symbol, avg hold duration.
+  * New `GET /api/trade/by-analysis/{id}` endpoint returns all trades linked to an analysis.
+  * `AnalysisDetailPage` fetches and displays linked trades in a dedicated card.
+  * `TradesPage` adds a tag filter row (computed from loaded trades) and tag pills per row.
+  * `TradeForm` adds a multi-select chip input with 7 preset tags.
+  * `PortfolioPage` completely rewritten: lightweight-charts equity curve, monthly PnL bar grid, 8 advanced stat cards.
+  * `TradingChart` rewritten: client-side EMA(20/50), Bollinger(20,2), RSI(14), MACD(12,26,9) calculated from klines data. RSI and MACD rendered in separate chart instances synced via `subscribeVisibleLogicalRangeChange`. All 4 indicator groups have on/off toggles in the chart header.
+* **Issues & Resolutions:** None — clean implementation following the plan.
+
+---

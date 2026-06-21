@@ -173,3 +173,54 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ── Linked Trades Card ─────────────────────────────────────────────────── */
+.linkedTradesCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.linkedTradesHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.linkedTradesEmpty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.linkedTradesTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.linkedTradesTable th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.linkedTradesTable td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+  color: var(--text-secondary);
+}
+
+.linkedTradesTable tr:last-child td {
+  border-bottom: none;
+}
+
+.profitCell { color: var(--green) !important; font-weight: 600; }
+.lossCell   { color: var(--red)   !important; font-weight: 600; }

@@ -68,6 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .statLabel {
@@ -78,11 +79,12 @@
 }
 
 .statValue {
-  font-size: 1.35rem;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
   font-weight: 700;
   font-family: var(--font-display);
   color: var(--text-primary);
-  line-height: 1;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .statSub {
@@ -186,3 +188,66 @@
 }
 
 .analysisLink:hover { text-decoration: underline; }
+
+/* ── Advanced metrics grid ───────────────────────────────────────────────── */
+.advancedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+/* ── Equity curve chart ──────────────────────────────────────────────────── */
+.equityChart {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ── Monthly breakdown ───────────────────────────────────────────────────── */
+.monthlyGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-4) var(--space-5);
+}
+
+.monthCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.monthLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  min-width: 72px;
+}
+
+.monthBar {
+  height: 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  min-width: 4px;
+}
+
+.monthBarGreen { background: #4ade80; }
+.monthBarRed   { background: #f87171; }
+
+.monthPnl {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  min-width: 90px;
+}
+
+.monthMeta {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* sectionTitle without border (used inside section) */
+.section .sectionTitle {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
