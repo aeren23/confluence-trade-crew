@@ -2,9 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ControlPanel from '../components/Analysis/ControlPanel';
 import TradingChart from '../components/Chart/TradingChart';
-import TelemetryConsole from '../components/Analysis/TelemetryConsole';
 import SynthesisPanel from '../components/Analysis/SynthesisPanel';
 import OpenTrades from '../components/Trade/OpenTrades';
+import AlertWidget from '../components/Analysis/AlertWidget';
+import TelemetryConsole from '../components/Analysis/TelemetryConsole';
 import useAppStore from '../store/useAppStore';
 
 const DashboardPage = () => {
@@ -29,8 +30,15 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Open Trades widget */}
-      <OpenTrades />
+      {/* Open Trades and Alerts */}
+      <div style={{ display: 'flex', gap: 'var(--space-6)', marginBottom: 'var(--space-6)', flexWrap: 'wrap' }}>
+        <div style={{ flex: '2 1 600px' }}>
+          <OpenTrades />
+        </div>
+        <div style={{ flex: '1 1 300px' }}>
+          <AlertWidget />
+        </div>
+      </div>
 
       {/* Live Telemetry Console */}
       <TelemetryConsole />

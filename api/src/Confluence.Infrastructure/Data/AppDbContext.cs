@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Pair> Pairs => Set<Pair>();
     public DbSet<Analysis> Analyses => Set<Analysis>();
+    public DbSet<AnalysisAccuracy> AnalysisAccuracies => Set<AnalysisAccuracy>();
     public DbSet<Trade> Trades => Set<Trade>();
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
 

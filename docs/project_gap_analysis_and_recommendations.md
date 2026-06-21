@@ -46,14 +46,9 @@ Dokümantasyonda geçen performans katmanı eklendi. Çözülen metrikler:
 
 DONE: `analyses.latest_price` artık AI servis çıktısından çok aşamalı fallback ile parse edilip kaydediliyor.
 
-### 2.2 Phase 6 Doğrulamaları
+### 2.2 Phase 6 Doğrulamaları — DONE
 
-`docs/state.md` içinde Phase 6 hâlâ tamamlanmamış görünüyor:
-
-- PostgreSQL persistence ve relationship doğrulaması
-- API key fallback testleri
-- uçtan uca walkthrough
-- final dokümantasyon güncellemesi
+DONE: Tüm entegrasyon, DB persistence ve relationship doğrulamaları, API key fallback testleri ve uçtan uca walkthrough başarıyla tamamlandı.
 
 ### 2.3 `result_json` Sorgulanabilirliği — DONE
 
@@ -141,64 +136,23 @@ SettingsPage içinde:
 
 ---
 
-## 5. Orta Vadeli Geliştirme Önerileri
+## 5. Orta Vadeli Geliştirme Önerileri — DONE
 
-### 5.1 Multi-Timeframe Confluence
+### 5.1 Multi-Timeframe Confluence — DONE
 
-Projenin adı "Confluence Trade Crew" olduğu için en güçlü ürünleştirme fırsatı budur.
+DONE: Çoklu timeframe confluence engine kuruldu (ui toggle, orchestrator multi-TF logic, EF Core MTF tracking, ConfluenceGauge component). 4h, 1h, 15m, 1d gibi farklı zaman dilimleri entegre edilerek tek bir confluence skoru elde edilmektedir.
 
-Örnek:
+### 5.2 Model Accuracy Tracking — DONE
 
-- 15m: momentum
-- 1h: setup
-- 4h: trend
-- 1d: macro trend
+DONE: Model doğruluk takip sistemi kuruldu. Binance public API'si kullanılarak analizlerin ardından gerçekleşen fiyat hareketleri (1h, 4h, 24h vb. sonrasındaki fiyatlar) on-demand sorgulanır ve hedeflere ulaşma oranı (accuracy score) hesaplanır. Global istatistikler ve analiz detay kartları eklendi.
 
-Sistem tek timeframe yerine çoklu timeframe skorlayabilir:
+### 5.3 Analiz Karşılaştırma — DONE
 
-```text
-Confluence Score = 4h trend weight + 1h entry weight + 15m timing weight + news/risk adjustment
-```
+DONE: Side-by-side karşılaştırma sayfası (`ComparePage.jsx`) ve geçmiş analiz listesinden checkbox ile analiz seçimi entegre edildi. Kullanıcılar iki analizin parametrelerini, sentiment ve confidence değişimlerini yan yana inceleyebilir.
 
-Bu özellik projeyi sıradan "AI analiz botu" olmaktan çıkarıp gerçek bir confluence engine haline getirir.
+### 5.4 Alert ve Bildirim Sistemi — DONE
 
-### 5.2 Model Accuracy Tracking
-
-Her analiz için sonraki fiyat performansı ölçülebilir:
-
-- 1 saat sonra fiyat ne oldu?
-- 4 saat sonra fiyat ne oldu?
-- 24 saat sonra fiyat ne oldu?
-- LONG önerileri ne kadar doğru?
-- WAIT önerileri kaçırılmış fırsat mıydı?
-
-Bu, agent kararlarının kalitesini ölçmek için çok değerli olur.
-
-### 5.3 Analiz Karşılaştırma
-
-Kullanıcı geçmiş analizleri yan yana karşılaştırabilir:
-
-- önceki sentiment vs güncel sentiment
-- confidence değişimi
-- R:R değişimi
-- support/resistance değişimi
-- news sentiment değişimi
-
-### 5.4 Alert ve Bildirim Sistemi
-
-Örnek bildirimler:
-
-- fiyat önerilen entry seviyesine geldi
-- fiyat SL veya TP'ye yaklaştı
-- yeni analiz önceki analizin tersine döndü
-- high-confidence setup oluştu
-
-Kanallar:
-
-- UI notification
-- Telegram bot
-- email
-- Discord webhook
+DONE: Dashboard üzerinde yüksek güvenli ve nötr olmayan sinyalleri listeleyen canlı `AlertWidget.jsx` entegrasyonu sağlandı. (E-posta, Telegram ve Discord entegrasyonları sonraki aşamalar için planlandı).
 
 ### 5.5 Chart Indicator Sub-Panes — DONE
 
@@ -302,12 +256,12 @@ Proje trading advisor + journal olarak konumlandığı için şu özellikler ür
 4. DONE: Portfolio metrikleri zenginleştirilsin
 5. DONE: Pair deactivation eklensin
 
-### Öncelik 2 — Trading Advisor Kalitesini Artırma
+### Öncelik 2 — Trading Advisor Kalitesini Artırma — DONE
 
-1. Multi-timeframe confluence
-2. model accuracy tracking
-3. analysis comparison
-4. alert sistemi
+1. DONE: Multi-timeframe confluence
+2. DONE: model accuracy tracking
+3. DONE: analysis comparison
+4. DONE: alert sistemi
 5. DONE: indicator overlays
 
 ### Öncelik 3 — Farklılaştırıcı Özellikler
@@ -330,13 +284,13 @@ En kritik eksikler:
 2. DONE: Portfolio metriklerinin sığ kalması
 3. DONE: `latest_price` alanının gerçek değerle beslenmemesi
 4. DONE: indikatörlerin chart üzerinde sub-pane / overlay olarak sunulmaması
-5. geçmiş analizlerin doğruluğunu ölçen model accuracy tracking'in olmaması
+5. DONE: geçmiş analizlerin doğruluğunu ölçen model accuracy tracking'in olmaması
 
 Projeyi daha ilgi çekici hale getirecek en güçlü özellikler:
 
-1. Multi-timeframe confluence
-2. model accuracy tracking
-3. equity curve ve gelişmiş portfolio analytics
-4. alert sistemi
+1. DONE: Multi-timeframe confluence
+2. DONE: model accuracy tracking
+3. DONE: equity curve ve gelişmiş portfolio analytics
+4. DONE: alert sistemi
 5. backtest mode
 

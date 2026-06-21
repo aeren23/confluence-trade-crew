@@ -40,11 +40,66 @@ class SynthesisOutput(BaseModel):
     agent_summaries: dict[str, str] = Field(default_factory=dict, description="Per-agent summary strings")
 
 
+# ── Multi-Timeframe Confluence schemas ────────────────────────────────────────
+
+class TimeframeResult(BaseModel):
+    """Per-timeframe TA result used in multi-timeframe confluence calculation."""
+
+    timeframe: str = Field(..., description="Timeframe identifier, e.g. '4h'")
+    ta_sentiment: str = Field(..., description="bullish, bearish, or neutral")
+    ta_sentiment_score: float = Field(..., ge=-1.0, le=1.0, description="Raw TA sentiment score")
+    ta_confidence: float = Field(..., ge=0.0, le=1.0, description="TA agent confidence for this timeframe")
+    weight: float = Field(..., ge=0.0, le=1.0, description="Configured weight for this timeframe in confluence score")
+    weighted_score: float = Field(
+        ...,
+        description="ta_sentiment_score × weight × ta_confidence — this TF's contribution to confluence score"
+    )
+    key_indicators: dict = Field(
+        default_factory=dict,
+        description="Brief indicator snapshot: RSI value/state, trend direction, EMA crossover"
+    )
+
+
+class MultiTimeframeConfluence(BaseModel):
+    """
+    Confluence score derived from multiple timeframe analyses.
+
+    Score ranges from -1.0 (full bearish confluence) to +1.0 (full bullish confluence).
+    Alignment describes how consistent the timeframes are with each other.
+    """
+
+    timeframes_analyzed: list[str] = Field(..., description="List of timeframes that were analyzed")
+    confluence_score: float = Field(..., ge=-1.0, le=1.0, description="Weighted confluence score across all timeframes")
+    confluence_sentiment: str = Field(..., description="bullish if > 0.25, bearish if < -0.25, neutral otherwise")
+    confluence_confidence: float = Field(..., ge=0.0, le=1.0, description="Weighted average confidence across timeframes")
+    alignment: str = Field(
+        ...,
+        description="aligned (all TFs agree) | mixed (some disagree) | conflicting (TFs strongly oppose)"
+    )
+    per_timeframe: list[TimeframeResult] = Field(..., description="Individual TA results per timeframe")
+    news_adjustment: float = Field(
+        default=0.0,
+        description="News sentiment score adjustment applied to final confluence score (news agent runs once, shared across all TF)"
+    )
+
+
+# ── Top-level analysis response ───────────────────────────────────────────────
+
 class AnalysisResponse(BaseModel):
     """Full response from the /analyze endpoint."""
 
     symbol: str
     timestamp: str
-    agents: dict[str, AgentOutput] = Field(default_factory=dict, description="Individual agent outputs keyed by agent name")
+    agents: dict[str, AgentOutput] = Field(
+        default_factory=dict,
+        description="Individual agent outputs keyed by agent name"
+    )
     synthesis: SynthesisOutput
-    annotations: list[Annotation] = Field(default_factory=list, description="Chart annotations for frontend")
+    annotations: list[Annotation] = Field(
+        default_factory=list,
+        description="Chart annotations for frontend rendering"
+    )
+    multi_timeframe_confluence: MultiTimeframeConfluence | None = Field(
+        default=None,
+        description="Multi-timeframe confluence data, present only when multiple timeframes were requested"
+    )

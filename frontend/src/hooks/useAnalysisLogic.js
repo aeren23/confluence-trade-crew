@@ -55,6 +55,10 @@ export const useAnalysisLogic = () => {
         riskPercentage: store.riskPercentage,
         sessionId,
         riskProfile: store.riskProfile || 'moderate',
+        // Include timeframes only when Multi-TF mode is enabled with 2+ selections
+        timeframes: store.isMultiTfMode && store.selectedTimeframes.length >= 2
+          ? store.selectedTimeframes
+          : undefined,
       };
 
       const result = await AnalysisService.triggerAnalysis(payload);

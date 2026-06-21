@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createChart } from 'lightweight-charts';
 import styles from './PortfolioPage.module.css';
-import { PortfolioService, TradeService } from '../services/apiClient';
+import { PortfolioService, TradeService, AccuracyService } from '../services/apiClient';
 import {
   TrendingUp, TrendingDown, Activity, Target, Loader2,
   ArrowRight, Award, AlertTriangle, Clock, BarChart2
@@ -161,6 +161,7 @@ const EquityCurveChart = ({ data }) => {
 const PortfolioPage = () => {
   const [summary,       setSummary]       = useState(null);
   const [recentTrades,  setRecentTrades]  = useState([]);
+  const [accuracyStats, setAccuracyStats] = useState(null);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [breakdownView, setBreakdownView] = useState('monthly');
@@ -169,10 +170,12 @@ const PortfolioPage = () => {
     Promise.all([
       PortfolioService.getSummary(),
       TradeService.list({ status: 'Closed', page: 1, pageSize: 8 }),
+      AccuracyService.getGlobalStats().catch(() => null)
     ])
-      .then(([sum, trades]) => {
+      .then(([sum, trades, accuracy]) => {
         setSummary(sum);
         setRecentTrades(trades.items || trades || []);
+        setAccuracyStats(accuracy);
       })
       .catch(() => setError('Failed to load portfolio data.'))
       .finally(() => setLoading(false));
@@ -230,6 +233,15 @@ const PortfolioPage = () => {
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Advanced Metrics</h3>
         <div className={styles.advancedGrid}>
+          {accuracyStats && (
+            <StatCard
+              icon={<Target size={16} />}
+              label="AI Model Accuracy"
+              value={`${accuracyStats.winRate}%`}
+              sub={`${accuracyStats.totalEvaluated} predictions evaluated`}
+              colorClass={accuracyStats.winRate >= 50 ? styles.green : styles.red}
+            />
+          )}
           <StatCard
             icon={<BarChart2 size={16} />}
             label="Avg Risk/Reward"

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 
+// Default timeframe set for Multi-Timeframe Confluence analysis
+const DEFAULT_MTF_TIMEFRAMES = ['15m', '1h', '4h', '1d'];
+
 const useAppStore = create((set, get) => ({
   // ── Form / session state ────────────────────────────────────────────────
   symbol: 'BTC/USDT',
@@ -7,6 +10,10 @@ const useAppStore = create((set, get) => ({
   balance: 1000,
   riskPercentage: 2,
   riskProfile: 'moderate',  // conservative | moderate | aggressive
+
+  // ── Multi-Timeframe state ───────────────────────────────────────────────
+  isMultiTfMode: false,                         // Toggle for MTF analysis
+  selectedTimeframes: DEFAULT_MTF_TIMEFRAMES,   // Chosen TF set
 
   // ── Analysis run state ──────────────────────────────────────────────────
   analysisStatus: 'idle', // idle | loading | complete | error
@@ -30,6 +37,20 @@ const useAppStore = create((set, get) => ({
   setBalance: (balance) => set({ balance }),
   setRiskPercentage: (riskPercentage) => set({ riskPercentage }),
   setRiskProfile: (riskProfile) => set({ riskProfile }),
+
+  // ── Multi-Timeframe actions ─────────────────────────────────────────────
+  toggleMultiTfMode: () => set((state) => ({ isMultiTfMode: !state.isMultiTfMode })),
+  setSelectedTimeframes: (tfs) => set({ selectedTimeframes: tfs }),
+  toggleTimeframe: (tf) => set((state) => {
+    const exists = state.selectedTimeframes.includes(tf);
+    // Enforce minimum of 2 TFs when in MTF mode
+    if (exists && state.selectedTimeframes.length <= 2) return {};
+    return {
+      selectedTimeframes: exists
+        ? state.selectedTimeframes.filter((t) => t !== tf)
+        : [...state.selectedTimeframes, tf],
+    };
+  }),
 
   // ── Analysis run actions ─────────────────────────────────────────────────
   setAnalysisStatus: (status) => set({ analysisStatus: status }),

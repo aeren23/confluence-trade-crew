@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './SynthesisPanel.module.css';
 import useAppStore from '../../store/useAppStore';
+import ConfluenceGauge from './ConfluenceGauge';
 import {
   ShieldCheck, TrendingUp, TrendingDown, Minus,
   Activity, Globe, Database, AlertTriangle, BarChart2,
@@ -331,6 +332,11 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
 
       {/* ── Summary ──────────────────────────────────────────────────────── */}
       <p className={styles.summary}>{synthesis.summary}</p>
+
+      {/* ── Multi-Timeframe Confluence Gauge ─────────────────────────────── */}
+      {finalAnalysis.multi_timeframe_confluence && (
+        <ConfluenceGauge confluence={finalAnalysis.multi_timeframe_confluence} />
+      )}
 
       {/* ── Position Sizing Card + Trade action ─────────────────────────── */}
       {risk && (

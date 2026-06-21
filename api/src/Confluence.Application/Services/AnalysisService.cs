@@ -37,7 +37,8 @@ public class AnalysisService : IAnalysisService
             request.Balance, 
             request.RiskPercentage,
             request.SessionId,
-            request.RiskProfile);
+            request.RiskProfile,
+            request.Timeframes);
 
         // 3. Parse result
         var cleanJson = resultJson.Trim();
@@ -61,7 +62,11 @@ public class AnalysisService : IAnalysisService
         // 4. Extract latest price — try multiple locations in the AI response JSON
         var latestPrice = ExtractLatestPrice(root);
 
-        // 5. Save Analysis to DB
+        // 5. Extract Multi-Timeframe Confluence data (null for single-TF analyses)
+        var (confluenceScore, confluenceAlignment, timeframesAnalyzed) =
+            ExtractMultiTimeframeData(root);
+
+        // 6. Save Analysis to DB
         var analysis = new Analysis
         {
             Symbol = request.Symbol,
@@ -73,13 +78,16 @@ public class AnalysisService : IAnalysisService
             Confidence = confidence,
             ConflictsDetected = conflicts,
             LatestPrice = latestPrice,
-            ResultJson = cleanJson
+            ResultJson = cleanJson,
+            TimeframesAnalyzed = timeframesAnalyzed,
+            ConfluenceScore = confluenceScore,
+            ConfluenceAlignment = confluenceAlignment,
         };
 
         _context.Set<Analysis>().Add(analysis);
         await _context.SaveChangesAsync();
 
-        // 6. Return response
+        // 7. Return response
         return new AnalysisResponseDto
         {
             Id = analysis.Id,
@@ -93,6 +101,9 @@ public class AnalysisService : IAnalysisService
             ConflictsDetected = analysis.ConflictsDetected,
             LatestPrice = analysis.LatestPrice,
             ResultJson = analysis.ResultJson,
+            TimeframesAnalyzed = analysis.TimeframesAnalyzed,
+            ConfluenceScore = analysis.ConfluenceScore,
+            ConfluenceAlignment = analysis.ConfluenceAlignment,
             CreatedAt = analysis.CreatedAt
         };
     }
@@ -286,5 +297,42 @@ public class AnalysisService : IAnalysisService
         }
 
         return 0m;
+    }
+
+    /// <summary>
+    /// Extracts Multi-Timeframe Confluence data from the AI response JSON.
+    /// Returns (confluenceScore, confluenceAlignment, timeframesAnalyzed) or nulls for single-TF analyses.
+    /// </summary>
+    private static (decimal? ConfluenceScore, string? ConfluenceAlignment, string? TimeframesAnalyzed)
+        ExtractMultiTimeframeData(JsonElement root)
+    {
+        if (!root.TryGetProperty("multi_timeframe_confluence", out var mtfElem) ||
+            mtfElem.ValueKind != JsonValueKind.Object)
+        {
+            return (null, null, null);
+        }
+
+        decimal? score = null;
+        string? alignment = null;
+        string? timeframesJson = null;
+
+        if (mtfElem.TryGetProperty("confluence_score", out var scoreElem) &&
+            scoreElem.ValueKind == JsonValueKind.Number)
+        {
+            score = scoreElem.GetDecimal();
+        }
+
+        if (mtfElem.TryGetProperty("alignment", out var alignElem))
+        {
+            alignment = alignElem.GetString();
+        }
+
+        if (mtfElem.TryGetProperty("timeframes_analyzed", out var tfElem) &&
+            tfElem.ValueKind == JsonValueKind.Array)
+        {
+            timeframesJson = tfElem.GetRawText();
+        }
+
+        return (score, alignment, timeframesJson);
     }
 }

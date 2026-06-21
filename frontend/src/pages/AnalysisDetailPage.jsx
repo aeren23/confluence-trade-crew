@@ -4,6 +4,7 @@ import styles from './AnalysisDetailPage.module.css';
 import { AnalysisService, TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
 import SynthesisPanelStatic from '../components/Analysis/SynthesisPanelStatic';
+import AccuracyDashboard from '../components/Analysis/AccuracyDashboard';
 import {
   ArrowLeft, Clock, TrendingUp, TrendingDown, Minus,
   Loader2, AlertTriangle, ExternalLink, Link2
@@ -151,6 +152,9 @@ const AnalysisDetailPage = () => {
           </span>
         </div>
       </div>
+
+      {/* Accuracy Tracking Widget */}
+      <AccuracyDashboard analysisId={analysis.id} initialSentiment={analysis.overallSentiment} />
 
       {/* Full synthesis panel (static, no store dependency) */}
       <SynthesisPanelStatic analysisData={parsed} />

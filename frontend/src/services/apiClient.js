@@ -26,6 +26,18 @@ export const AnalysisService = {
     apiClient.get(`/api/analysis/${id}`).then((r) => r.data),
 };
 
+// ── Accuracy ──────────────────────────────────────────────────────────────────
+export const AccuracyService = {
+  evaluate: (analysisId, intervalLabel = 'on-demand') =>
+    apiClient.post(`/api/accuracy/evaluate/${analysisId}?intervalLabel=${intervalLabel}`).then((r) => r.data),
+
+  getByAnalysis: (analysisId) =>
+    apiClient.get(`/api/accuracy/analysis/${analysisId}`).then((r) => r.data),
+
+  getGlobalStats: () =>
+    apiClient.get('/api/accuracy/stats').then((r) => r.data),
+};
+
 // ── Settings ─────────────────────────────────────────────────────────────────
 export const SettingsService = {
   get: () =>

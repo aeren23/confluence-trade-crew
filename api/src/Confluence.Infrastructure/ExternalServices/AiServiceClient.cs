@@ -12,16 +12,26 @@ public class AiServiceClient : IAiServiceClient
         _httpClient = httpClient;
     }
 
-    public async Task<string> AnalyzeAsync(string symbol, string timeframe, decimal balance, decimal riskPercentage, string sessionId, string riskProfile = "moderate")
+    /// <inheritdoc />
+    public async Task<string> AnalyzeAsync(
+        string symbol,
+        string timeframe,
+        decimal balance,
+        decimal riskPercentage,
+        string sessionId,
+        string riskProfile = "moderate",
+        IEnumerable<string>? timeframes = null)
     {
         var payload = new
         {
-            symbol = symbol,
-            timeframe = timeframe,
-            balance = balance,
+            symbol,
+            timeframe,
+            balance,
             risk_percentage = riskPercentage,
             session_id = sessionId,
-            risk_profile = riskProfile
+            risk_profile = riskProfile,
+            // Only include timeframes when multi-TF is requested; null omits the field.
+            timeframes = timeframes?.ToList()
         };
 
         var response = await _httpClient.PostAsJsonAsync("/analyze", payload);

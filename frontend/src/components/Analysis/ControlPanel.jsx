@@ -3,13 +3,18 @@ import { Link } from 'react-router-dom';
 import styles from './ControlPanel.module.css';
 import useAppStore from '../../store/useAppStore';
 import { useAnalysisLogic } from '../../hooks/useAnalysisLogic';
-import { Play, Loader2, Settings } from 'lucide-react';
+import { Play, Loader2, Settings, Layers } from 'lucide-react';
 import { PairService } from '../../services/apiClient';
+
+// Ordered list of available timeframes for MTF chip selection
+const AVAILABLE_TIMEFRAMES = ['15m', '1h', '4h', '1d'];
 
 const ControlPanel = () => {
   const {
     symbol, timeframe, balance, riskPercentage, elapsedSeconds, riskProfile,
+    isMultiTfMode, selectedTimeframes,
     setSymbol, setTimeframe, setBalance, setRiskPercentage,
+    toggleMultiTfMode, toggleTimeframe,
   } = useAppStore();
   const { runAnalysis, status } = useAnalysisLogic();
 
@@ -71,20 +76,62 @@ const ControlPanel = () => {
           </select>
         </div>
 
-        {/* Timeframe */}
+        {/* Timeframe — shown only in single-TF mode */}
+        {!isMultiTfMode && (
+          <div className={styles.inputGroup}>
+            <label>Timeframe</label>
+            <select
+              value={timeframe}
+              onChange={(e) => setTimeframe(e.target.value)}
+              disabled={isLoading}
+              className="input-field"
+            >
+              <option value="15m">15m</option>
+              <option value="1h">1H</option>
+              <option value="4h">4H</option>
+              <option value="1d">1D</option>
+            </select>
+          </div>
+        )}
+
+        {/* Multi-Timeframe Toggle */}
         <div className={styles.inputGroup}>
-          <label>Timeframe</label>
-          <select
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-            disabled={isLoading}
-            className="input-field"
-          >
-            <option value="15m">15m</option>
-            <option value="1h">1H</option>
-            <option value="4h">4H</option>
-            <option value="1d">1D</option>
-          </select>
+          <label className={styles.mtfLabel}>
+            <Layers size={12} />
+            Multi-Timeframe Confluence
+          </label>
+          <div className={styles.mtfToggleRow}>
+            <button
+              id="mtf-toggle"
+              className={`${styles.mtfToggle} ${isMultiTfMode ? styles.mtfToggleOn : ''}`}
+              onClick={toggleMultiTfMode}
+              disabled={isLoading}
+              title={isMultiTfMode ? 'Switch to single timeframe' : 'Enable Multi-Timeframe Confluence'}
+            >
+              <span className={styles.mtfThumb} />
+            </button>
+            <span className={styles.mtfToggleHint}>
+              {isMultiTfMode ? 'MTF Active' : 'Single TF'}
+            </span>
+          </div>
+          {isMultiTfMode && (
+            <div className={styles.tfChips}>
+              {AVAILABLE_TIMEFRAMES.map((tf) => {
+                const active = selectedTimeframes.includes(tf);
+                return (
+                  <button
+                    key={tf}
+                    id={`tf-chip-${tf}`}
+                    className={`${styles.tfChip} ${active ? styles.tfChipActive : ''}`}
+                    onClick={() => toggleTimeframe(tf)}
+                    disabled={isLoading}
+                  >
+                    {tf}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Portfolio Balance */}

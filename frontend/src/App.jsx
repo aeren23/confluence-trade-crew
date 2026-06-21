@@ -8,6 +8,7 @@ import AnalysisDetailPage from './pages/AnalysisDetailPage';
 import PortfolioPage from './pages/PortfolioPage';
 import TradesPage from './pages/TradesPage';
 import SettingsPage from './pages/SettingsPage';
+import ComparePage from './pages/ComparePage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/dashboard"     element={<DashboardPage />} />
         <Route path="/history"       element={<HistoryPage />} />
         <Route path="/analysis/:id"  element={<AnalysisDetailPage />} />
+        <Route path="/compare"       element={<ComparePage />} />
         <Route path="/portfolio"     element={<PortfolioPage />} />
         <Route path="/trades"        element={<TradesPage />} />
         <Route path="/settings"      element={<SettingsPage />} />

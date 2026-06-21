@@ -67,6 +67,8 @@ const HistoryPage = () => {
   const [conflictsOnly, setConflictsOnly] = useState(currentConflictsOnly);
   const [minConfidence, setMinConfidence] = useState(currentMinConfidence);
 
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
+
   // Load pair options for the dropdown
   useEffect(() => {
     PairService.getAll().then(setPairs).catch(() => {});
@@ -134,6 +136,24 @@ const HistoryPage = () => {
     return `${Math.floor(m / 1440)}d ago`;
   };
 
+  const handleSelectForCompare = (id) => {
+    setSelectedForCompare(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      }
+      if (prev.length >= 2) {
+        return [prev[1], id];
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleCompareClick = () => {
+    if (selectedForCompare.length === 2) {
+      navigate(`/compare?id1=${selectedForCompare[0]}&id2=${selectedForCompare[1]}`);
+    }
+  };
+
   return (
     <div className={styles.page}>
       {/* Page header */}
@@ -142,6 +162,25 @@ const HistoryPage = () => {
           <h2 className={styles.title}>Analysis History</h2>
           {!loading && <span className={styles.count}>{totalCount} analyses</span>}
         </div>
+
+        {selectedForCompare.length > 0 && (
+          <div className={styles.compareToolbar}>
+            <span className={styles.compareCount}>{selectedForCompare.length}/2 selected</span>
+            <button 
+              className={styles.compareBtn} 
+              disabled={selectedForCompare.length !== 2}
+              onClick={handleCompareClick}
+            >
+              Compare
+            </button>
+            <button 
+              className={styles.clearCompareBtn}
+              onClick={() => setSelectedForCompare([])}
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <form className={styles.filters} onSubmit={handleSearch}>
@@ -214,6 +253,7 @@ const HistoryPage = () => {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.chkTh}></th>
               <th>ID</th>
               <th>Pair</th>
               <th>Sentiment</th>
@@ -233,10 +273,18 @@ const HistoryPage = () => {
             {!loading && items.map(item => (
               <tr
                 key={item.id}
-                className={styles.row}
+                className={`${styles.row} ${selectedForCompare.includes(item.id) ? styles.rowSelected : ''}`}
                 onClick={() => navigate(`/analysis/${item.id}`)}
                 title="Click to view full analysis"
               >
+                <td className={styles.chkTd} onClick={(e) => e.stopPropagation()}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedForCompare.includes(item.id)}
+                    onChange={() => handleSelectForCompare(item.id)}
+                    className={styles.compareChk}
+                  />
+                </td>
                 <td className={styles.idCell}>
                   <span className={styles.shortId}>{item.id.slice(0, 8)}</span>
                 </td>

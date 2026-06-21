@@ -5,10 +5,10 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 ---
 
 ## 1. Executive Summary & Current Status
-* **Current Phase:** Phase 6: Integration, Testing & Validation (In Progress)
-* **Last Execution Timestamp:** 2026-06-21T02:18:00Z
-* **Current Overall Progress:** 100% (Professional Trading Journal features fully implemented)
-* **Active Goal:** Completed. All Phase 6 trading journal tasks done.
+* **Current Phase:** Phase 6: Integration, Testing & Validation (100% Complete)
+* **Last Execution Timestamp:** 2026-06-21T22:15:00+03:00
+* **Current Overall Progress:** 100% (Medium term features and Phase 6 validation completed)
+* **Active Goal:** Maintenance and documentation updates.
 
 ---
 
@@ -74,7 +74,8 @@ This document maintains the absolute current state of the **Confluence Trade Cre
 * [x] Verify data persistence and schema relationships in PostgreSQL.
 * [x] Validate fallback mechanism when optional API keys (Binance, CryptoPanic) are missing.
 * [x] Resolve outstanding bugs and finalize documentation walkthrough.
-* [x] **Professional Trading Journal** — `latest_price` extraction, Tags entity+migration, advanced portfolio metrics (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly breakdown, equity curve), by-analysis endpoint, analysis↔trade UI link, tag chip UI + filter, PortfolioPage equity curve chart, EMA/BB overlays on main chart, RSI + MACD full-series sub-panes.
+* **Professional Trading Journal** — `latest_price` extraction, Tags entity+migration, advanced portfolio metrics (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly breakdown, equity curve), by-analysis endpoint, analysis↔trade UI link, tag chip UI + filter, PortfolioPage equity curve chart, EMA/BB overlays on main chart, RSI + MACD full-series sub-panes.
+* **Medium Term Features (Priority 2)** — Multi-Timeframe Confluence analysis (UI toggle, orchestrator multi-TF logic, EF Core MTF tracking), Model Accuracy Tracking (Binance public API on-demand evaluation, global stats in Portfolio, widget in detail page), Analysis Comparison (side-by-side ComparePage, History checkbox selection), Alert System (AlertWidget in Dashboard).
 
 ---
 
@@ -95,6 +96,10 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 11. ✅ TradingChart: MACD(12,26,9) sub-pane with line, signal, and colored histogram
 12. ✅ All indicator toggles (EMA, BB, RSI, MACD) in chart header
 13. ✅ EF Core migration `20260621000000_AddTagsToTrades`
+14. ✅ Multi-Timeframe Confluence (`ai-service` multi_tf_orchestrator.py, `api` Analysis/Service/DTO changes, `AddMultiTimeframeToAnalyses` migration, `frontend` ControlPanel pill toggle + chip styles, ConfluenceGauge component).
+15. ✅ Model Accuracy Tracking (`AnalysisAccuracy` entity, `CreateAnalysisAccuracyTable` migration, `AccuracyService` fetching Binance price on-demand, `AccuracyDashboard` widget, Portfolio stats).
+16. ✅ Analysis Comparison (`ComparePage.jsx` side-by-side comparison, `HistoryPage.jsx` checkbox selection).
+17. ✅ Alert System (`AlertWidget.jsx` in Dashboard showing high-confidence, non-neutral recent signals).
 
 ---
 
@@ -123,6 +128,7 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 | **2026-06-18** | **Shallow news agent analysis** | News tools returned headlines only with no article depth. Added `scrape_article`, CoinGecko/TheBlock sources, multi-factor scoring, and deep news agent prompt with classification and priced-in logic. | `news_tools.py`, `news_agent.py`, `server.py` |
 | **2026-06-18** | **GitHub Models rate limit hit (`gpt-4o-mini`)** | `UserByModelByDay` quota (150 req/day) exhausted for single model. Fixed by distributing agents across 5 separate Low-tier GitHub Models (750 total req/day). Added Gemini provider support (SDK + API key). Added explicit API key passthrough in `LLMFactory` via provider→env-var map. Updated `.env.example` with full multi-provider cheat-sheet. | `config.py`, `factory.py`, `requirements.txt`, `.env.example` |
 | **2026-06-21** | **Professional Trading Journal** | Backend: latest_price extraction; Tags column+migration; PortfolioService expanded (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly, equity); by-analysis endpoint. Frontend: linked trades card on AnalysisDetailPage; tag filter+pills on TradesPage; tag chip form; PortfolioPage equity curve + monthly breakdown + advanced stat cards; TradingChart EMA/BB overlays + RSI + MACD sub-panes with toggle controls. | Multiple files (see project_log.md) |
+| **2026-06-21** | **Documentation Update** | Marked Priority 2 features (Multi-Timeframe Confluence, Accuracy Tracking, Compare, Alerts) as completed in gap analysis documentation. | [project_gap_analysis_and_recommendations.md](file:///c:/Users/alihe/OneDrive/Masa%C3%BCst%C3%BC/confluence-trade-crew/docs/project_gap_analysis_and_recommendations.md) |
 
 ---
 

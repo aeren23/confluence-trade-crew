@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPortfolioService, PortfolioService>();
         services.AddScoped<IPairService, PairService>();
         services.AddScoped<IUserSettingsService, UserSettingsService>();
+        services.AddScoped<IAccuracyService, AccuracyService>();
 
         return services;
     }
@@ -33,6 +34,13 @@ public static class ServiceCollectionExtensions
             var aiServiceUrl = configuration["AiService:BaseUrl"] ?? "http://ai-service:8000";
             client.BaseAddress = new Uri(aiServiceUrl);
             client.Timeout = TimeSpan.FromMinutes(15); // CrewAI pipeline can take 5–10 minutes with multiple LLM calls
+        });
+
+        // HttpClient for Binance Public API (Accuracy Tracking)
+        services.AddHttpClient("BinanceClient", client =>
+        {
+            client.BaseAddress = new Uri("https://api.binance.com");
+            client.Timeout = TimeSpan.FromSeconds(30);
         });
 
         return services;

@@ -18,5 +18,10 @@ public class AnalysisResponseDto
     public decimal LatestPrice { get; set; }
     public string ResultJson { get; set; } = string.Empty;
     
+    // Multi-Timeframe Confluence fields (null for single-TF analyses)
+    public string? TimeframesAnalyzed { get; set; }
+    public decimal? ConfluenceScore { get; set; }
+    public string? ConfluenceAlignment { get; set; }
+    
     public DateTime CreatedAt { get; set; }
 }

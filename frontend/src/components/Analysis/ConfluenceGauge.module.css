@@ -1,0 +1,171 @@
+.wrapper {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tfPills {
+  display: flex;
+  gap: 4px;
+}
+
+.tfPill {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Body: gauge + stats side by side */
+.body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.svgWrapper {
+  flex: 0 0 auto;
+  width: 200px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Stats column */
+.stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alignmentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  width: fit-content;
+}
+
+.alignIcon {
+  font-size: 14px;
+}
+
+.confRow,
+.newsAdj {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.confLabel {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.confVal {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Per-TF breakdown */
+.breakdown {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 12px;
+}
+
+.breakdownTitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 8px;
+}
+
+/* TF Bar row */
+.tfBar {
+  display: grid;
+  grid-template-columns: 36px 1fr 48px 36px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.tfLabel {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: right;
+}
+
+.tfTrack {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tfCenter {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.tfFill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  opacity: 0.8;
+  transition: width 0.4s ease;
+}
+
+.tfScore {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tfConf {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: right;
+}

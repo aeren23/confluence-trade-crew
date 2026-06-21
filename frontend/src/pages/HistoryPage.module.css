@@ -320,3 +320,75 @@
   font-size: 0.82rem;
   padding: 0 2px;
 }
+
+/* ── Compare ─────────────────────────────────────────────────────────────── */
+.compareToolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 6px 12px;
+  border-radius: var(--radius-md, 8px);
+}
+
+.compareCount {
+  font-size: 0.8rem;
+  color: #c4b5fd;
+  font-weight: 500;
+}
+
+.compareBtn {
+  background: rgba(139, 92, 246, 0.8);
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.compareBtn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 1);
+}
+
+.compareBtn:disabled {
+  background: rgba(139, 92, 246, 0.3);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.clearCompareBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.clearCompareBtn:hover {
+  color: var(--text-primary);
+}
+
+.chkTh {
+  width: 30px;
+  padding-left: 14px !important;
+  padding-right: 0 !important;
+}
+
+.chkTd {
+  width: 30px;
+  padding-left: 14px !important;
+  padding-right: 0 !important;
+}
+
+.compareChk {
+  cursor: pointer;
+  accent-color: #8b5cf6;
+}
+
+.rowSelected {
+  background: rgba(139, 92, 246, 0.05) !important;
+}

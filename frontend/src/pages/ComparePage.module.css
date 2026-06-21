@@ -1,0 +1,217 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  height: 100%;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 300px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.spin {
+  animation: spinAnim 0.7s linear infinite;
+  color: var(--accent-primary, #00f0ff);
+}
+
+.errorIcon { color: #f87171; }
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent-primary, #00f0ff);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.backLink:hover { text-decoration: underline; }
+
+/* ── Header row ─────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.backBtn:hover { color: var(--text-primary); }
+
+.sep { color: rgba(255,255,255,0.2); }
+
+.idLabel {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.headerTitle h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── Comparison Grid ─────────────────────────────────────────────────────── */
+.comparisonGrid {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex: 1;
+  min-height: 0;
+}
+
+.compareCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0; /* prevent overflow */
+}
+
+.divider {
+  width: 1px;
+  background: var(--border-color, rgba(255, 255, 255, 0.08));
+  align-self: stretch;
+}
+
+/* ── Column Header ──────────────────────────────────────────────────────── */
+.colHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--space-4);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md, 8px);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metaSentiment {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.bullish { color: #4ade80; }
+.bearish { color: #f87171; }
+.neutral { color: #fbbf24; }
+
+.metaSymbol {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-left: auto; /* push to right */
+}
+
+.metaTf {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.metaSub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.metaSub b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.metaDate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+}
+
+.viewFullBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 6px 12px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: var(--radius-md, 8px);
+  color: var(--accent-primary, #00f0ff);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.viewFullBtn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.panelWrapper {
+  /* This prevents the SynthesisPanel from taking full width of the screen, constraining it to the column */
+  /* Note: SynthesisPanelStatic has its own internal grid, it should adapt. */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+@keyframes spinAnim {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .comparisonGrid {
+    flex-direction: column;
+  }
+  .divider {
+    height: 1px;
+    width: 100%;
+  }
+}

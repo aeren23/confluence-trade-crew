@@ -70,6 +70,21 @@ public class AnalysisConfiguration : IEntityTypeConfiguration<Analysis>
             .HasColumnName("created_at")
             .HasDefaultValueSql("now()")
             .IsRequired();
+
+        builder.Property(a => a.TimeframesAnalyzed)
+            .HasColumnName("timeframes_analyzed")
+            .HasMaxLength(100)
+            .IsRequired(false);
+
+        builder.Property(a => a.ConfluenceScore)
+            .HasColumnName("confluence_score")
+            .HasColumnType("numeric(4,3)")
+            .IsRequired(false);
+
+        builder.Property(a => a.ConfluenceAlignment)
+            .HasColumnName("confluence_alignment")
+            .HasMaxLength(15)
+            .IsRequired(false);
             
         // Indexes
         builder.HasIndex(a => new { a.Symbol, a.CreatedAt }).IsDescending(false, true);
