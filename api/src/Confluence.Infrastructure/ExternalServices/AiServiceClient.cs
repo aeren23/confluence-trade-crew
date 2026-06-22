@@ -20,7 +20,8 @@ public class AiServiceClient : IAiServiceClient
         decimal riskPercentage,
         string sessionId,
         string riskProfile = "moderate",
-        IEnumerable<string>? timeframes = null)
+        IEnumerable<string>? timeframes = null,
+        Dictionary<string, object>? strategyConfig = null)
     {
         var payload = new
         {
@@ -31,7 +32,9 @@ public class AiServiceClient : IAiServiceClient
             session_id = sessionId,
             risk_profile = riskProfile,
             // Only include timeframes when multi-TF is requested; null omits the field.
-            timeframes = timeframes?.ToList()
+            timeframes = timeframes?.ToList(),
+            // Only include strategy_config when a strategy template is selected.
+            strategy_config = strategyConfig
         };
 
         var response = await _httpClient.PostAsJsonAsync("/analyze", payload);

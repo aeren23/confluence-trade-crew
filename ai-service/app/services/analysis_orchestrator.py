@@ -66,6 +66,17 @@ class AnalysisOrchestrator:
             # 2. Kickoff execution
             # CrewAI v2 kickoff accepts a dict of inputs that get interpolated into prompts
             profile = _RISK_PROFILES.get(request.risk_profile, _RISK_PROFILES["moderate"])
+
+            # Strategy config overrides: when a strategy template is selected, its
+            # minimum R:R and news weight take precedence over the risk profile defaults.
+            rr_minimum = profile["rr_minimum"]
+            if request.strategy_config and "minimum_rr" in request.strategy_config:
+                rr_minimum = float(request.strategy_config["minimum_rr"])
+
+            news_weight = 0.20  # default news influence
+            if request.strategy_config and "news_weight" in request.strategy_config:
+                news_weight = float(request.strategy_config["news_weight"])
+
             result = await crew_instance.kickoff_async(
                 inputs={
                     "symbol": request.symbol,
@@ -74,10 +85,12 @@ class AnalysisOrchestrator:
                     "risk_percentage": request.risk_percentage,
                     "limit": 200,
                     # Risk profile thresholds — interpolated into risk_agent.py prompt
-                    "rr_minimum": profile["rr_minimum"],
+                    "rr_minimum": rr_minimum,
                     "rr_ideal": profile["rr_ideal"],
                     "neutral_lo": profile["neutral_lo"],
                     "neutral_hi": profile["neutral_hi"],
+                    # Strategy-aware news weight — interpolated into orchestrator prompt
+                    "news_weight": news_weight,
                 }
             )
 

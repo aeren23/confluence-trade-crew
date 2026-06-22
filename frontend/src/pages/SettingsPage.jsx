@@ -3,6 +3,7 @@ import styles from './SettingsPage.module.css';
 import { SettingsService, PairService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
 import { Save, CheckCircle2, Loader2, AlertTriangle, Plus, Star, Power } from 'lucide-react';
+import StrategyManager from '../components/Settings/StrategyManager';
 
 const TIMEFRAMES = ['1m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w'];
 
@@ -110,7 +111,7 @@ const SettingsPage = () => {
 
   return (
     <div className={styles.page}>
-      <form className={styles.form} onSubmit={handleSave}>
+      <div className={styles.form}>
         {/* Trading defaults card */}
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>Trading Defaults</h3>
@@ -227,6 +228,9 @@ const SettingsPage = () => {
           </div>
         </div>
 
+        {/* Custom Strategy Manager */}
+        <StrategyManager />
+
         {/* Pair management card */}
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>Tracked Pairs</h3>
@@ -295,7 +299,7 @@ const SettingsPage = () => {
         )}
 
         <div className={styles.saveRow}>
-          <button type="submit" className={styles.saveBtn} disabled={saving}>
+          <button type="button" onClick={handleSave} className={styles.saveBtn} disabled={saving}>
             {saving ? (
               <><Loader2 size={14} className={styles.spin} /> Saving...</>
             ) : saved ? (
@@ -306,7 +310,7 @@ const SettingsPage = () => {
           </button>
           {saved && <span className={styles.savedMsg}>Settings saved successfully.</span>}
         </div>
-      </form>
+      </div>
     </div>
   );
 };

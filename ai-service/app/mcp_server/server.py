@@ -27,6 +27,10 @@ from app.mcp_server.tools import (
     get_pair_news,
     get_market_news,
     scrape_article,
+    get_funding_rate,
+    get_open_interest,
+    get_long_short_ratio,
+    get_derivatives_summary,
 )
 
 # Create MCP server instance
@@ -161,6 +165,70 @@ async def list_tools() -> list[Tool]:
                 "required": ["url"],
             },
         ),
+        # ── On-Chain / Derivatives Tools ─────────────────────────────────────
+        Tool(
+            name="get_funding_rate",
+            description=(
+                "Fetch current and historical funding rates from Binance Futures. "
+                "Positive rates = longs paying shorts (bearish contrarian). "
+                "Negative rates = shorts paying longs (bullish contrarian). "
+                "Extreme rates (>±0.05%) are strong squeeze risk signals."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Trading pair, e.g. 'BTC/USDT'"},
+                    "limit": {"type": "integer", "default": 8, "description": "Number of historical periods"},
+                },
+                "required": ["symbol"],
+            },
+        ),
+        Tool(
+            name="get_open_interest",
+            description=(
+                "Fetch open interest (total outstanding contracts) from Binance Futures. "
+                "Rising OI + rising price = healthy trend. Falling OI + rising price = weakness. "
+                "Sharp OI drops signal potential liquidation cascades."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Trading pair, e.g. 'BTC/USDT'"},
+                },
+                "required": ["symbol"],
+            },
+        ),
+        Tool(
+            name="get_long_short_ratio",
+            description=(
+                "Fetch global and top-trader long/short account ratios from Binance Futures. "
+                "Extreme long bias (>70% longs) is a contrarian bearish signal. "
+                "Extreme short bias (<30% longs) is a contrarian bullish signal."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Trading pair, e.g. 'BTC/USDT'"},
+                    "period": {"type": "string", "default": "1h", "description": "Interval: 5m|15m|1h|4h|1d"},
+                },
+                "required": ["symbol"],
+            },
+        ),
+        Tool(
+            name="get_derivatives_summary",
+            description=(
+                "PRIMARY on-chain tool. Aggregates funding rate + open interest + long/short ratio "
+                "into a single composite derivatives sentiment score (-1.0 to +1.0). "
+                "Call this first for a comprehensive overview; use individual tools for drill-down."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Trading pair, e.g. 'BTC/USDT'"},
+                },
+                "required": ["symbol"],
+            },
+        ),
     ]
 
 
@@ -179,6 +247,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         "get_pair_news": get_pair_news,
         "get_market_news": get_market_news,
         "scrape_article": scrape_article,
+        # On-Chain tools
+        "get_funding_rate": get_funding_rate,
+        "get_open_interest": get_open_interest,
+        "get_long_short_ratio": get_long_short_ratio,
+        "get_derivatives_summary": get_derivatives_summary,
     }
 
     handler = tool_map.get(name)

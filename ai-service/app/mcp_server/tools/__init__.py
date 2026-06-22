@@ -1,5 +1,5 @@
 """
-MCP Server tools — Data, Indicator, and News tools.
+MCP Server tools — Data, Indicator, News, and On-Chain tools.
 """
 
 from app.mcp_server.tools.data_tools import get_ohlcv
@@ -11,6 +11,12 @@ from app.mcp_server.tools.indicator_tools import (
     analyze_volume_profile,
 )
 from app.mcp_server.tools.news_tools import get_market_news, get_pair_news, scrape_article
+from app.mcp_server.tools.onchain_tools import (
+    get_funding_rate,
+    get_open_interest,
+    get_long_short_ratio,
+    get_derivatives_summary,
+)
 
 __all__ = [
     "get_ohlcv",
@@ -22,4 +28,8 @@ __all__ = [
     "get_pair_news",
     "get_market_news",
     "scrape_article",
+    "get_funding_rate",
+    "get_open_interest",
+    "get_long_short_ratio",
+    "get_derivatives_summary",
 ]

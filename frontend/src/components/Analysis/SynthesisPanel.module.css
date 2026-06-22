@@ -513,6 +513,39 @@
 
 .metaLinkBtn:hover { opacity: 0.75; }
 
+/* ── On-Chain / Derivatives ───────────────────────────────────────────── */
+.onchainRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 4px 0;
+  font-size: 0.82rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+.onchainRow:last-child {
+  border-bottom: none;
+}
+
+.onchainWarnings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(248, 113, 113, 0.05);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.onchainWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
 /* ── Position Sizing Card ─────────────────────────────────────────────── */
 .sizingRow_outer {
   display: flex;

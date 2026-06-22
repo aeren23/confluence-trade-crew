@@ -40,6 +40,7 @@ class LLMConfig(BaseSettings):
     llm_news_agent_model: str = ""
     llm_risk_agent_model: str = ""
     llm_orchestrator_model: str = ""
+    llm_onchain_agent_model: str = ""  # On-Chain Agent override (defaults to LLM_DEFAULT)
 
     # Common LLM parameters
     llm_temperature: float = 0.1  # Low for deterministic analysis output
@@ -59,6 +60,7 @@ class LLMConfig(BaseSettings):
         "news": "llm_news_agent_model",
         "risk": "llm_risk_agent_model",
         "orchestrator": "llm_orchestrator_model",
+        "onchain": "llm_onchain_agent_model",
     }
 
     def get_model_string(self, agent_name: str) -> str:

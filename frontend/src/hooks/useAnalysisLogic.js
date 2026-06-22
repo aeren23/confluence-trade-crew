@@ -59,6 +59,14 @@ export const useAnalysisLogic = () => {
         timeframes: store.isMultiTfMode && store.selectedTimeframes.length >= 2
           ? store.selectedTimeframes
           : undefined,
+        // Strategy config: forwarded to AI service when a strategy template is selected
+        strategyConfig: store.selectedStrategy
+          ? {
+              timeframe_weights: store.selectedStrategy.timeframeWeights || {},
+              news_weight: store.selectedStrategy.newsWeight ?? 0.20,
+              minimum_rr: store.selectedStrategy.minimumRR ?? 1.5,
+            }
+          : undefined,
       };
 
       const result = await AnalysisService.triggerAnalysis(payload);

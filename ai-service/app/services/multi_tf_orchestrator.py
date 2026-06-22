@@ -165,8 +165,16 @@ class MultiTimeframeOrchestrator:
         secondary_results = await self._run_secondary_timeframes(request, secondary_timeframes)
 
         # Step 3: Build per-timeframe results list
+        # Strategy config weights override defaults when a strategy template is selected.
+        strategy_weights: dict[str, float] = {}
+        if request.strategy_config and "timeframe_weights" in request.strategy_config:
+            strategy_weights = {
+                k: float(v)
+                for k, v in request.strategy_config["timeframe_weights"].items()
+            }
+
         timeframe_weights = {
-            tf: DEFAULT_TIMEFRAME_WEIGHTS.get(tf, 1.0 / len(unique_timeframes))
+            tf: strategy_weights.get(tf, DEFAULT_TIMEFRAME_WEIGHTS.get(tf, 1.0 / len(unique_timeframes)))
             for tf in unique_timeframes
         }
 

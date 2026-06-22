@@ -531,6 +531,91 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
           </div>
         )}
 
+        {/* On-Chain / Derivatives Card */}
+        {agents?.onchain && (() => {
+          const onchain = agents.onchain;
+          const od = onchain.details || {};
+          const squeezeSeverity = {
+            EXTREME: 'red', HIGH: 'red', MEDIUM: 'amber', LOW: 'green', NONE: 'default',
+          };
+          const fundingSentColors = {
+            extreme_greed: 'red', greed: 'amber', neutral: 'default', fear: 'cyan', extreme_fear: 'cyan',
+          };
+          return (
+            <div className={styles.agentCard}>
+              <h3>⛓️ On-Chain &amp; Derivatives</h3>
+              <AgentMeta agentData={onchain} />
+              <p className={styles.cardSummary}>{synthesis?.agent_summaries?.onchain}</p>
+
+              {/* Funding Rate */}
+              {od.funding_rate_pct != null && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Funding Rate</span>
+                  <span className={styles.detailVal}>
+                    {od.funding_rate_pct >= 0 ? '+' : ''}{Number(od.funding_rate_pct).toFixed(4)}%
+                  </span>
+                  {od.funding_sentiment && (
+                    <Pill variant={fundingSentColors[od.funding_sentiment] || 'default'}>
+                      {od.funding_sentiment.replace('_', ' ')}
+                    </Pill>
+                  )}
+                </div>
+              )}
+
+              {/* Crowd Positioning */}
+              {od.long_pct != null && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Crowd Longs</span>
+                  <span className={styles.detailVal}>{Number(od.long_pct).toFixed(1)}%</span>
+                  {od.retail_sentiment && (
+                    <Pill variant={
+                      od.retail_sentiment === 'overleveraged_long' ? 'red' :
+                      od.retail_sentiment === 'overleveraged_short' ? 'cyan' : 'default'
+                    }>
+                      {od.retail_sentiment.replace(/_/g, ' ')}
+                    </Pill>
+                  )}
+                </div>
+              )}
+
+              {/* OI Trend */}
+              {od.oi_trend && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Open Interest</span>
+                  <Pill variant={
+                    od.oi_trend === 'increasing' ? 'green' :
+                    od.oi_trend === 'decreasing' ? 'red' : 'default'
+                  }>
+                    {od.oi_trend}
+                  </Pill>
+                </div>
+              )}
+
+              {/* Squeeze Risk */}
+              {od.squeeze_risk && od.squeeze_risk !== 'NONE' && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Squeeze Risk</span>
+                  <Pill variant={squeezeSeverity[od.squeeze_risk] || 'default'}>
+                    {od.squeeze_risk}
+                  </Pill>
+                </div>
+              )}
+
+              {/* Warnings */}
+              {od.warnings && od.warnings.length > 0 && (
+                <div className={styles.onchainWarnings}>
+                  {od.warnings.map((w, i) => (
+                    <div key={i} className={styles.onchainWarning}>
+                      <AlertTriangle size={12} className={styles.bearish} />
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Risk & Sizing Card */}
         {risk && (
           <div className={styles.agentCard}>

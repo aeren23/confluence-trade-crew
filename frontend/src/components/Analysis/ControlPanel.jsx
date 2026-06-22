@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import styles from './ControlPanel.module.css';
 import useAppStore from '../../store/useAppStore';
 import { useAnalysisLogic } from '../../hooks/useAnalysisLogic';
-import { Play, Loader2, Settings, Layers } from 'lucide-react';
-import { PairService } from '../../services/apiClient';
+import { Play, Loader2, Settings, Layers, Sparkles, X } from 'lucide-react';
+import { PairService, StrategyService } from '../../services/apiClient';
 
 // Ordered list of available timeframes for MTF chip selection
 const AVAILABLE_TIMEFRAMES = ['15m', '1h', '4h', '1d'];
@@ -12,9 +12,9 @@ const AVAILABLE_TIMEFRAMES = ['15m', '1h', '4h', '1d'];
 const ControlPanel = () => {
   const {
     symbol, timeframe, balance, riskPercentage, elapsedSeconds, riskProfile,
-    isMultiTfMode, selectedTimeframes,
+    isMultiTfMode, selectedTimeframes, selectedStrategy,
     setSymbol, setTimeframe, setBalance, setRiskPercentage,
-    toggleMultiTfMode, toggleTimeframe,
+    toggleMultiTfMode, toggleTimeframe, setSelectedStrategy,
   } = useAppStore();
   const { runAnalysis, status } = useAnalysisLogic();
 
@@ -22,11 +22,18 @@ const ControlPanel = () => {
   const riskAmount = balance && riskPercentage ? (balance * riskPercentage / 100).toFixed(2) : '—';
 
   const [pairs, setPairs] = useState([]);
+  const [strategies, setStrategies] = useState([]);
 
   useEffect(() => {
     PairService.getAll()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) setPairs(data);
+      })
+      .catch(() => {});
+
+    StrategyService.getAll()
+      .then((data) => {
+        if (Array.isArray(data)) setStrategies(data);
       })
       .catch(() => {});
   }, []);
@@ -35,6 +42,17 @@ const ControlPanel = () => {
     if (s < 60) return `${s}s`;
     return `${Math.floor(s / 60)}m ${s % 60}s`;
   };
+
+  const handleStrategySelect = (strategy) => {
+    if (selectedStrategy?.id === strategy.id) {
+      // Deselect: back to manual mode
+      setSelectedStrategy(null);
+    } else {
+      setSelectedStrategy(strategy);
+    }
+  };
+
+  const clearStrategy = () => setSelectedStrategy(null);
 
   return (
     <div className={`glass-card ${styles.panel}`}>
@@ -51,6 +69,78 @@ const ControlPanel = () => {
           </Link>
         </div>
       </div>
+
+      {/* ── Strategy Templates ───────────────────────────────── */}
+      {strategies.length > 0 && (
+        <div className={styles.strategySection}>
+          <div className={styles.strategySectionHeader}>
+            <Sparkles size={12} className={styles.strategyIcon} />
+            <span>Strategy</span>
+            {selectedStrategy && (
+              <button
+                className={styles.clearStrategy}
+                onClick={clearStrategy}
+                title="Back to manual mode"
+              >
+                <X size={11} />
+                Manual
+              </button>
+            )}
+          </div>
+          <div className={styles.strategyPills}>
+            {strategies.map((s) => (
+              <button
+                key={s.id}
+                id={`strategy-pill-${s.name}`}
+                className={`${styles.strategyPill} ${selectedStrategy?.id === s.id ? styles.strategyPillActive : ''}`}
+                onClick={() => handleStrategySelect(s)}
+                disabled={isLoading}
+                title={s.description}
+                style={selectedStrategy?.id === s.id ? { '--strategy-color': s.colorHex } : {}}
+              >
+                <span className={styles.strategyEmoji}>{s.iconEmoji}</span>
+                <span className={styles.strategyName}>{s.displayName}</span>
+              </button>
+            ))}
+          </div>
+          {selectedStrategy && (
+            <div className={styles.strategyInfo} style={{ '--strategy-color': selectedStrategy.colorHex }}>
+              <div className={styles.strategyInfoMain}>
+                <span className={styles.strategyInfoLabel}>Active:</span>
+                <span className={styles.strategyInfoName}>
+                  {selectedStrategy.iconEmoji} {selectedStrategy.displayName}
+                </span>
+                <span className={styles.strategyInfoTfs}>
+                  {selectedStrategy.timeframes?.join(' → ')}
+                </span>
+              </div>
+              <div className={styles.strategyMetaBar}>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>Min R:R</span>
+                  <span className={styles.metaValue}>{selectedStrategy.minimumRR}</span>
+                </div>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>News Weight</span>
+                  <span className={styles.metaValue}>{(selectedStrategy.newsWeight * 100).toFixed(0)}%</span>
+                </div>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>TA / On-Chain</span>
+                  <span className={styles.metaValue}>{((1 - selectedStrategy.newsWeight) * 100).toFixed(0)}%</span>
+                </div>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>Risk</span>
+                  <span className={styles.metaValue} style={{textTransform: 'capitalize'}}>{selectedStrategy.riskProfile}</span>
+                </div>
+              </div>
+              {selectedStrategy.description && (
+                <div className={styles.strategyDescription}>
+                  {selectedStrategy.description}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.grid}>
         {/* Trading Pair */}

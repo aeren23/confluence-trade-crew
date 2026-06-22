@@ -101,6 +101,10 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 16. ✅ Analysis Comparison (`ComparePage.jsx` side-by-side comparison, `HistoryPage.jsx` checkbox selection).
 17. ✅ Alert System (`AlertWidget.jsx` in Dashboard showing high-confidence, non-neutral recent signals).
 
+### Recently Completed (2026-06-22)
+18. ✅ Strategy Templates (`StrategyTemplate` entity, DB Seeding, `StrategyService`, API endpoints, ControlPanel pills, AI service weight overrides injection).
+19. ✅ On-Chain & Derivatives Integration (Binance Futures tools: funding, OI, LS ratio; `OnChainAgent` with prompt; `confluence_crew` wiring; JSON schema updates; SynthesisPanel UI card).
+
 ---
 
 ## 4. Solved Problems & Challenge Log

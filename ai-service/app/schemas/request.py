@@ -38,3 +38,9 @@ class AnalysisRequest(BaseModel):
     risk_percentage: float = Field(default=2.0, gt=0, le=100, description="Risk percentage per trade")
     session_id: str | None = Field(default=None, description="Optional UUID to broadcast live telemetry via Redis Pub/Sub")
     risk_profile: str = Field(default="moderate", description="Trading risk appetite: conservative | moderate | aggressive")
+    strategy_config: dict | None = Field(
+        default=None,
+        description="Optional strategy template configuration injected by the .NET API when a strategy is selected. "
+                    "Keys: timeframe_weights (dict), news_weight (float). "
+                    "When provided, overrides DEFAULT_TIMEFRAME_WEIGHTS and news scoring weight."
+    )

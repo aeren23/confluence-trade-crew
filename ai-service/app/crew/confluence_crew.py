@@ -19,6 +19,7 @@ from app.crew.prompts import (
     orchestrator as orch_prompts,
     risk_agent as risk_prompts,
     ta_agent as ta_prompts,
+    onchain_agent as onchain_prompts,
 )
 from app.llm.factory import LLMFactory
 from app.schemas.response import AgentOutput, SynthesisOutput
@@ -194,6 +195,20 @@ class ConfluenceTradeCrew:
         )
 
     @agent
+    def onchain_agent(self) -> Agent:
+        return Agent(
+            role=onchain_prompts.ROLE,
+            goal=onchain_prompts.GOAL,
+            backstory=onchain_prompts.BACKSTORY,
+            llm=self._llm_factory.create("onchain"),
+            mcps=[self._mcp],
+            max_iter=8,
+            max_retry_limit=2,
+            verbose=True,
+            step_callback=self._make_step_callback("On-Chain Agent"),
+        )
+
+    @agent
     def orchestrator_agent(self) -> Agent:
         return Agent(
             role=orch_prompts.ROLE,
@@ -232,7 +247,17 @@ class ConfluenceTradeCrew:
             expected_output=news_prompts.EXPECTED_OUTPUT,
             agent=self.news_agent(),
             context=[self.data_task()],  # Only needs symbol from data/request
-            async_execution=True,  # Runs in parallel with ta_task
+            async_execution=True,  # Runs in parallel with ta_task and onchain_task
+        )
+
+    @task
+    def onchain_task(self) -> Task:
+        return Task(
+            description=onchain_prompts.TASK_DESCRIPTION,
+            expected_output=onchain_prompts.EXPECTED_OUTPUT,
+            agent=self.onchain_agent(),
+            context=[self.data_task()],  # Needs symbol; runs in parallel with TA and News
+            async_execution=True,
         )
 
     @task
@@ -241,7 +266,7 @@ class ConfluenceTradeCrew:
             description=risk_prompts.TASK_DESCRIPTION,
             expected_output=risk_prompts.EXPECTED_OUTPUT,
             agent=self.risk_agent(),
-            context=[self.ta_task(), self.news_task()],  # Waits for both TA and News
+            context=[self.ta_task(), self.news_task(), self.onchain_task()],  # Waits for TA, News, and On-Chain
             async_execution=False,
         )
 
@@ -251,7 +276,10 @@ class ConfluenceTradeCrew:
             description=orch_prompts.TASK_DESCRIPTION,
             expected_output=orch_prompts.EXPECTED_OUTPUT,
             agent=self.orchestrator_agent(),
-            context=[self.data_task(), self.ta_task(), self.news_task(), self.risk_task()],
+            context=[
+                self.data_task(), self.ta_task(), self.news_task(),
+                self.onchain_task(), self.risk_task()
+            ],
             # We don't strictly use output_pydantic here because we wrap it later,
             # but we could define a specific model. Let's just output JSON.
         )

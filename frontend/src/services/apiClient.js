@@ -86,4 +86,22 @@ export const TradeService = {
     apiClient.get(`/api/trade/by-analysis/${analysisId}`).then((r) => r.data),
 };
 
+// ── Strategy Templates ────────────────────────────────────────────────────────
+export const StrategyService = {
+  getAll: () =>
+    apiClient.get('/api/strategy').then((r) => r.data),
+
+  getById: (id) =>
+    apiClient.get(`/api/strategy/${id}`).then((r) => r.data),
+
+  create: (payload) =>
+    apiClient.post('/api/strategy', payload).then((r) => r.data),
+
+  update: (id, payload) =>
+    apiClient.put(`/api/strategy/${id}`, payload).then((r) => r.data),
+
+  remove: (id) =>
+    apiClient.delete(`/api/strategy/${id}`).then((r) => r.data),
+};
+
 export default apiClient;

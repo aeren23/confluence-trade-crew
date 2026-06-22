@@ -11,6 +11,9 @@ const useAppStore = create((set, get) => ({
   riskPercentage: 2,
   riskProfile: 'moderate',  // conservative | moderate | aggressive
 
+  // ── Strategy Template state ─────────────────────────────────────────────
+  selectedStrategy: null,   // null = manual mode; object = StrategyTemplateDto
+
   // ── Multi-Timeframe state ───────────────────────────────────────────────
   isMultiTfMode: false,                         // Toggle for MTF analysis
   selectedTimeframes: DEFAULT_MTF_TIMEFRAMES,   // Chosen TF set
@@ -37,6 +40,26 @@ const useAppStore = create((set, get) => ({
   setBalance: (balance) => set({ balance }),
   setRiskPercentage: (riskPercentage) => set({ riskPercentage }),
   setRiskProfile: (riskProfile) => set({ riskProfile }),
+
+  // ── Strategy Template actions ────────────────────────────────────────────
+  setSelectedStrategy: (strategy) => {
+    if (!strategy) {
+      // Manual mode: clear strategy selection
+      set({ selectedStrategy: null });
+      return;
+    }
+    // Auto-apply strategy parameters
+    const updates = {
+      selectedStrategy: strategy,
+      riskProfile: strategy.riskProfile || get().riskProfile,
+    };
+    // If strategy defines timeframes and we're in MTF mode or enabling it
+    if (strategy.timeframes && strategy.timeframes.length >= 2) {
+      updates.isMultiTfMode = true;
+      updates.selectedTimeframes = strategy.timeframes;
+    }
+    set(updates);
+  },
 
   // ── Multi-Timeframe actions ─────────────────────────────────────────────
   toggleMultiTfMode: () => set((state) => ({ isMultiTfMode: !state.isMultiTfMode })),

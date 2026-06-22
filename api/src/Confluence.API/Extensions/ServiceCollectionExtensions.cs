@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPairService, PairService>();
         services.AddScoped<IUserSettingsService, UserSettingsService>();
         services.AddScoped<IAccuracyService, AccuracyService>();
+        services.AddScoped<IStrategyService, StrategyService>();
 
         return services;
     }

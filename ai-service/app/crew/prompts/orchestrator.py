@@ -18,15 +18,20 @@ BACKSTORY = (
 
 TASK_DESCRIPTION = (
     "1. Review the detailed text reports from the Data, TA, News, and Risk agents.\n"
-    "2. Calculate overall sentiment with dynamic weighting:\n"
-    "   STEP A — Choose the weighting formula:\n"
-    "   - If News confidence < 0.30 (poor/no news data): weight_ta = 0.80, weight_news = 0.20\n"
-    "   - Else if |TA_confidence - News_confidence| > 0.15 (one signal is clearly more reliable):\n"
-    "       weight_ta   = TA_confidence  / (TA_confidence + News_confidence)\n"
-    "       weight_news = News_confidence / (TA_confidence + News_confidence)\n"
-    "   - Default (confidences within 15%% of each other): weight_ta = 0.60, weight_news = 0.40\n"
+    "2. Calculate overall sentiment with dynamic weighting (TA, News, and On-Chain):\n"
+    "   Strategy news weight override: {news_weight:.2f} (set by the selected strategy template).\n"
+    "   Base Weights: TA = 1.0 - {news_weight:.2f} - 0.10, News = {news_weight:.2f}, On-Chain = 0.10\n"
+    "   STEP A — Adjust for confidence:\n"
+    "   - Multiply each base weight by its agent's confidence score.\n"
+    "   - e.g., adj_ta = base_ta * TA_confidence, adj_news = base_news * News_confidence, adj_onchain = base_onchain * Onchain_confidence\n"
+    "   - If an agent's confidence is < 0.30 or data is missing, its adj_weight becomes 0.\n"
+    "   - Normalize the adjusted weights so they sum to 1.0.\n"
+    "       total_adj = adj_ta + adj_news + adj_onchain\n"
+    "       weight_ta = adj_ta / total_adj\n"
+    "       weight_news = adj_news / total_adj\n"
+    "       weight_onchain = adj_onchain / total_adj\n"
     "   STEP B — Compute the score:\n"
-    "       overall_sentiment_score = (TA_score * weight_ta) + (News_score * weight_news)\n"
+    "       overall_sentiment_score = (TA_score * weight_ta) + (News_score * weight_news) + (OnChain_score * weight_onchain)\n"
     "   STEP C — Map score to sentiment label using STRICT thresholds:\n"
     "       overall_sentiment = 'bullish' if overall_sentiment_score > 0.25\n"
     "       overall_sentiment = 'bearish' if overall_sentiment_score < -0.25\n"
@@ -44,9 +49,12 @@ TASK_DESCRIPTION = (
     "4. Confidence rules for synthesis.confidence and per-agent confidence:\n"
     "   - Base floor when tools succeeded: minimum 0.50 per agent (unless agent explicitly reported tool failure)\n"
     "   - Signal confluence bonus: +0.10 to +0.30 when TA and News agree in direction\n"
-    "   - synthesis.confidence = weighted average of TA and News confidence, capped at 0.95\n"
-    "5. Write a comprehensive summary explaining the synthesis. Explicitly mention "
-    "   the Risk agent's leverage range, trade direction, and risk assessment.\n"
+    "   - If On-Chain agent reported EXTREME conditions (squeeze risk HIGH/EXTREME), apply a caution penalty: -0.10 to overall confidence\n"
+    "   - synthesis.confidence = weighted average of TA, News, and On-Chain confidence, capped at 0.95\n"
+    "5. Write a comprehensive summary explaining the synthesis. Explicitly mention:\n"
+    "   - The Risk agent's leverage range, trade direction, and risk assessment\n"
+    "   - Any extreme derivatives conditions reported by the On-Chain agent (if applicable)\n"
+    "   - Whether the on-chain signal supports or conflicts with TA direction\n"
     "6. Extract 1-sentence summaries and scores for each agent to populate the agents dictionary.\n"
     "7. IMPORTANT — Extract indicator values for technical_analysis.details.indicators:\n"
     "   PRIMARY: Look for the TA agent's INDICATOR_DATA JSON block (fenced ```json block at end of TA report).\n"
@@ -125,6 +133,22 @@ TASK_DESCRIPTION = (
     '          "short": {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>}}\n'
     '        }}\n'
     '      }}\n'
+    '    }},\n'
+    '    "onchain": {{\n'
+    '      "agent": "onchain",\n'
+    '      "sentiment": "bullish | bearish | neutral",\n'
+    '      "sentiment_score": <-1.0 to 1.0>,\n'
+    '      "confidence": <0.0 to 1.0>,\n'
+    '      "summary": "<1-sentence summary of on-chain/derivatives data>",\n'
+    '      "details": {{\n'
+    '        "funding_rate_pct": <float or null>,\n'
+    '        "funding_sentiment": "<extreme_greed | greed | neutral | fear | extreme_fear>",\n'
+    '        "long_pct": <float or null>,\n'
+    '        "retail_sentiment": "<overleveraged_long | leaning_long | balanced | leaning_short | overleveraged_short>",\n'
+    '        "oi_trend": "<increasing | decreasing | flat>",\n'
+    '        "squeeze_risk": "<NONE | LOW | MEDIUM | HIGH | EXTREME>",\n'
+    '        "warnings": [<string>, ...]\n'
+    '      }}\n'
     '    }}\n'
     '  }},\n'
     '  "synthesis": {{\n'
@@ -136,6 +160,7 @@ TASK_DESCRIPTION = (
     '    "agent_summaries": {{\n'
     '      "technical_analysis": "<1-sentence summary from TA output>",\n'
     '      "news": "<1-sentence summary from News output>",\n'
+    '      "onchain": "<1-sentence summary from On-Chain output>",\n'
     '      "risk": "<1-sentence summary from Risk output>"\n'
     '    }}\n'
     '  }},\n'
