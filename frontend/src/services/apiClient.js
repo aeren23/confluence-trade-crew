@@ -104,4 +104,10 @@ export const StrategyService = {
     apiClient.delete(`/api/strategy/${id}`).then((r) => r.data),
 };
 
+// ── Backtest ─────────────────────────────────────────────────────────────────
+export const BacktestService = {
+  run: (payload) =>
+    apiClient.post('/api/backtest/run', payload).then((r) => r.data),
+};
+
 export default apiClient;

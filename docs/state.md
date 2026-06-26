@@ -101,9 +101,9 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 16. ✅ Analysis Comparison (`ComparePage.jsx` side-by-side comparison, `HistoryPage.jsx` checkbox selection).
 17. ✅ Alert System (`AlertWidget.jsx` in Dashboard showing high-confidence, non-neutral recent signals).
 
-### Recently Completed (2026-06-22)
-18. ✅ Strategy Templates (`StrategyTemplate` entity, DB Seeding, `StrategyService`, API endpoints, ControlPanel pills, AI service weight overrides injection).
-19. ✅ On-Chain & Derivatives Integration (Binance Futures tools: funding, OI, LS ratio; `OnChainAgent` with prompt; `confluence_crew` wiring; JSON schema updates; SynthesisPanel UI card).
+### Recently Completed (2026-06-25)
+20. ✅ Algorithmic Vectorized Backtest Mode (`ai-service` backtest_engine.py, `api` BacktestController.cs, `frontend` BacktestPage.jsx ve BacktestDashboard.jsx). AI logic is simulated locally over Pandas using ccxt historical fetch without blocking LLM calls.
+
 
 ---
 
@@ -133,6 +133,7 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 | **2026-06-18** | **GitHub Models rate limit hit (`gpt-4o-mini`)** | `UserByModelByDay` quota (150 req/day) exhausted for single model. Fixed by distributing agents across 5 separate Low-tier GitHub Models (750 total req/day). Added Gemini provider support (SDK + API key). Added explicit API key passthrough in `LLMFactory` via provider→env-var map. Updated `.env.example` with full multi-provider cheat-sheet. | `config.py`, `factory.py`, `requirements.txt`, `.env.example` |
 | **2026-06-21** | **Professional Trading Journal** | Backend: latest_price extraction; Tags column+migration; PortfolioService expanded (AvgRR, Expectancy, MaxDrawdown, RecoveryFactor, streaks, monthly, equity); by-analysis endpoint. Frontend: linked trades card on AnalysisDetailPage; tag filter+pills on TradesPage; tag chip form; PortfolioPage equity curve + monthly breakdown + advanced stat cards; TradingChart EMA/BB overlays + RSI + MACD sub-panes with toggle controls. | Multiple files (see project_log.md) |
 | **2026-06-21** | **Documentation Update** | Marked Priority 2 features (Multi-Timeframe Confluence, Accuracy Tracking, Compare, Alerts) as completed in gap analysis documentation. | [project_gap_analysis_and_recommendations.md](file:///c:/Users/alihe/OneDrive/Masa%C3%BCst%C3%BC/confluence-trade-crew/docs/project_gap_analysis_and_recommendations.md) |
+| **2026-06-25** | **Backtest Simulation Speed Limit** | Calling CrewAI LLM for every candle in history would take days and thousands of dollars. Solved by building `BacktestEngine` in Python, converting Orchestrator rules into a localized Pandas mathematical vectorized algorithm. Bulk fetched via ccxt and executed in < 1 second. | `backtest_engine.py`, `backtest.py`, `BacktestController.cs`, `BacktestPage.jsx` |
 
 ---
 

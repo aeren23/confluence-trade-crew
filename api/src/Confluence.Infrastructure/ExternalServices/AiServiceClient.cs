@@ -42,4 +42,17 @@ public class AiServiceClient : IAiServiceClient
 
         return await response.Content.ReadAsStringAsync();
     }
+
+    public async Task<string> RunBacktestAsync(object requestPayload)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/backtest", requestPayload);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"AI Service Backtest Failed: {error}");
+        }
+
+        return await response.Content.ReadAsStringAsync();
+    }
 }

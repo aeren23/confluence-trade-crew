@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import styles from './MainLayout.module.css';
-import { LayoutDashboard, Clock, PieChart, ArrowLeftRight, Settings } from 'lucide-react';
+import { LayoutDashboard, Clock, PieChart, ArrowLeftRight, Settings, History } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
   { to: '/history',   icon: <Clock size={20} />,           label: 'History'   },
   { to: '/portfolio', icon: <PieChart size={20} />,         label: 'Portfolio' },
   { to: '/trades',    icon: <ArrowLeftRight size={20} />,   label: 'Trades'    },
+  { to: '/backtest',  icon: <History size={20} />,          label: 'Backtest'  },
   { to: '/settings',  icon: <Settings size={20} />,         label: 'Settings'  },
 ];
 
@@ -16,6 +17,7 @@ const PAGE_TITLES = {
   '/history':   'Analysis History',
   '/portfolio': 'Portfolio',
   '/trades':    'Trade Journal',
+  '/backtest':  'Backtest Simulation',
   '/settings':  'Settings',
 };
 

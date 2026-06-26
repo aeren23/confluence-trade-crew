@@ -179,7 +179,7 @@ Geçmiş veriler üzerinde pipeline simüle edilebilir:
 
 Bu özellik projenin araştırma ve portfolyo değerini ciddi artırır.
 
-### 6.2 On-Chain Data Integration
+### 6.2 On-Chain Data Integration — DONE
 
 Yeni MCP tool'lar ile:
 
@@ -192,7 +192,7 @@ Yeni MCP tool'lar ile:
 
 TA + News + On-chain üçlüsü çok daha güçlü bir karar destek sistemi oluşturur.
 
-### 6.3 Strategy Templates
+### 6.3 Strategy Templates — DONE
 
 Hazır profiller:
 
@@ -267,8 +267,8 @@ Proje trading advisor + journal olarak konumlandığı için şu özellikler ür
 ### Öncelik 3 — Farklılaştırıcı Özellikler
 
 1. backtest mode
-2. on-chain data MCP tools
-3. strategy templates
+2. DONE: on-chain data MCP tools
+3. DONE: strategy templates
 4. trade review assistant
 5. public MCP integration
 

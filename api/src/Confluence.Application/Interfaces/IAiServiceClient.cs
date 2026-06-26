@@ -19,4 +19,6 @@ public interface IAiServiceClient
         string riskProfile = "moderate",
         IEnumerable<string>? timeframes = null,
         Dictionary<string, object>? strategyConfig = null);
+
+    Task<string> RunBacktestAsync(object requestPayload);
 }

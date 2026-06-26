@@ -56,3 +56,7 @@ async def health_check() -> dict:
 # Register Phase 4 /analyze endpoint
 from app.api.analyze import router as analyze_router
 app.include_router(analyze_router)
+
+# Register Backtest endpoint
+from app.api.backtest import router as backtest_router
+app.include_router(backtest_router)

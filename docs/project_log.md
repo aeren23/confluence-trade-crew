@@ -86,3 +86,21 @@
 - Discovered that StrategyManager.jsx was rendered inside a giant <form> in SettingsPage.jsx.
 - Nested forms caused the onSubmit event from the Strategy Builder to be intercepted by the outer form, silently failing to create the strategy.
 - Replaced the outer <form> in SettingsPage.jsx with a <div> and bound the Save button to onClick.
+
+## Execution Log Entry — 2026-06-25 17:05 UTC
+* **Phase:** Backtest Mode Implementation
+* **Action/Task:** Implemented Algorithmic Vectorized Backtest Mode bypassing slow LLM execution per candle.
+* **Files Affected:** `ai-service/app/services/backtest_engine.py`, `ai-service/app/api/backtest.py`, `api/src/Confluence.API/Controllers/BacktestController.cs`, `frontend/src/pages/BacktestPage.jsx`, `frontend/src/components/Backtest/BacktestDashboard.jsx`
+* **Details/Decisions:** Instead of invoking the full AI Crew for every candle in history (which is prohibitively slow and expensive), the backtest engine uses `ccxt` to bulk fetch data and `pandas` to vector-simulate the LLM synthesis math (TA scores, RSI/EMA boundaries, Minimum RR scaling) locally. The entire historical sweep completes in <1s. Connected to .NET proxy and built a React dashboard with lightweight-charts equity curve.
+
+## Execution Log Entry — 2026-06-25 17:39 UTC
+* **Phase:** Backtest Mode Improvements
+* **Action/Task:** Added Optional Trading Fees and Max Trades limit for realistic simulation.
+* **Files Affected:** `ai-service/app/schemas/backtest.py`, `ai-service/app/services/backtest_engine.py`, `api/src/Confluence.Application/DTOs/BacktestDto.cs`, `api/src/Confluence.API/Controllers/BacktestController.cs`, `frontend/src/pages/BacktestPage.jsx`, `frontend/src/components/Backtest/BacktestDashboard.jsx`
+* **Details/Decisions:** Simulated volume-based commission deduction for entries and exits to calculate Net PnL accurately. Implemented `max_trades` loop breakout. Renamed UI "Timeframe" to "Candle Resolution" to clarify its purpose vs strategy MTF.
+
+## Execution Log Entry — 2026-06-25 18:09 UTC
+* **Phase:** Backtest Mode Transparency (Phase 2)
+* **Action/Task:** Added disclaimer for simulation boundaries and added SL, TP, Leverage columns to trades table.
+* **Files Affected:** `ai-service/app/schemas/backtest.py`, `ai-service/app/services/backtest_engine.py`, `frontend/src/pages/BacktestPage.jsx`, `frontend/src/components/Backtest/BacktestDashboard.jsx`, `frontend/src/pages/BacktestPage.module.css`, `frontend/src/components/Backtest/BacktestDashboard.module.css`
+* **Details/Decisions:** Calculated implicit leverage (`Position Size / Risk Amount`) in Python engine and passed it to frontend. Updated React UI to display SL, TP, and Lev clearly to prevent user confusion regarding "liquidation" vs "stop-loss" events. Added prominent disclaimer explaining that On-Chain and News signals are neutral in vectorized backtesting.
