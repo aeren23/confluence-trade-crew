@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserSettingsService, UserSettingsService>();
         services.AddScoped<IAccuracyService, AccuracyService>();
         services.AddScoped<IStrategyService, StrategyService>();
+        services.AddScoped<ITradeReviewService, TradeReviewService>();
 
         return services;
     }

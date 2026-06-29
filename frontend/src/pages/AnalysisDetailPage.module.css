@@ -153,7 +153,35 @@
 
 .metaStat {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-green);
+}
+.lossCell {
+  color: var(--color-red);
+}
+
+.reviewBtn {
+  background: transparent;
+  color: var(--color-purple, #a855f7);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.reviewBtn:hover, .reviewBtnActive {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.8);
+}
+
+.reviewRow td {
+  padding: 0 16px 16px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
 }
 
 .metaStat b {

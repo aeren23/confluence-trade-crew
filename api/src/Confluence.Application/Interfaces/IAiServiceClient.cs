@@ -21,4 +21,6 @@ public interface IAiServiceClient
         Dictionary<string, object>? strategyConfig = null);
 
     Task<string> RunBacktestAsync(object requestPayload);
+    
+    Task<string> ReviewTradeAsync(object reviewPayload);
 }

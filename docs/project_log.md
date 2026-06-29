@@ -93,6 +93,12 @@
 * **Files Affected:** `ai-service/app/services/backtest_engine.py`, `ai-service/app/api/backtest.py`, `api/src/Confluence.API/Controllers/BacktestController.cs`, `frontend/src/pages/BacktestPage.jsx`, `frontend/src/components/Backtest/BacktestDashboard.jsx`
 * **Details/Decisions:** Instead of invoking the full AI Crew for every candle in history (which is prohibitively slow and expensive), the backtest engine uses `ccxt` to bulk fetch data and `pandas` to vector-simulate the LLM synthesis math (TA scores, RSI/EMA boundaries, Minimum RR scaling) locally. The entire historical sweep completes in <1s. Connected to .NET proxy and built a React dashboard with lightweight-charts equity curve.
 
+## Execution Log Entry — 2026-06-29 11:35 UTC
+* **Phase:** Trade Review Assistant (İşlem Değerlendirme Asistanı)
+* **Action/Task:** Implemented manual AI-driven trade review feature for closed trades.
+* **Files Affected:** `TradeReview.cs`, `TradeReviewConfiguration.cs`, `AppDbContext.cs`, `TradeReviewService.cs`, `TradeReviewController.cs`, `trade_review_engine.py`, `review_trade.py`, `TradeReviewPanel.jsx`, `TradesPage.jsx`, `AnalysisDetailPage.jsx`.
+* **Details/Decisions:** Added a `TradeReview` entity to persist AI evaluation scores. Bypassed the heavy CrewAI pipeline in favor of a direct single LLM call for fast evaluation. Integrated into the frontend as a glassmorphism panel that expands below closed trades in the Journal and Analysis Detail pages. Triggered manually by user interaction.
+
 ## Execution Log Entry — 2026-06-25 17:39 UTC
 * **Phase:** Backtest Mode Improvements
 * **Action/Task:** Added Optional Trading Fees and Max Trades limit for realistic simulation.

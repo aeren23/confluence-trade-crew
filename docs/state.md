@@ -104,6 +104,13 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 ### Recently Completed (2026-06-25)
 20. ✅ Algorithmic Vectorized Backtest Mode (`ai-service` backtest_engine.py, `api` BacktestController.cs, `frontend` BacktestPage.jsx ve BacktestDashboard.jsx). AI logic is simulated locally over Pandas using ccxt historical fetch without blocking LLM calls.
 
+### Recently Completed (2026-06-29)
+21. ✅ **Trade Review Assistant (İşlem Değerlendirme Asistanı):** AI-driven evaluation for closed trades.
+    - Evaluates Plan Adherence, SL/TP Rationality, Timing (early/late/optimal), and Improvement Advice.
+    - Added `TradeReview` PostgreSQL entity and EF Core migration.
+    - AI Service uses single direct LLM call instead of CrewAI pipeline for speed and lower cost.
+    - Frontend integration: `TradeReviewPanel` with glassmorphism design, manual triggering via "Review" button in `TradesPage.jsx` and `AnalysisDetailPage.jsx`.
+
 
 ---
 

@@ -110,4 +110,13 @@ export const BacktestService = {
     apiClient.post('/api/backtest/run', payload).then((r) => r.data),
 };
 
+// ── Trade Review ──────────────────────────────────────────────────────────────
+export const TradeReviewService = {
+  generate: (tradeId) =>
+    apiClient.post(`/api/trade-review/${tradeId}`).then((r) => r.data),
+
+  getByTrade: (tradeId) =>
+    apiClient.get(`/api/trade-review/trade/${tradeId}`).then((r) => r.data),
+};
+
 export default apiClient;

@@ -41,6 +41,7 @@ class LLMConfig(BaseSettings):
     llm_risk_agent_model: str = ""
     llm_orchestrator_model: str = ""
     llm_onchain_agent_model: str = ""  # On-Chain Agent override (defaults to LLM_DEFAULT)
+    llm_review_agent_model: str = ""   # Trade Review override
 
     # Common LLM parameters
     llm_temperature: float = 0.1  # Low for deterministic analysis output
@@ -61,6 +62,7 @@ class LLMConfig(BaseSettings):
         "risk": "llm_risk_agent_model",
         "orchestrator": "llm_orchestrator_model",
         "onchain": "llm_onchain_agent_model",
+        "review": "llm_review_agent_model",
     }
 
     def get_model_string(self, agent_name: str) -> str:

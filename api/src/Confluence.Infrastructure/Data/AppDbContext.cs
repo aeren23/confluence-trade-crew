@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Trade> Trades => Set<Trade>();
     public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<StrategyTemplate> StrategyTemplates => Set<StrategyTemplate>();
+    public DbSet<TradeReview> TradeReviews => Set<TradeReview>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

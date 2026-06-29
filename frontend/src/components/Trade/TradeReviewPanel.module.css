@@ -1,0 +1,209 @@
+.container {
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.loadingState, .emptyState {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.generateBtn {
+  background: var(--color-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.generateBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  user-select: none;
+}
+
+.header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.verdictBadge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.verdictGood { background: rgba(34, 197, 94, 0.2); color: var(--color-green); }
+.verdictFair { background: rgba(234, 179, 8, 0.2); color: var(--color-yellow); }
+.verdictPoor { background: rgba(239, 68, 68, 0.2); color: var(--color-red); }
+
+.scoreText {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+.generateBtnSmall {
+  background: transparent;
+  color: var(--color-blue);
+  border: 1px solid var(--color-blue);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.generateBtnSmall:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.generateBtnSmall:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.content {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-surface);
+}
+
+.scoreBarContainer {
+  height: 4px;
+  background: var(--bg-surface-secondary);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.scoreBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease-in-out, background-color 0.3s;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cardHeader h5 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.iconGreen { color: var(--color-green); }
+.iconRed { color: var(--color-red); }
+.iconYellow { color: var(--color-yellow); }
+.iconBlue { color: var(--color-blue); }
+
+.cardBody {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.historyNote {
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.errorText {
+  color: var(--color-red);
+  margin-top: 8px;
+}
+
+.errorBanner {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-red);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+}

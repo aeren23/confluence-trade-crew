@@ -55,4 +55,17 @@ public class AiServiceClient : IAiServiceClient
 
         return await response.Content.ReadAsStringAsync();
     }
+
+    public async Task<string> ReviewTradeAsync(object reviewPayload)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/review-trade", reviewPayload);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"AI Service Trade Review Failed: {error}");
+        }
+
+        return await response.Content.ReadAsStringAsync();
+    }
 }

@@ -60,3 +60,7 @@ app.include_router(analyze_router)
 # Register Backtest endpoint
 from app.api.backtest import router as backtest_router
 app.include_router(backtest_router)
+
+# Register Trade Review endpoint
+from app.api.review_trade import router as review_trade_router
+app.include_router(review_trade_router)

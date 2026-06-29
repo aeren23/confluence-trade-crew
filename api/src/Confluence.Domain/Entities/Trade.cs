@@ -31,6 +31,7 @@ public class Trade
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    // Navigation property
+    // Navigation properties
     public Analysis? Analysis { get; set; }
+    public ICollection<TradeReview> Reviews { get; set; } = new List<TradeReview>();
 }

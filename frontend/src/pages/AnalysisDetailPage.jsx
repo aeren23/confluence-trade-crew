@@ -5,9 +5,10 @@ import { AnalysisService, TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
 import SynthesisPanelStatic from '../components/Analysis/SynthesisPanelStatic';
 import AccuracyDashboard from '../components/Analysis/AccuracyDashboard';
+import TradeReviewPanel from '../components/Trade/TradeReviewPanel';
 import {
   ArrowLeft, Clock, TrendingUp, TrendingDown, Minus,
-  Loader2, AlertTriangle, ExternalLink, Link2
+  Loader2, AlertTriangle, ExternalLink, Link2, Sparkles
 } from 'lucide-react';
 
 const AnalysisDetailPage = () => {
@@ -20,6 +21,7 @@ const AnalysisDetailPage = () => {
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [linkedTrades,  setLinkedTrades]  = useState([]);
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,20 +179,41 @@ const AnalysisDetailPage = () => {
                 <th>Status</th>
                 <th>PnL</th>
                 <th>Date</th>
+                <th>Review</th>
               </tr>
             </thead>
             <tbody>
               {linkedTrades.map((t) => (
-                <tr key={t.id}>
-                  <td className={t.direction === 'Long' ? styles.bullish : styles.bearish}>{t.direction}</td>
-                  <td>{t.entryPrice}</td>
-                  <td>{t.exitPrice ?? '—'}</td>
-                  <td>{t.status}</td>
-                  <td className={(t.pnlQuote ?? 0) >= 0 ? styles.profitCell : styles.lossCell}>
-                    {t.pnlQuote != null ? `${t.pnlQuote >= 0 ? '+' : ''}${t.pnlQuote.toFixed(2)} USDT` : '—'}
-                  </td>
-                  <td>{new Date(t.entryAt).toLocaleDateString()}</td>
-                </tr>
+                <React.Fragment key={t.id}>
+                  <tr>
+                    <td className={t.direction === 'Long' ? styles.bullish : styles.bearish}>{t.direction}</td>
+                    <td>{t.entryPrice}</td>
+                    <td>{t.exitPrice ?? '—'}</td>
+                    <td>{t.status}</td>
+                    <td className={(t.pnlQuote ?? 0) >= 0 ? styles.profitCell : styles.lossCell}>
+                      {t.pnlQuote != null ? `${t.pnlQuote >= 0 ? '+' : ''}${t.pnlQuote.toFixed(2)} USDT` : '—'}
+                    </td>
+                    <td>{new Date(t.entryAt).toLocaleDateString()}</td>
+                    <td>
+                      {t.status === 'Closed' || t.status === 1 ? (
+                        <button
+                          className={`${styles.reviewBtn} ${expandedReviewId === t.id ? styles.reviewBtnActive : ''}`}
+                          onClick={() => setExpandedReviewId(expandedReviewId === t.id ? null : t.id)}
+                          title="AI Trade Review"
+                        >
+                          <Sparkles size={12} /> {expandedReviewId === t.id ? 'Close' : 'Review'}
+                        </button>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                  {expandedReviewId === t.id && (
+                    <tr className={styles.reviewRow}>
+                      <td colSpan={7}>
+                        <TradeReviewPanel tradeId={t.id} />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

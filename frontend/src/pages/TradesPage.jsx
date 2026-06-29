@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import styles from './TradesPage.module.css';
 import { TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
-import { TrendingUp, TrendingDown, Plus, CheckCircle2, Trash2, Loader2, ChevronLeft, ChevronRight, ExternalLink, Tag } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, CheckCircle2, Trash2, Loader2, ChevronLeft, ChevronRight, ExternalLink, Tag, Sparkles } from 'lucide-react';
+import TradeReviewPanel from '../components/Trade/TradeReviewPanel';
 
 const PAGE_SIZE = 20;
 
@@ -87,6 +88,7 @@ const TradesPage = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [expandedNoteId, setExpandedNoteId] = useState(null);
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
 
   const fetchTrades = useCallback(async (tab, page) => {
     setLoading(true);
@@ -311,6 +313,15 @@ const TradesPage = () => {
                           <CheckCircle2 size={12} /> Close
                         </button>
                       )}
+                      {!isOpen && (
+                        <button
+                          className={`${styles.reviewBtn} ${expandedReviewId === t.id ? styles.reviewBtnActive : ''}`}
+                          onClick={() => setExpandedReviewId(expandedReviewId === t.id ? null : t.id)}
+                          title="AI Trade Review"
+                        >
+                          <Sparkles size={12} /> Review
+                        </button>
+                      )}
                       <button
                         className={styles.deleteBtn}
                         onClick={() => handleDelete(t.id)}
@@ -326,6 +337,13 @@ const TradesPage = () => {
                   <tr className={styles.notesRow}>
                     <td colSpan={11}>
                       <div className={styles.fullNotes}>{t.notes}</div>
+                    </td>
+                  </tr>
+                )}
+                {expandedReviewId === t.id && (
+                  <tr className={styles.reviewRow}>
+                    <td colSpan={11}>
+                      <TradeReviewPanel tradeId={t.id} />
                     </td>
                   </tr>
                 )}
