@@ -104,3 +104,9 @@
 * **Action/Task:** Added disclaimer for simulation boundaries and added SL, TP, Leverage columns to trades table.
 * **Files Affected:** `ai-service/app/schemas/backtest.py`, `ai-service/app/services/backtest_engine.py`, `frontend/src/pages/BacktestPage.jsx`, `frontend/src/components/Backtest/BacktestDashboard.jsx`, `frontend/src/pages/BacktestPage.module.css`, `frontend/src/components/Backtest/BacktestDashboard.module.css`
 * **Details/Decisions:** Calculated implicit leverage (`Position Size / Risk Amount`) in Python engine and passed it to frontend. Updated React UI to display SL, TP, and Lev clearly to prevent user confusion regarding "liquidation" vs "stop-loss" events. Added prominent disclaimer explaining that On-Chain and News signals are neutral in vectorized backtesting.
+
+## Execution Log Entry — 2026-06-27 02:24 UTC
+* **Phase:** Marketing & Product Educational Page
+* **Action/Task:** Developed an aesthetically pleasing Landing Page explaining AI Pipeline and Risk Management philosophy.
+* **Files Affected:** `frontend/src/App.jsx`, `frontend/src/pages/LandingPage.jsx`, `frontend/src/pages/LandingPage.module.css`
+* **Details/Decisions:** Reconfigured React Router to serve LandingPage at `/` and wrapped all internal app pages within `/app/*` structure via `MainLayout`. Utilized dark mode, glassmorphism, and radial gradients in CSS to establish an institutional, professional UI aesthetic. Integrated educational content directly targeting amateur retail misconceptions (Leverage vs Risk, R:R 2.0).

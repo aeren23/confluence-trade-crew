@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import styles from './MainLayout.module.css';
-import { LayoutDashboard, Clock, PieChart, ArrowLeftRight, Settings, History } from 'lucide-react';
+import { LayoutDashboard, Clock, PieChart, ArrowLeftRight, Settings, History, BookOpen } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/portfolio', icon: <PieChart size={20} />,         label: 'Portfolio' },
   { to: '/trades',    icon: <ArrowLeftRight size={20} />,   label: 'Trades'    },
   { to: '/backtest',  icon: <History size={20} />,          label: 'Backtest'  },
+  { to: '/academy',   icon: <BookOpen size={20} />,         label: 'Academy'   },
   { to: '/settings',  icon: <Settings size={20} />,         label: 'Settings'  },
 ];
 
@@ -18,6 +19,7 @@ const PAGE_TITLES = {
   '/portfolio': 'Portfolio',
   '/trades':    'Trade Journal',
   '/backtest':  'Backtest Simulation',
+  '/academy':   'Academy & Philosophy',
   '/settings':  'Settings',
 };
 
