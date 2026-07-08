@@ -259,6 +259,7 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
       symbol: meta?.symbol || '',
       direction: direction === 'long' ? 'Long' : 'Short',
       entryPrice: levels.entry || levels.entry_reference || '',
+      plannedEntryPrice: levels.entry || levels.entry_reference || '',
       stopLoss: levels.stop_loss || '',
       takeProfit: levels.take_profit || '',
       leverage: leverage.capped_maximum || leverage.recommended_range || 1,

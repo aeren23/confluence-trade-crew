@@ -28,6 +28,20 @@ public class Trade
     public string? Tags { get; set; }
     public string? Notes { get; set; }
     
+    // ── Chart Snapshots ─────────────────────────────────────────
+    /// <summary>Relative URL to entry chart snapshot (e.g. /snapshots/{guid}_entry.png)</summary>
+    public string? EntrySnapshotUrl { get; set; }
+    /// <summary>Relative URL to exit chart snapshot</summary>
+    public string? ExitSnapshotUrl { get; set; }
+
+    // ── Execution Quality ───────────────────────────────────────
+    /// <summary>AI-recommended entry price at time of trade creation (from linked analysis)</summary>
+    public decimal? PlannedEntryPrice { get; set; }
+    /// <summary>Entry slippage in percentage: |actual - planned| / planned × 100</summary>
+    public decimal? EntrySlippagePct { get; set; }
+    /// <summary>Execution quality grade: "good", "fair", or "poor"</summary>
+    public string? ExecutionQuality { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     

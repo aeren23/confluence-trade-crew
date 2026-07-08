@@ -29,4 +29,11 @@ public class TradeResponseDto
     public string? Tags { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    // ── Snapshot & Execution Quality ──────────
+    public string? EntrySnapshotUrl { get; set; }
+    public string? ExitSnapshotUrl { get; set; }
+    public decimal? PlannedEntryPrice { get; set; }
+    public decimal? EntrySlippagePct { get; set; }
+    public string? ExecutionQuality { get; set; }
 }

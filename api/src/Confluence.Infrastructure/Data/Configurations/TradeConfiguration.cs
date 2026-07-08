@@ -93,6 +93,26 @@ public class TradeConfiguration : IEntityTypeConfiguration<Trade>
             .HasColumnName("tags")
             .HasMaxLength(200);
             
+        builder.Property(t => t.EntrySnapshotUrl)
+            .HasColumnName("entry_snapshot_url")
+            .HasMaxLength(500);
+            
+        builder.Property(t => t.ExitSnapshotUrl)
+            .HasColumnName("exit_snapshot_url")
+            .HasMaxLength(500);
+            
+        builder.Property(t => t.PlannedEntryPrice)
+            .HasColumnName("planned_entry_price")
+            .HasColumnType("numeric(20,8)");
+            
+        builder.Property(t => t.EntrySlippagePct)
+            .HasColumnName("entry_slippage_pct")
+            .HasColumnType("numeric(10,4)");
+            
+        builder.Property(t => t.ExecutionQuality)
+            .HasColumnName("execution_quality")
+            .HasMaxLength(10);
+            
         builder.Property(t => t.CreatedAt)
             .HasColumnName("created_at")
             .HasDefaultValueSql("now()")

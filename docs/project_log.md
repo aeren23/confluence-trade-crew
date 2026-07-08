@@ -116,3 +116,15 @@
 * **Action/Task:** Developed an aesthetically pleasing Landing Page explaining AI Pipeline and Risk Management philosophy.
 * **Files Affected:** `frontend/src/App.jsx`, `frontend/src/pages/LandingPage.jsx`, `frontend/src/pages/LandingPage.module.css`
 * **Details/Decisions:** Reconfigured React Router to serve LandingPage at `/` and wrapped all internal app pages within `/app/*` structure via `MainLayout`. Utilized dark mode, glassmorphism, and radial gradients in CSS to establish an institutional, professional UI aesthetic. Integrated educational content directly targeting amateur retail misconceptions (Leverage vs Risk, R:R 2.0).
+
+## Execution Log Entry — 2026-06-29 12:15 UTC
+* **Phase:** Chart Snapshotting & Execution Quality (Trading Journal)
+* **Action/Task:** Implemented visual chart recording and execution slippage tracking for trades.
+* **Files Affected:** `Trade.cs`, `TradeConfiguration.cs`, `TradeService.cs`, `SnapshotService.cs`, `ISnapshotService.cs`, `Program.cs`, `TradingChart.jsx`, `TradesPage.jsx`, `TradeForm.jsx`, `SynthesisPanel.jsx`, `SnapshotLightbox.jsx`
+* **Details/Decisions:** Added fields for `entrySnapshotUrl`, `exitSnapshotUrl`, `plannedEntryPrice`, `entrySlippagePct`, and `executionQuality` to the DB. Built an `ISnapshotService` to save base64 lightweight-charts screenshots as static WebP/PNG files via `IWebHostEnvironment`. Extracted `plannedEntryPrice` directly from the AI analysis JSON. Updated the frontend to calculate slippage vs plan, assign Good/Fair/Poor execution badges, and render interactive thumbnail lightboxes inside the Trades table.
+
+## Execution Log Entry — 2026-07-08 03:24 UTC
+* **Phase:** Documentation — README Professional Overhaul
+* **Action/Task:** Rewrote README.md from a minimal 104-line stub to a comprehensive, professional GitHub README.
+* **Files Affected:** `README.md`, `docs/images/architecture_diagram.png` (new), `docs/images/agent_pipeline_flow.png` (new), `docs/images/ui_dashboard_mockup.png` (new), `docs/state.md`, `docs/project_log.md`
+* **Details/Decisions:** 16-section structure (Hero, Architecture, AI Pipeline, Features, Tech Stack, Project Structure, Quick Start, Config, Design Decisions, Challenges Solved, Roadmap, License). 3 AI-generated images in `docs/images/`. Shields.io badges for Python 3.12, .NET 8, React 18, FastAPI, CrewAI v2, Docker, MIT. GitHub clone URL set to aeren23. Multi-provider LLM config section with 5-model GitHub distribution example. Challenges Solved table with 8 engineering decisions.

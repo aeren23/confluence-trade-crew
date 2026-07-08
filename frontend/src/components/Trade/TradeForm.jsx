@@ -7,7 +7,7 @@ import { X, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 const PRESET_TAGS = ['breakout', 'reversal', 'trend', 'scalp', 'news-driven', 'support', 'resistance'];
 
 const TradeForm = () => {
-  const { tradeFormOpen, pendingTradeDefaults, closeTradeForm, addOpenTrade } = useAppStore();
+  const { tradeFormOpen, pendingTradeDefaults, closeTradeForm, addOpenTrade, captureChartSnapshot } = useAppStore();
 
   const [form, setForm] = useState({
     symbol: '',
@@ -22,23 +22,29 @@ const TradeForm = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [snapshotPreview, setSnapshotPreview] = useState(null);
 
   // Pre-fill from analysis defaults when form opens
   useEffect(() => {
-    if (tradeFormOpen && pendingTradeDefaults) {
-      setForm((prev) => ({
-        ...prev,
-        symbol: pendingTradeDefaults.symbol || prev.symbol,
-        direction: pendingTradeDefaults.direction || 'Long',
-        entryPrice: pendingTradeDefaults.entryPrice || '',
-        entryAmount: pendingTradeDefaults.entryAmount || '',
-        leverage: pendingTradeDefaults.leverage || 1,
-        stopLoss: pendingTradeDefaults.stopLoss || '',
-        takeProfit: pendingTradeDefaults.takeProfit || '',
-      }));
+    if (tradeFormOpen) {
+      setSnapshotPreview(captureChartSnapshot());
+      if (pendingTradeDefaults) {
+        setForm((prev) => ({
+          ...prev,
+          symbol: pendingTradeDefaults.symbol || prev.symbol,
+          direction: pendingTradeDefaults.direction || 'Long',
+          entryPrice: pendingTradeDefaults.entryPrice || '',
+          entryAmount: pendingTradeDefaults.entryAmount || '',
+          leverage: pendingTradeDefaults.leverage || 1,
+          stopLoss: pendingTradeDefaults.stopLoss || '',
+          takeProfit: pendingTradeDefaults.takeProfit || '',
+        }));
+      }
+      setError(null);
+    } else {
+      setSnapshotPreview(null);
     }
-    if (tradeFormOpen) setError(null);
-  }, [tradeFormOpen, pendingTradeDefaults]);
+  }, [tradeFormOpen, pendingTradeDefaults, captureChartSnapshot]);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -60,6 +66,8 @@ const TradeForm = () => {
         analysisId: pendingTradeDefaults?.analysisId || null,
         notes: form.notes || null,
         tags: form.tags.length > 0 ? form.tags.join(',') : null,
+        entrySnapshotBase64: snapshotPreview ? snapshotPreview.replace(/^data:image\/[a-zA-Z]+;base64,/, '') : null,
+        plannedEntryPrice: pendingTradeDefaults?.plannedEntryPrice || null,
       };
       const created = await TradeService.create(payload);
       addOpenTrade(created);
@@ -225,6 +233,13 @@ const TradeForm = () => {
               })}
             </div>
           </div>
+
+          {snapshotPreview && (
+            <div className={styles.snapshotPreviewContainer}>
+              <label>Chart Snapshot</label>
+              <img src={snapshotPreview} alt="Chart Snapshot" className={styles.snapshotPreviewImage} />
+            </div>
+          )}
 
           {error && <div className={styles.errorMsg}>{error}</div>}
 

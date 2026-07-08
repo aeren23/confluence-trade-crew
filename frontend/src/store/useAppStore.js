@@ -29,6 +29,9 @@ const useAppStore = create((set, get) => ({
   // ── Settings ────────────────────────────────────────────────────────────
   settingsLoaded: false,
 
+  // ── Chart Snapshot ───────────────────────────────────────────────────────
+  chartSnapshotFn: null,           // Function ref from TradingChart
+
   // ── Trades ──────────────────────────────────────────────────────────────
   openTrades: [],               // TradeResponseDto[]
   tradeFormOpen: false,
@@ -98,6 +101,13 @@ const useAppStore = create((set, get) => ({
     const { _elapsedTimer } = get();
     if (_elapsedTimer) clearInterval(_elapsedTimer);
     set({ _elapsedTimer: null });
+  },
+
+  // ── Chart Snapshot ───────────────────────────────────────────────────────
+  setChartSnapshotFn: (fn) => set({ chartSnapshotFn: fn }),
+  captureChartSnapshot: () => {
+    const fn = get().chartSnapshotFn;
+    return fn ? fn() : null;
   },
 
   // ── Settings actions ─────────────────────────────────────────────────────

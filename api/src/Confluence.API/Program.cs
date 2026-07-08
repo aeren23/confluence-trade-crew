@@ -24,6 +24,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+// Add API-specific services
+builder.Services.AddScoped<Confluence.Application.Interfaces.ISnapshotService, Confluence.API.Services.SnapshotService>();
+
 // Add SignalR & Redis Telemetry
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
@@ -56,6 +59,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseStaticFiles();
 
 app.UseCors();
 

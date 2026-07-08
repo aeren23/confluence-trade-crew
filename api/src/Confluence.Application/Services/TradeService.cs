@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Confluence.Application.Common;
 using Confluence.Application.DTOs.Trade;
 using Confluence.Application.Interfaces;
@@ -11,11 +12,13 @@ public class TradeService : ITradeService
 {
     private readonly DbContext _context;
     private readonly IPairService _pairService;
+    private readonly ISnapshotService _snapshotService;
 
-    public TradeService(DbContext context, IPairService pairService)
+    public TradeService(DbContext context, IPairService pairService, ISnapshotService snapshotService)
     {
         _context = context;
         _pairService = pairService;
+        _snapshotService = snapshotService;
     }
 
     public async Task<TradeResponseDto> CreateTradeAsync(TradeCreateDto request)
@@ -42,8 +45,23 @@ public class TradeService : ITradeService
             Tags = request.Tags
         };
 
+        // Execution Quality
+        var plannedEntryPrice = request.PlannedEntryPrice ?? await ExtractPlannedEntryPriceAsync(request.AnalysisId);
+        trade.PlannedEntryPrice = plannedEntryPrice;
+        
+        var execQual = CalculateExecutionQuality(request.EntryPrice, plannedEntryPrice);
+        trade.EntrySlippagePct = execQual.slippagePct;
+        trade.ExecutionQuality = execQual.quality;
+
         _context.Set<Trade>().Add(trade);
         await _context.SaveChangesAsync();
+        
+        // Save Entry Snapshot
+        if (!string.IsNullOrEmpty(request.EntrySnapshotBase64))
+        {
+            trade.EntrySnapshotUrl = await _snapshotService.SaveSnapshotAsync(request.EntrySnapshotBase64, trade.Id, "entry");
+            await _context.SaveChangesAsync();
+        }
 
         return MapToDto(trade);
     }
@@ -119,6 +137,12 @@ public class TradeService : ITradeService
         {
             trade.PnlPercentage = (trade.PnlQuote / positionValue) * 100;
         }
+        
+        // Save Exit Snapshot
+        if (!string.IsNullOrEmpty(request.ExitSnapshotBase64))
+        {
+            trade.ExitSnapshotUrl = await _snapshotService.SaveSnapshotAsync(request.ExitSnapshotBase64, trade.Id, "exit");
+        }
 
         await _context.SaveChangesAsync();
 
@@ -170,7 +194,40 @@ public class TradeService : ITradeService
             Notes = trade.Notes,
             Tags = trade.Tags,
             CreatedAt = trade.CreatedAt,
-            UpdatedAt = trade.UpdatedAt
+            UpdatedAt = trade.UpdatedAt,
+            EntrySnapshotUrl = trade.EntrySnapshotUrl,
+            ExitSnapshotUrl = trade.ExitSnapshotUrl,
+            PlannedEntryPrice = trade.PlannedEntryPrice,
+            EntrySlippagePct = trade.EntrySlippagePct,
+            ExecutionQuality = trade.ExecutionQuality
         };
+    }
+    
+    private async Task<decimal?> ExtractPlannedEntryPriceAsync(Guid? analysisId)
+    {
+        if (analysisId == null) return null;
+        
+        var analysis = await _context.Set<Analysis>().FindAsync(analysisId.Value);
+        if (analysis == null || string.IsNullOrEmpty(analysis.ResultJson)) return null;
+        
+        using var doc = JsonDocument.Parse(analysis.ResultJson);
+        var root = doc.RootElement;
+        
+        // Try risk_sizing.entry_price → latest_price fallback
+        if (root.TryGetProperty("risk_sizing", out var risk) &&
+            risk.TryGetProperty("entry_price", out var ep))
+            return ep.GetDecimal();
+        
+        return analysis.LatestPrice > 0 ? analysis.LatestPrice : null;
+    }
+    
+    private static (decimal? slippagePct, string? quality) CalculateExecutionQuality(decimal entryPrice, decimal? plannedPrice)
+    {
+        if (plannedPrice == null || plannedPrice == 0) return (null, null);
+        
+        var slippage = Math.Abs(entryPrice - plannedPrice.Value) / plannedPrice.Value * 100m;
+        var quality = slippage < 0.3m ? "good" : slippage <= 1.0m ? "fair" : "poor";
+        
+        return (Math.Round(slippage, 4), quality);
     }
 }

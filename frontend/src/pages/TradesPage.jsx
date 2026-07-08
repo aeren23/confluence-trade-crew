@@ -5,6 +5,7 @@ import { TradeService } from '../services/apiClient';
 import useAppStore from '../store/useAppStore';
 import { TrendingUp, TrendingDown, Plus, CheckCircle2, Trash2, Loader2, ChevronLeft, ChevronRight, ExternalLink, Tag, Sparkles } from 'lucide-react';
 import TradeReviewPanel from '../components/Trade/TradeReviewPanel';
+import SnapshotLightbox from '../components/Trade/SnapshotLightbox';
 
 const PAGE_SIZE = 20;
 
@@ -33,8 +34,19 @@ const Pagination = ({ page, totalPages, onPage }) => {
 };
 
 const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
+  const { captureChartSnapshot } = useAppStore();
   const [exitPrice, setExitPrice] = useState(String(trade?.entryPrice || ''));
   const [exitNotes, setExitNotes] = useState('');
+  const [snapshotPreview, setSnapshotPreview] = useState(null);
+
+  useEffect(() => {
+    if (trade) {
+      setSnapshotPreview(captureChartSnapshot());
+    } else {
+      setSnapshotPreview(null);
+    }
+  }, [trade, captureChartSnapshot]);
+
   if (!trade) return null;
   return (
     <div className={styles.modalOverlay} onClick={() => onClose()}>
@@ -55,11 +67,28 @@ const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
             rows={3}
           />
         </div>
+        
+        {snapshotPreview ? (
+          <div className={styles.modalField}>
+            <label>Exit Chart Snapshot</label>
+            <img src={snapshotPreview} alt="Exit Snapshot" className={styles.modalSnapshotImage} />
+          </div>
+        ) : (
+          <div className={styles.modalField}>
+            <span style={{ fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(251,191,36,0.1)', padding: '6px', borderRadius: '4px' }}>
+              ⚠️ Open chart not found. Exit snapshot will not be captured.
+            </span>
+          </div>
+        )}
+
         <div className={styles.modalActions}>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button
             className={styles.confirmCloseBtn}
-            onClick={() => onConfirm(trade.id, parseFloat(exitPrice), exitNotes)}
+            onClick={() => {
+              const exitSnapshotBase64 = snapshotPreview ? snapshotPreview.replace(/^data:image\/[a-zA-Z]+;base64,/, '') : null;
+              onConfirm(trade.id, parseFloat(exitPrice), exitNotes, exitSnapshotBase64);
+            }}
             disabled={loading || !exitPrice}
           >
             {loading ? <><Loader2 size={12} className={styles.spin} /> Closing...</> : 'Close Position'}
@@ -89,6 +118,7 @@ const TradesPage = () => {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [expandedNoteId, setExpandedNoteId] = useState(null);
   const [expandedReviewId, setExpandedReviewId] = useState(null);
+  const [lightboxTrade, setLightboxTrade] = useState(null);
 
   const fetchTrades = useCallback(async (tab, page) => {
     setLoading(true);
@@ -132,10 +162,10 @@ const TradesPage = () => {
     return trades.filter((t) => t.tags && t.tags.split(',').map((s) => s.trim()).includes(activeTagFilter));
   }, [trades, activeTagFilter]);
 
-  const handleCloseConfirm = async (id, exitPrice, exitNotes) => {
+  const handleCloseConfirm = async (id, exitPrice, exitNotes, exitSnapshotBase64) => {
     setClosingLoading(true);
     try {
-      const updated = await TradeService.close(id, { exitPrice, exitNotes: exitNotes || null });
+      const updated = await TradeService.close(id, { exitPrice, exitNotes: exitNotes || null, exitSnapshotBase64 });
       setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
       updateOpenTrade(id, updated);
       setClosingTrade(null);
@@ -225,6 +255,8 @@ const TradesPage = () => {
               <th>Leverage</th>
               <th>Date</th>
               <th>PnL</th>
+              <th>Quality</th>
+              <th>Snapshots</th>
               <th>Tags</th>
               <th>Notes</th>
               <th>Actions</th>
@@ -282,6 +314,41 @@ const TradesPage = () => {
                     ) : (
                       <span className={styles.openBadge}>Open</span>
                     )}
+                  </td>
+                  <td>
+                    {t.executionQuality ? (
+                      <span className={`${styles.execBadge} ${styles[`exec_${t.executionQuality}`]}`}>
+                        {t.executionQuality}
+                        {t.entrySlippagePct != null && (
+                          <span className={styles.slippageValue}>
+                            {fmt(t.entrySlippagePct)}% slip
+                          </span>
+                        )}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td>
+                    <div className={styles.snapshotCol}>
+                      {t.entrySnapshotUrl && (
+                        <img 
+                          src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${t.entrySnapshotUrl}`} 
+                          alt="Entry" 
+                          className={styles.snapshotThumb} 
+                          title="View Entry Snapshot"
+                          onClick={() => setLightboxTrade(t)}
+                        />
+                      )}
+                      {t.exitSnapshotUrl && (
+                        <img 
+                          src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${t.exitSnapshotUrl}`} 
+                          alt="Exit" 
+                          className={styles.snapshotThumb} 
+                          title="View Exit Snapshot"
+                          onClick={() => setLightboxTrade(t)}
+                        />
+                      )}
+                      {!t.entrySnapshotUrl && !t.exitSnapshotUrl && '—'}
+                    </div>
                   </td>
                   <td>
                     <div className={styles.tagCells}>
@@ -363,6 +430,8 @@ const TradesPage = () => {
         onConfirm={handleCloseConfirm}
         loading={closingLoading}
       />
+
+      <SnapshotLightbox trade={lightboxTrade} onClose={() => setLightboxTrade(null)} />
     </div>
   );
 };

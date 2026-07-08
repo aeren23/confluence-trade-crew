@@ -144,6 +144,8 @@ const TradingChart = () => {
 
   const { symbol, timeframe, finalAnalysis } = useAppStore();
   const { data, loading, error, isMockData } = useBinanceData(symbol, timeframe);
+  
+  const { setChartSnapshotFn } = useAppStore();
 
   const [activeIndicators, setActiveIndicators] = useState(['EMA', 'BB', 'RSI', 'MACD']);
 
@@ -203,12 +205,19 @@ const TradingChart = () => {
       if (mainRef.current) chart.applyOptions({ width: mainRef.current.clientWidth });
     };
     window.addEventListener('resize', handleResize);
+    
+    // Expose capture function to store
+    setChartSnapshotFn(() => {
+      if (!chartMainRef.current) return null;
+      return chartMainRef.current.takeScreenshot().toDataURL('image/png');
+    });
 
     return () => {
+      setChartSnapshotFn(null);
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [setChartSnapshotFn]);
 
   // ── RSI sub-chart init ──────────────────────────────────────────────────
 
