@@ -40,8 +40,10 @@ class LLMConfig(BaseSettings):
     llm_news_agent_model: str = ""
     llm_risk_agent_model: str = ""
     llm_orchestrator_model: str = ""
-    llm_onchain_agent_model: str = ""  # On-Chain Agent override (defaults to LLM_DEFAULT)
-    llm_review_agent_model: str = ""   # Trade Review override
+    llm_onchain_agent_model: str = ""        # On-Chain Agent override (defaults to LLM_DEFAULT)
+    llm_review_agent_model: str = ""         # Trade Review override
+    llm_market_structure_agent_model: str = ""  # Market Structure Agent (Faz 1)
+    llm_liquidity_agent_model: str = ""      # Liquidity Agent (Faz 4)
 
     # Common LLM parameters
     llm_temperature: float = 0.1  # Low for deterministic analysis output
@@ -63,6 +65,8 @@ class LLMConfig(BaseSettings):
         "orchestrator": "llm_orchestrator_model",
         "onchain": "llm_onchain_agent_model",
         "review": "llm_review_agent_model",
+        "market_structure": "llm_market_structure_agent_model",  # Faz 1
+        "liquidity": "llm_liquidity_agent_model",  # Faz 4
     }
 
     def get_model_string(self, agent_name: str) -> str:

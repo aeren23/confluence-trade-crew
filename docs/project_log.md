@@ -128,3 +128,79 @@
 * **Action/Task:** Rewrote README.md from a minimal 104-line stub to a comprehensive, professional GitHub README.
 * **Files Affected:** `README.md`, `docs/images/architecture_diagram.png` (new), `docs/images/agent_pipeline_flow.png` (new), `docs/images/ui_dashboard_mockup.png` (new), `docs/state.md`, `docs/project_log.md`
 * **Details/Decisions:** 16-section structure (Hero, Architecture, AI Pipeline, Features, Tech Stack, Project Structure, Quick Start, Config, Design Decisions, Challenges Solved, Roadmap, License). 3 AI-generated images in `docs/images/`. Shields.io badges for Python 3.12, .NET 8, React 18, FastAPI, CrewAI v2, Docker, MIT. GitHub clone URL set to aeren23. Multi-provider LLM config section with 5-model GitHub distribution example. Challenges Solved table with 8 engineering decisions.
+
+## Execution Log Entry — 2026-07-13 13:08 UTC
+* **Phase:** Phase 7 — AI Pipeline Enhancement (Faz 1: Deterministic Scoring + Market Structure)
+* **Action/Task:** Implemented Faz 1 of the AI pipeline strengthening roadmap. Added Market Structure Agent and 3 deterministic MCP tools to eliminate LLM variance in core TA calculations.
+* **Files Affected:**
+  - [NEW] `ai-service/app/mcp_server/tools/structure_tools.py` — 3 new MCP tools
+  - [NEW] `ai-service/app/crew/prompts/market_structure_agent.py` — Market Structure Agent prompt
+  - [MODIFIED] `ai-service/app/crew/prompts/ta_agent.py` — Rewritten to use deterministic composite score + structure context
+  - [MODIFIED] `ai-service/app/crew/confluence_crew.py` — Market Structure Agent + task added, dependency graph updated
+  - [MODIFIED] `ai-service/app/mcp_server/server.py` — 3 new tool definitions registered (10 total)
+  - [MODIFIED] `ai-service/app/mcp_server/tools/__init__.py` — 3 new exports
+  - [MODIFIED] `ai-service/app/llm/config.py` — market_structure override field + _AGENT_OVERRIDE_MAP entry
+  - [MODIFIED] `.env.example` — LLM_MARKET_STRUCTURE_AGENT_MODEL + updated GitHub 8-agent distribution guide
+* **Details/Decisions:**
+  - `detect_market_structure`: Swing point analysis — identifies HH/HL (bullish) vs LH/LL (bearish), BOS (Break of Structure) and CHoCH (Character Change) events
+  - `detect_market_regime`: ADX + EMA alignment + BB width squeeze → trending_up / trending_down / ranging / breakout classification
+  - `calculate_ta_composite_score`: Fully deterministic -1.0 to +1.0 score. Same data = same score every time. Components: EMA trend (30%), RSI (15%), MACD cross (10%), BB position (15%), RSI divergence (15%), ADX multiplier.
+  - TA Agent now uses composite_score as non-negotiable sentiment_score; applies CHoCH/BOS confidence adjustments.
+  - Market Structure Agent runs in parallel with News + OnChain after Data Agent; TA Agent waits for it.
+  - GitHub Models distribution updated: 8 agents across 5 models (750 req/day maintained).
+  - TODO added to state.md: Coinglass API for real liquidation heatmap (future enhancement).
+
+## Execution Log Entry — 2026-07-13 23:48 UTC
+* **Phase:** Phase 7 — AI Pipeline Enhancement (Faz 2: Trade Mode + Range Trade)
+* **Action/Task:** Implemented Faz 2: Orchestrator now determines trade_mode, generates range_trade block, and all layers (AI → Schema → UI) updated end-to-end.
+* **Files Affected:**
+  - [MODIFIED] `ai-service/app/crew/prompts/orchestrator.py` — trade_mode logic, market_structure agent block, range_trade synthesis
+  - [MODIFIED] `ai-service/app/schemas/response.py` — RangeTrade, RangeTradeBreakoutAlert models; SynthesisOutput.trade_mode + range_trade
+  - [MODIFIED] `ai-service/app/services/analysis_orchestrator.py` — range_trade + trade_mode parsing with graceful fallback
+  - [MODIFIED] `frontend/src/components/Analysis/SynthesisPanel.jsx` — TradeModeBanner + RangeTradeCard components
+  - [MODIFIED] `frontend/src/components/Analysis/SynthesisPanel.module.css` — trade mode banner + range trade card styles
+* **Details/Decisions:**
+  - trade_mode = 'trend' when ADX>25 and regime is trending_up/down.
+  - trade_mode = 'range' when ADX<20 and regime is 'ranging' with no BOS. Produces range_trade block with range_high, range_low, bias, trigger, and breakout_alert.
+  - trade_mode = 'breakout_watch' when BOS is detected or regime = 'breakout'. No open position — wait for breakout confirmation.
+  - Bias determination in range mode: price in lower half → long_at_support; upper half → short_at_resistance; neutral near midrange → no_edge.
+  - Frontend Trade Mode Banner: green/amber/purple variants with icon and description.
+  - Range Trade Card: animated price marker on range bar, bias tag, trigger sentence, bull/bear breakout alert boxes.
+  - SynthesisOutput.range_trade is null when trade_mode != 'range'. Graceful fallback in analysis_orchestrator ensures no pipeline break on malformed LLM output.
+  - SynthesisOutput.trade_mode defaults to 'trend' (backward-compatible with existing stored analyses).
+
+## Execution Log Entry — 2026-07-14 00:00 UTC
+* **Phase:** Phase 7 — AI Pipeline Enhancement (Faz 3: Entry Timing + TP1/TP2 Graduated Take-Profit)
+* **Action/Task:** Implemented Faz 3: TA Agent produces entry_timing signal, Risk Agent generates TP1 (1:1) and TP2 (primary) targets, Orchestrator propagates both with dedicated annotations, frontend displays Entry Timing Badge and dual TP rows.
+* **Files Affected:**
+  - [MODIFIED] `ai-service/app/crew/prompts/ta_agent.py` — Step 16 Entry Timing (immediate/wait_for_pullback/wait_for_confirmation/avoid); entry_timing field in INDICATOR_DATA JSON
+  - [MODIFIED] `ai-service/app/crew/prompts/risk_agent.py` — Step 9 Graduated TP (tp1=1:1 R:R, tp2=primary target); Step 11 R/R gate uses TP2; GOAL + EXPECTED_OUTPUT updated
+  - [MODIFIED] `ai-service/app/crew/prompts/orchestrator.py` — tp1/tp2 in risk.details.levels schema; entry_timing extraction from INDICATOR_DATA; TP1/TP2 annotations (take_profit_1/take_profit_2); entry_timing in agent_summaries
+  - [MODIFIED] `frontend/src/components/Analysis/SynthesisPanel.jsx` — EntryTimingBadge component; TP1/TP2 rows in PositionSizingCard (1:1 tag + primary tag); entryTiming state read from synthesis.agent_summaries.entry_timing
+  - [MODIFIED] `frontend/src/components/Analysis/SynthesisPanel.module.css` — .entryTimingBox, .tp1Tag, .tp2Tag styles
+* **Details/Decisions:**
+  - Entry timing is DETERMINISTIC based on RSI thresholds (>72 overbought for longs, <28 oversold for shorts), MACD histogram direction, BB position, volume trend, and ADX level.
+  - 'immediate': all conditions aligned — enter at market.
+  - 'wait_for_pullback': price extended (RSI OB, upper BB).
+  - 'wait_for_confirmation': BOS/CHoCH just fired or ADX < 15.
+  - 'avoid': no directional edge or conflicting signals.
+  - TP1 = entry ± (1.0 * SL_distance) — 1:1 R:R. Hit this first, then move SL to break-even.
+  - TP2 = resistance/support level from Step 8 — primary target. R/R gate uses TP2.
+  - Backwards compatible: tp.take_profit still populated so existing stored analyses display normally.
+
+## Execution Log Entry — 2026-07-14 00:15 UTC
+* **Phase:** Phase 7 — AI Pipeline Enhancement (Faz 4: Liquidity Agent + HTF Context)
+* **Action/Task:** Implemented Faz 4: Created Liquidity Agent to estimate stop hunt zones and order book bias using OI and L/S ratios. Injected Higher Time Frame (HTF) 1d context into TA Agent for lower timeframes.
+* **Files Affected:**
+  - [NEW] `ai-service/app/mcp_server/tools/liquidity_tools.py` — `get_liquidation_clusters` tool
+  - [NEW] `ai-service/app/crew/prompts/liquidity_agent.py` — Liquidity Agent prompt generating LIQUIDITY_DATA
+  - [MODIFIED] `ai-service/app/crew/confluence_crew.py` — Added `liquidity_agent` and `liquidity_task` (runs parallel)
+  - [MODIFIED] `ai-service/app/mcp_server/server.py` — Registered `get_liquidation_clusters`
+  - [MODIFIED] `ai-service/app/crew/prompts/data_agent.py` — Added fallback `1d` fetch for `ohlcv_ref_1d`
+  - [MODIFIED] `ai-service/app/crew/prompts/ta_agent.py` — Step 7 reads `ohlcv_ref_1d` to check HTF alignment and applies confidence penalty if conflicting. Added `htf_alignment` to JSON.
+  - [MODIFIED] `ai-service/app/crew/prompts/risk_agent.py` — Step 5 reads `LIQUIDITY_DATA` and adjusts SL to be BEYOND the closest major liquidity pool to avoid stop hunts.
+  - [MODIFIED] `ai-service/app/crew/prompts/orchestrator.py` — Included Liquidity agent in JSON schema and extracted summary.
+* **Details/Decisions:**
+  - Used estimated liquidation clusters based on Long/Short ratio rather than Coinglass API (to save cost and keep within Binance public API).
+  - HTF context is seamlessly injected by `DataAgent` making a second call for `1d` data, and `TAAgent` executing structure tools on `ohlcv_ref_1d`.
+  - Risk SL placement now explicitly avoids liquidity zones, directly fulfilling the "stop hunt avoidance" goal.

@@ -12,7 +12,14 @@ from app.crew import ConfluenceTradeCrew
 from app.llm import LLMConfig, LLMFactory
 from app.mcp_server import ohlcv_cache
 from app.schemas.request import AnalysisRequest
-from app.schemas.response import AnalysisResponse, AgentOutput, SynthesisOutput, Annotation
+from app.schemas.response import (
+    AnalysisResponse,
+    AgentOutput,
+    SynthesisOutput,
+    Annotation,
+    RangeTrade,
+    RangeTradeBreakoutAlert,
+)
 
 # Risk profile → R:R thresholds and TA neutral zone width
 _RISK_PROFILES = {
@@ -140,7 +147,18 @@ class AnalysisOrchestrator:
             synthesis_dict = parsed_synthesis.get("synthesis", {})
             annotations_list = parsed_synthesis.get("annotations", [])
 
-            synthesis = SynthesisOutput(**synthesis_dict)
+            # Parse range_trade block when trade_mode == 'range'
+            range_trade_raw = synthesis_dict.pop("range_trade", None)
+            range_trade: RangeTrade | None = None
+            if range_trade_raw and isinstance(range_trade_raw, dict):
+                try:
+                    breakout_raw = range_trade_raw.pop("breakout_alert", {})
+                    alert = RangeTradeBreakoutAlert(**breakout_raw)
+                    range_trade = RangeTrade(**range_trade_raw, breakout_alert=alert)
+                except Exception:
+                    range_trade = None  # Graceful fallback — never break the pipeline
+
+            synthesis = SynthesisOutput(**synthesis_dict, range_trade=range_trade)
             annotations = [Annotation(**ann) for ann in annotations_list]
 
             # Construct final response

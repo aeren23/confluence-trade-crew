@@ -20,6 +20,8 @@ from app.crew.prompts import (
     risk_agent as risk_prompts,
     ta_agent as ta_prompts,
     onchain_agent as onchain_prompts,
+    market_structure_agent as ms_prompts,
+    liquidity_agent as liq_prompts,
 )
 from app.llm.factory import LLMFactory
 from app.schemas.response import AgentOutput, SynthesisOutput
@@ -220,6 +222,34 @@ class ConfluenceTradeCrew:
             step_callback=self._make_step_callback("Orchestrator"),
         )
 
+    @agent
+    def market_structure_agent(self) -> Agent:
+        return Agent(
+            role=ms_prompts.ROLE,
+            goal=ms_prompts.GOAL,
+            backstory=ms_prompts.BACKSTORY,
+            llm=self._llm_factory.create("market_structure"),
+            mcps=[self._mcp],
+            max_iter=8,
+            max_retry_limit=2,
+            verbose=True,
+            step_callback=self._make_step_callback("Market Structure Agent"),
+        )
+
+    @agent
+    def liquidity_agent(self) -> Agent:
+        return Agent(
+            role=liq_prompts.ROLE,
+            goal=liq_prompts.GOAL,
+            backstory=liq_prompts.BACKSTORY,
+            llm=self._llm_factory.create("liquidity"),
+            mcps=[self._mcp],
+            max_iter=5,
+            max_retry_limit=2,
+            verbose=True,
+            step_callback=self._make_step_callback("Liquidity Agent"),
+        )
+
     # ── Tasks ──────────────────────────────────────────────────────────────
 
     @task
@@ -231,13 +261,23 @@ class ConfluenceTradeCrew:
         )
 
     @task
+    def market_structure_task(self) -> Task:
+        return Task(
+            description=ms_prompts.TASK_DESCRIPTION,
+            expected_output=ms_prompts.EXPECTED_OUTPUT,
+            agent=self.market_structure_agent(),
+            context=[self.data_task()],  # Needs ohlcv_ref; runs in parallel with news/onchain
+            async_execution=True,
+        )
+
+    @task
     def ta_task(self) -> Task:
         return Task(
             description=ta_prompts.TASK_DESCRIPTION,
             expected_output=ta_prompts.EXPECTED_OUTPUT,
             agent=self.ta_agent(),
-            context=[self.data_task()],  # Depends on Data Agent output
-            async_execution=True,  # Runs in parallel with news_task
+            context=[self.data_task(), self.market_structure_task()],  # Waits for structure context
+            async_execution=False,  # Must wait for market_structure_task to finish
         )
 
     @task
@@ -261,12 +301,22 @@ class ConfluenceTradeCrew:
         )
 
     @task
+    def liquidity_task(self) -> Task:
+        return Task(
+            description=liq_prompts.TASK_DESCRIPTION,
+            expected_output=liq_prompts.EXPECTED_OUTPUT,
+            agent=self.liquidity_agent(),
+            context=[self.data_task()],  # Needs symbol
+            async_execution=True,  # Runs in parallel with others
+        )
+
+    @task
     def risk_task(self) -> Task:
         return Task(
             description=risk_prompts.TASK_DESCRIPTION,
             expected_output=risk_prompts.EXPECTED_OUTPUT,
             agent=self.risk_agent(),
-            context=[self.ta_task(), self.news_task(), self.onchain_task()],  # Waits for TA, News, and On-Chain
+            context=[self.ta_task(), self.news_task(), self.onchain_task(), self.liquidity_task()],
             async_execution=False,
         )
 
@@ -277,8 +327,8 @@ class ConfluenceTradeCrew:
             expected_output=orch_prompts.EXPECTED_OUTPUT,
             agent=self.orchestrator_agent(),
             context=[
-                self.data_task(), self.ta_task(), self.news_task(),
-                self.onchain_task(), self.risk_task()
+                self.data_task(), self.market_structure_task(), self.ta_task(),
+                self.news_task(), self.onchain_task(), self.risk_task()
             ],
             # We don't strictly use output_pydantic here because we wrap it later,
             # but we could define a specific model. Let's just output JSON.

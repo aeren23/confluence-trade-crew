@@ -1,7 +1,7 @@
 """
 Internal MCP Server — stdio transport.
 
-Registers all 7 tools and runs as a subprocess invoked by
+Registers all 10 tools and runs as a subprocess invoked by
 CrewAI agents via MCPServerStdio transport.
 
 See architecture.md § 3.4 and mcp_tools.md for full documentation.
@@ -31,6 +31,12 @@ from app.mcp_server.tools import (
     get_open_interest,
     get_long_short_ratio,
     get_derivatives_summary,
+    # Structure & Regime tools (Faz 1)
+    detect_market_structure,
+    detect_market_regime,
+    calculate_ta_composite_score,
+    # Liquidity tools (Faz 4)
+    get_liquidation_clusters,
 )
 
 # Create MCP server instance
@@ -229,6 +235,72 @@ async def list_tools() -> list[Tool]:
                 "required": ["symbol"],
             },
         ),
+        # ── Structure & Regime Tools (Faz 1) ─────────────────────────────────
+        Tool(
+            name="detect_market_structure",
+            description=(
+                "Detect price action market structure using swing points. "
+                "Identifies Higher Highs/Higher Lows (bullish) or Lower Highs/Lower Lows (bearish). "
+                "Detects Break of Structure (BOS) — price closes beyond last swing extreme — and "
+                "Character Change (CHoCH) — first sign of structure reversal. "
+                "Call this BEFORE TA indicators to understand the structural context."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ohlcv_ref": {"type": "string", "description": "UUID reference from get_ohlcv"},
+                    "swing_window": {"type": "integer", "default": 5, "description": "Candles each side to confirm a pivot (default 5)"},
+                    "lookback": {"type": "integer", "default": 60, "description": "Recent candles to analyze (default 60)"},
+                },
+                "required": ["ohlcv_ref"],
+            },
+        ),
+        Tool(
+            name="detect_market_regime",
+            description=(
+                "Classify the current market regime: trending_up / trending_down / ranging / breakout. "
+                "Uses ADX strength (>25 = trending, <20 = ranging), EMA20/50 alignment, "
+                "Bollinger Band width squeeze, and volume spikes. "
+                "Regime determines which trade strategy is most appropriate."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ohlcv_ref": {"type": "string", "description": "UUID reference from get_ohlcv"},
+                },
+                "required": ["ohlcv_ref"],
+            },
+        ),
+        Tool(
+            name="calculate_ta_composite_score",
+            description=(
+                "Compute a fully DETERMINISTIC composite TA sentiment score from -1.0 (strongly bearish) "
+                "to +1.0 (strongly bullish). "
+                "Unlike asking the LLM to score indicators, this tool always produces the same score "
+                "for the same market data. Components: EMA trend alignment (30%), RSI momentum (15%), "
+                "MACD signal cross (10%), Bollinger Band position (15%), RSI divergence (15%), "
+                "ADX strength multiplier (amplifies or dampens the score). "
+                "Use this score as the authoritative TA sentiment_score — interpret it, do not override it."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ohlcv_ref": {"type": "string", "description": "UUID reference from get_ohlcv"},
+                },
+                "required": ["ohlcv_ref"],
+            },
+        ),
+        Tool(
+            name="get_liquidation_clusters",
+            description="Estimate liquidation clusters and liquidity pools based on OI, long/short ratio, and current price.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Trading pair, e.g. 'BTC/USDT'"},
+                },
+                "required": ["symbol"],
+            },
+        ),
     ]
 
 
@@ -252,6 +324,12 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         "get_open_interest": get_open_interest,
         "get_long_short_ratio": get_long_short_ratio,
         "get_derivatives_summary": get_derivatives_summary,
+        # Structure & Regime tools (Faz 1)
+        "detect_market_structure": detect_market_structure,
+        "detect_market_regime": detect_market_regime,
+        "calculate_ta_composite_score": calculate_ta_composite_score,
+        # Liquidity tools (Faz 4)
+        "get_liquidation_clusters": get_liquidation_clusters,
     }
 
     handler = tool_map.get(name)

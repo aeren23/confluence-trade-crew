@@ -1,5 +1,5 @@
 """
-MCP Server tools — Data, Indicator, News, and On-Chain tools.
+MCP Server tools — Data, Indicator, News, On-Chain, and Structure tools.
 """
 
 from app.mcp_server.tools.data_tools import get_ohlcv
@@ -17,6 +17,14 @@ from app.mcp_server.tools.onchain_tools import (
     get_long_short_ratio,
     get_derivatives_summary,
 )
+from app.mcp_server.tools.structure_tools import (
+    detect_market_structure,
+    detect_market_regime,
+    calculate_ta_composite_score,
+)
+from app.mcp_server.tools.liquidity_tools import (
+    get_liquidation_clusters,
+)
 
 __all__ = [
     "get_ohlcv",
@@ -32,4 +40,11 @@ __all__ = [
     "get_open_interest",
     "get_long_short_ratio",
     "get_derivatives_summary",
+    # Structure & Regime tools
+    "detect_market_structure",
+    "detect_market_regime",
+    "calculate_ta_composite_score",
+    # Liquidity tools
+    "get_liquidation_clusters",
 ]
+

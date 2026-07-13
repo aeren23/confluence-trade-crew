@@ -5,6 +5,8 @@ Matches the output envelope defined in agents.md and the
 synthesis schema in architecture.md § 3.3.
 """
 
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 
 
@@ -25,8 +27,44 @@ class Annotation(BaseModel):
     type: str = Field(..., description="horizontal_line or marker")
     label: str = Field(..., description="Display label for the annotation")
     value: float | None = Field(default=None, description="Price level (for horizontal_line)")
-    style: str = Field(..., description="Rendering style: support, resistance, stop_loss, take_profit, divergence_bullish, divergence_bearish")
+    style: str = Field(
+        ...,
+        description=(
+            "Rendering style: support, resistance, stop_loss, take_profit, "
+            "divergence_bullish, divergence_bearish, range_boundary, bos_level"
+        ),
+    )
     indicator: str | None = Field(default=None, description="Related indicator name (for marker type)")
+
+
+# ── Faz 2: Range Trade & Market Structure schemas ─────────────────────────────
+
+class RangeTradeBreakoutAlert(BaseModel):
+    """Breakout/breakdown price triggers for range trade mode."""
+
+    bullish_breakout_above: float = Field(..., description="Price above this level = bullish breakout from range")
+    bearish_breakdown_below: float = Field(..., description="Price below this level = bearish breakdown from range")
+
+
+class RangeTrade(BaseModel):
+    """
+    Actionable range trade guidance produced when trade_mode = 'range'.
+
+    Replaces the generic NEUTRAL/WAIT output with specific range boundaries,
+    bias direction, entry trigger, and breakout alert levels.
+    """
+
+    range_high: float = Field(..., description="Upper range boundary (last swing high)")
+    range_low: float = Field(..., description="Lower range boundary (last swing low)")
+    bias: str = Field(
+        ...,
+        description="long_at_support | short_at_resistance | no_edge",
+    )
+    trigger: str = Field(..., description="Human-readable entry trigger description")
+    breakout_alert: RangeTradeBreakoutAlert = Field(
+        ...,
+        description="Price levels that would signal a breakout from the range",
+    )
 
 
 class SynthesisOutput(BaseModel):
@@ -36,8 +74,16 @@ class SynthesisOutput(BaseModel):
     overall_sentiment_score: float = Field(..., ge=-1.0, le=1.0)
     confidence: float = Field(..., ge=0.0, le=1.0)
     conflicts_detected: bool = Field(default=False, description="True if TA and News agents conflict")
+    trade_mode: str = Field(
+        default="trend",
+        description="Market mode: 'trend' (directional) | 'range' (oscillating) | 'breakout_watch' (BOS detected)",
+    )
     summary: str = Field(..., description="Comprehensive human-readable synthesis")
     agent_summaries: dict[str, str] = Field(default_factory=dict, description="Per-agent summary strings")
+    range_trade: RangeTrade | None = Field(
+        default=None,
+        description="Range trade guidance block — populated when trade_mode='range', null otherwise",
+    )
 
 
 # ── Multi-Timeframe Confluence schemas ────────────────────────────────────────
@@ -92,7 +138,7 @@ class AnalysisResponse(BaseModel):
     timestamp: str
     agents: dict[str, AgentOutput] = Field(
         default_factory=dict,
-        description="Individual agent outputs keyed by agent name"
+        description="Individual agent outputs keyed by agent name (includes market_structure from Faz 1)"
     )
     synthesis: SynthesisOutput
     annotations: list[Annotation] = Field(

@@ -6,7 +6,7 @@ import {
   ShieldCheck, TrendingUp, TrendingDown, Minus,
   Activity, Globe, Database, AlertTriangle, BarChart2,
   ArrowDownRight, ArrowUpRight, Layers, DollarSign, Target,
-  Wallet, TrendingUp as TrendUp, Clock
+  Wallet, TrendingUp as TrendUp, Clock, Zap, BarChart, RefreshCw, Crosshair, Droplets
 } from 'lucide-react';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -15,6 +15,104 @@ const SentimentIcon = ({ sentiment, size = 20 }) => {
   if (sentiment === 'bullish') return <TrendingUp  className={styles.bullish} size={size} />;
   if (sentiment === 'bearish') return <TrendingDown className={styles.bearish} size={size} />;
   return <Minus className={styles.neutral} size={size} />;
+};
+
+// ── Trade Mode Banner ───────────────────────────────────────────────────────
+const TRADE_MODE_CONFIG = {
+  trend: {
+    icon: <TrendingUp size={15} />,
+    label: 'TREND MODE',
+    desc: 'Directional trend detected — follow momentum.',
+    cls: styles.tradeModeBanner_trend,
+  },
+  range: {
+    icon: <RefreshCw size={15} />,
+    label: 'RANGE MODE',
+    desc: 'Market oscillating between support and resistance — mean-reversion setups preferred.',
+    cls: styles.tradeModeBanner_range,
+  },
+  breakout_watch: {
+    icon: <Zap size={15} />,
+    label: 'BREAKOUT WATCH',
+    desc: 'Structure break detected — watch for breakout confirmation before entry.',
+    cls: styles.tradeModeBanner_breakout_watch,
+  },
+};
+
+const TradeModeBanner = ({ mode }) => {
+  const cfg = TRADE_MODE_CONFIG[mode];
+  if (!cfg) return null;
+  return (
+    <div className={`${styles.tradeModeBanner} ${cfg.cls}`}>
+      {cfg.icon}
+      <span className={styles.tradeModeLabel}>{cfg.label}</span>
+      <span className={styles.tradeModeDesc}>{cfg.desc}</span>
+    </div>
+  );
+};
+
+// ── Range Trade Card ────────────────────────────────────────────────────────
+const RangeTradeCard = ({ rangeTrade, currentPrice }) => {
+  if (!rangeTrade) return null;
+  const { range_high, range_low, bias, trigger, breakout_alert } = rangeTrade;
+
+  // Current price position within the range (0% = low, 100% = high)
+  const rangeSpan = range_high - range_low;
+  const pricePct = rangeSpan > 0
+    ? Math.min(100, Math.max(0, ((currentPrice - range_low) / rangeSpan) * 100))
+    : 50;
+
+  const biasClass =
+    bias === 'long_at_support'   ? styles.rangeBiasLong  :
+    bias === 'short_at_resistance' ? styles.rangeBiasShort :
+    styles.rangeBiasNeutral;
+
+  const biasLabel =
+    bias === 'long_at_support'   ? '↑ LONG BIAS'  :
+    bias === 'short_at_resistance' ? '↓ SHORT BIAS' :
+    '◆ NO EDGE';
+
+  return (
+    <div className={styles.rangeCard}>
+      <div className={styles.rangeCardHeader}>
+        <div className={styles.rangeCardTitle}>
+          <BarChart size={15} />
+          Range Trade Analysis
+        </div>
+        <span className={`${styles.rangeBiasTag} ${biasClass}`}>{biasLabel}</span>
+      </div>
+
+      {/* Range bar visualizer */}
+      <div>
+        <div className={styles.rangeBar}>
+          <div className={styles.rangeBarFill} />
+          <div className={styles.rangePriceMarker} style={{ left: `${pricePct}%` }} />
+        </div>
+        <div className={styles.rangeLabels}>
+          <span className={styles.rangeLevelLow}>Support {fmt(range_low)}</span>
+          <span>Price {fmt(currentPrice)}</span>
+          <span className={styles.rangeLevelHigh}>Resistance {fmt(range_high)}</span>
+        </div>
+      </div>
+
+      {/* Trigger */}
+      {trigger && <div className={styles.rangeTrigger}>{trigger}</div>}
+
+      {/* Breakout alerts */}
+      {breakout_alert && (
+        <div className={styles.breakoutAlertRow}>
+          <div className={`${styles.breakoutAlertItem} ${styles.breakoutAlertBull}`}>
+            <span className={styles.breakoutAlertLabel}>Bullish Breakout Above</span>
+            <span className={styles.breakoutAlertValue}>{fmt(breakout_alert.bullish_breakout_above)}</span>
+          </div>
+          <div className={`${styles.breakoutAlertItem} ${styles.breakoutAlertBear}`}>
+            <span className={styles.breakoutAlertLabel}>Bearish Breakdown Below</span>
+            <span className={styles.breakoutAlertValue}>{fmt(breakout_alert.bearish_breakdown_below)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const ScoreBar = ({ value }) => {
@@ -82,7 +180,11 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
 
   const entry = toNum(levels.entry || levels.entry_reference);
   const sl    = toNum(levels.stop_loss);
-  const tp    = toNum(levels.take_profit);
+  // TP1 (1:1 partial exit) and TP2 (primary target) — Faz 3
+  const tp1   = toNum(levels.tp1);
+  const tp2   = toNum(levels.tp2 ?? levels.take_profit);
+  // Backwards compat: fall back to take_profit if tp2 absent
+  const tp    = tp2 ?? toNum(levels.take_profit);
   const rr    = levels.risk_reward_ratio
     ?? sizing.risk_reward_ratio
     ?? (entry && sl && tp ? Math.abs(tp - entry) / Math.abs(entry - sl) : null);
@@ -176,9 +278,24 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
             Notional is derived from risk: {fmt(riskAmt)} USDT / {fmt(stopDistancePct)}% stop distance.
           </div>
         )}
+        {/* TP1 — 1:1 partial exit */}
+        {tp1 && (
+          <div className={styles.sizingRow}>
+            <span className={`${styles.sizingLabel} ${styles.bullish}`}>
+              <ArrowUpRight size={11}/> TP1 <span className={styles.tp1Tag}>1:1</span>
+            </span>
+            <span className={styles.sizingVal}>
+              {fmt(tp1)}
+              {entry && <span className={styles.sizingNote}> ({pctDiff(entry, tp1)}%)</span>}
+            </span>
+          </div>
+        )}
+        {/* TP2 — primary target */}
         {tp && (
           <div className={styles.sizingRow}>
-            <span className={`${styles.sizingLabel} ${styles.bullish}`}><ArrowUpRight size={11}/> Take Profit</span>
+            <span className={`${styles.sizingLabel} ${styles.bullish}`}>
+              <ArrowUpRight size={11}/> {tp1 ? 'TP2' : 'Take Profit'} <span className={styles.tp2Tag}>primary</span>
+            </span>
             <span className={styles.sizingVal}>
               {fmt(tp)}
               {entry && <span className={styles.sizingNote}> ({pctDiff(entry, tp)}%)</span>}
@@ -198,7 +315,28 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
   );
 };
 
-// ── Agent Section cards ────────────────────────────────────────────────────
+// ── Entry Timing Badge ────────────────────────────────────────────────────────
+const ENTRY_TIMING_CONFIG = {
+  immediate:             { label: 'ENTER NOW',            variant: 'green',   desc: 'All conditions met — immediate entry.' },
+  wait_for_pullback:     { label: 'WAIT — PULLBACK',      variant: 'amber',   desc: 'Price extended. Wait for retracement.' },
+  wait_for_confirmation: { label: 'WAIT — CONFIRM',       variant: 'cyan',    desc: 'Structure event. Wait for confirmation.' },
+  avoid:                 { label: 'AVOID',                 variant: 'red',     desc: 'No clear edge. Skip this setup.' },
+};
+
+const EntryTimingBadge = ({ timing }) => {
+  const cfg = ENTRY_TIMING_CONFIG[timing];
+  if (!cfg) return null;
+  return (
+    <div className={styles.entryTimingBox}>
+      <Crosshair size={12} />
+      <span className={styles.entryTimingLabel}>Entry Timing</span>
+      <Pill variant={cfg.variant}>{cfg.label}</Pill>
+      <span className={styles.entryTimingDesc}>{cfg.desc}</span>
+    </div>
+  );
+};
+
+// ── Agent Section cards ─────────────────────────────────────────────────────────
 
 const AgentMeta = ({ agentData, label }) => {
   if (!agentData) return null;
@@ -240,6 +378,14 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
   const news = agents?.news;
   const risk = agents?.risk;
   const data = agents?.data;
+  const ms   = agents?.market_structure;  // Faz 1 — Market Structure Agent
+
+  // Trade mode and range trade (Faz 2)
+  const tradeMode = synthesis?.trade_mode || 'trend';
+  const rangeTrade = synthesis?.range_trade || null;
+  const entryTiming = synthesis?.agent_summaries?.entry_timing
+    || taDetails?.entry_timing
+    || null;
 
   // TA detail helpers
   const taDetails     = ta?.details   || {};
@@ -302,6 +448,9 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
         </div>
       )}
 
+      {/* ── Trade Mode Banner (Faz 2) ─────────────────────────────────────── */}
+      <TradeModeBanner mode={tradeMode} />
+
       {/* ── Main Header ──────────────────────────────────────────────────── */}
       <div className={styles.header}>
         <div className={styles.sentimentBox}>
@@ -333,6 +482,21 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
 
       {/* ── Summary ──────────────────────────────────────────────────────── */}
       <p className={styles.summary}>{synthesis.summary}</p>
+
+      {/* ── Entry Timing Badge (Faz 3) ────────────────────────────────────── */}
+      {entryTiming && <EntryTimingBadge timing={entryTiming} />}
+
+      {/* ── Range Trade Card (Faz 2) — visible when trade_mode = 'range' ─── */}
+      {tradeMode === 'range' && rangeTrade && (
+        <RangeTradeCard
+          rangeTrade={rangeTrade}
+          currentPrice={
+            ta?.details?.indicators?.ema_20?.value
+              ? parseFloat(data?.details?.latest_price || 0)
+              : parseFloat(data?.details?.latest_price || 0)
+          }
+        />
+      )}
 
       {/* ── Multi-Timeframe Confluence Gauge ─────────────────────────────── */}
       {finalAnalysis.multi_timeframe_confluence && (
@@ -478,6 +642,19 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                     <span className={styles.indNote}>{taDetails.indicators.atr.atr_pct ?? '—'}% of price</span>
                   </div>
                 )}
+                {/* HTF Alignment Badge */}
+                {indicators.htf_alignment && indicators.htf_alignment !== 'not_available' && (
+                  <div className={styles.htfBadge}>
+                    <span className={styles.detailKey}>HTF Alignment:</span>
+                    <Pill variant={
+                      indicators.htf_alignment === 'aligned_bullish' ? 'green' :
+                      indicators.htf_alignment === 'aligned_bearish' ? 'red' :
+                      indicators.htf_alignment === 'conflicting' ? 'amber' : 'default'
+                    }>
+                      {indicators.htf_alignment.replace('_', ' ').toUpperCase()}
+                    </Pill>
+                  </div>
+                )}
               </div>
             )}
 
@@ -613,6 +790,52 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                   ))}
                 </div>
               )}
+            </div>
+          );
+        })()}
+
+        {/* Liquidity Agent Card */}
+        {agents?.liquidity && (() => {
+          const liquidity = agents.liquidity;
+          const ld = liquidity.details || {};
+          return (
+            <div className={styles.agentCard}>
+              <h3><Droplets size={15} /> Liquidity &amp; Order Flow</h3>
+              <AgentMeta agentData={liquidity} />
+              <p className={styles.cardSummary}>{synthesis?.agent_summaries?.liquidity}</p>
+
+              {ld.pool_bias && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Pool Bias</span>
+                  <Pill variant={
+                    ld.pool_bias === 'upside_heavy' ? 'cyan' :
+                    ld.pool_bias === 'downside_heavy' ? 'amber' : 'default'
+                  }>
+                    {ld.pool_bias.replace('_', ' ').toUpperCase()}
+                  </Pill>
+                </div>
+              )}
+
+              {ld.draw_target && (
+                <div className={styles.onchainRow}>
+                  <span className={styles.detailKey}>Draw Target</span>
+                  <Pill variant={
+                    ld.draw_target === 'up' ? 'green' :
+                    ld.draw_target === 'down' ? 'red' : 'default'
+                  }>
+                    {ld.draw_target.toUpperCase()}
+                  </Pill>
+                </div>
+              )}
+
+              <div className={styles.srRow} style={{ marginTop: '0.5rem' }}>
+                {ld.upside_pool_closest != null && (
+                  <Pill variant="cyan">Up Pool {fmt(ld.upside_pool_closest)}</Pill>
+                )}
+                {ld.downside_pool_closest != null && (
+                  <Pill variant="amber">Down Pool {fmt(ld.downside_pool_closest)}</Pill>
+                )}
+              </div>
             </div>
           );
         })()}
