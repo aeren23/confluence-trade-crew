@@ -3,6 +3,7 @@ using System;
 using Confluence.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Confluence.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713221453_AddAiMetadataAndTp2")]
+    partial class AddAiMetadataAndTp2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,18 +147,6 @@ namespace Confluence.Infrastructure.Migrations
                         .HasColumnName("checked_at")
                         .HasDefaultValueSql("now()");
 
-                    b.Property<bool>("HitEntry")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HitStopLoss")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HitTakeProfit1")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HitTakeProfit2")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsAccurate")
                         .HasColumnType("boolean")
                         .HasColumnName("is_accurate");
@@ -238,7 +229,7 @@ namespace Confluence.Infrastructure.Migrations
                         {
                             Symbol = "BTC/USDT",
                             BaseAsset = "BTC",
-                            CreatedAt = new DateTime(2026, 7, 13, 22, 58, 54, 465, DateTimeKind.Utc).AddTicks(977),
+                            CreatedAt = new DateTime(2026, 7, 13, 22, 14, 52, 558, DateTimeKind.Utc).AddTicks(504),
                             IsActive = true,
                             IsFavorite = true,
                             QuoteAsset = "USDT"
@@ -247,7 +238,7 @@ namespace Confluence.Infrastructure.Migrations
                         {
                             Symbol = "ETH/USDT",
                             BaseAsset = "ETH",
-                            CreatedAt = new DateTime(2026, 7, 13, 22, 58, 54, 465, DateTimeKind.Utc).AddTicks(989),
+                            CreatedAt = new DateTime(2026, 7, 13, 22, 14, 52, 558, DateTimeKind.Utc).AddTicks(508),
                             IsActive = true,
                             IsFavorite = false,
                             QuoteAsset = "USDT"
@@ -687,7 +678,7 @@ namespace Confluence.Infrastructure.Migrations
                             PreferredSymbol = "BTC/USDT",
                             PreferredTimeframe = "4h",
                             RiskProfile = "moderate",
-                            UpdatedAt = new DateTime(2026, 7, 13, 22, 58, 54, 465, DateTimeKind.Utc).AddTicks(3999)
+                            UpdatedAt = new DateTime(2026, 7, 13, 22, 14, 52, 558, DateTimeKind.Utc).AddTicks(1022)
                         });
                 });
 

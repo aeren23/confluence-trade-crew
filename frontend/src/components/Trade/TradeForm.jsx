@@ -17,6 +17,7 @@ const TradeForm = () => {
     leverage: 1,
     stopLoss: '',
     takeProfit: '',
+    takeProfit2: '',
     notes: '',
     tags: [],
   });
@@ -38,6 +39,7 @@ const TradeForm = () => {
           leverage: pendingTradeDefaults.leverage || 1,
           stopLoss: pendingTradeDefaults.stopLoss || '',
           takeProfit: pendingTradeDefaults.takeProfit || '',
+          takeProfit2: pendingTradeDefaults.takeProfit2 || '',
         }));
       }
       setError(null);
@@ -63,6 +65,7 @@ const TradeForm = () => {
         leverage: parseFloat(form.leverage) || 1,
         stopLoss: form.stopLoss ? parseFloat(form.stopLoss) : null,
         takeProfit: form.takeProfit ? parseFloat(form.takeProfit) : null,
+        takeProfit2: form.takeProfit2 ? parseFloat(form.takeProfit2) : null,
         analysisId: pendingTradeDefaults?.analysisId || null,
         notes: form.notes || null,
         tags: form.tags.length > 0 ? form.tags.join(',') : null,
@@ -187,14 +190,26 @@ const TradeForm = () => {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label>Take Profit</label>
+              <label>Take Profit (1:1)</label>
               <input
                 type="number"
                 step="any"
                 value={form.takeProfit}
                 onChange={(e) => handleChange('takeProfit', e.target.value)}
                 className={styles.input}
-                placeholder="Optional"
+                placeholder="TP1 (Optional)"
+              />
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label>Take Profit 2 (Target)</label>
+              <input
+                type="number"
+                step="any"
+                value={form.takeProfit2}
+                onChange={(e) => handleChange('takeProfit2', e.target.value)}
+                className={styles.input}
+                placeholder="TP2 (Optional)"
               />
             </div>
           </div>

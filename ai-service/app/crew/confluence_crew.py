@@ -189,7 +189,6 @@ class ConfluenceTradeCrew:
             goal=risk_prompts.GOAL,
             backstory=risk_prompts.BACKSTORY,
             llm=self._llm_factory.create("risk"),
-            mcps=[self._mcp],
             max_iter=10,
             max_retry_limit=3,
             verbose=True,

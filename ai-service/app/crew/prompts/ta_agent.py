@@ -169,5 +169,7 @@ EXPECTED_OUTPUT = (
     "trend direction, momentum, support/resistance levels, "
     "an entry_timing assessment (immediate/wait_for_pullback/wait_for_confirmation/avoid) with rationale, "
     "and a trailing INDICATOR_DATA JSON block including market_structure, market_regime, "
-    "bos_detected, choch_detected, htf_alignment, and entry_timing fields."
+    "bos_detected, choch_detected, htf_alignment, and entry_timing fields.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 200 words excluding JSON). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

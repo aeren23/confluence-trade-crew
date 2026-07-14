@@ -11,7 +11,8 @@ public class TradeCreateDto
     public decimal Leverage { get; set; } = 1.0m;
     
     public decimal? StopLoss { get; set; }
-    public decimal? TakeProfit { get; set; }
+    public decimal? TakeProfit { get; set; } // TP1
+    public decimal? TakeProfit2 { get; set; } // Primary Target
     public DateTime EntryAt { get; set; } = DateTime.UtcNow;
     
     public Guid? AnalysisId { get; set; }

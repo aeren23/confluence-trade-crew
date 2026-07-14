@@ -300,6 +300,7 @@ const TradesPage = () => {
                     {t.stopLoss   ? <span className={styles.sl}>{fmt(t.stopLoss)}</span>   : '—'}
                     {' / '}
                     {t.takeProfit ? <span className={styles.tp}>{fmt(t.takeProfit)}</span> : '—'}
+                    {t.takeProfit2 && <span> / <span className={styles.tp} title="Primary Target">{fmt(t.takeProfit2)}</span></span>}
                   </td>
                   <td className={styles.mono}>{t.leverage ?? 1}×</td>
                   <td className={styles.dateCell}>{new Date(t.entryAt || t.createdAt).toLocaleDateString()}</td>

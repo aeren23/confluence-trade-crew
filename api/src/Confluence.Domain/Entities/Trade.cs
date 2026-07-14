@@ -15,7 +15,8 @@ public class Trade
     public decimal Leverage { get; set; } = 1.0m;
     
     public decimal? StopLoss { get; set; }
-    public decimal? TakeProfit { get; set; }
+    public decimal? TakeProfit { get; set; } // Legacy or TP1
+    public decimal? TakeProfit2 { get; set; } // Primary Target
     
     public DateTime EntryAt { get; set; } = DateTime.UtcNow;
     

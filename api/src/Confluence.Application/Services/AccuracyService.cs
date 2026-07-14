@@ -28,33 +28,99 @@ public class AccuracyService : IAccuracyService
         if (analysis == null)
             throw new KeyNotFoundException($"Analysis with ID {analysisId} not found.");
 
-        // Get current market price from Binance API
-        var formattedSymbol = analysis.Symbol.Replace("/", "").ToUpper(); // e.g., "BTCUSDT"
-        var response = await _httpClient.GetAsync($"/api/v3/ticker/price?symbol={formattedSymbol}");
-        response.EnsureSuccessStatusCode();
-        
-        var json = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
-        var currentPrice = decimal.Parse(doc.RootElement.GetProperty("price").GetString()!);
-
-        // Calculate changes
         var entryPrice = analysis.LatestPrice;
         if (entryPrice <= 0)
             throw new InvalidOperationException("Analysis does not have a valid entry price to check against.");
 
-        var changePct = ((currentPrice - entryPrice) / entryPrice) * 100m;
         var predictedDirection = analysis.OverallSentiment.ToString().ToLower(); // "bullish", "bearish", "neutral"
+
+        // Parse SL/TP from ResultJson
+        decimal? sl = null;
+        decimal? tp1 = null;
+        decimal? tp2 = null;
+
+        if (!string.IsNullOrWhiteSpace(analysis.ResultJson))
+        {
+            try
+            {
+                using var docRes = JsonDocument.Parse(analysis.ResultJson);
+                var rootRes = docRes.RootElement;
+                if (rootRes.TryGetProperty("agents", out var agents) && 
+                    agents.TryGetProperty("risk", out var risk) && 
+                    risk.TryGetProperty("details", out var details) && 
+                    details.TryGetProperty("levels", out var levels))
+                {
+                    if (levels.TryGetProperty("stop_loss", out var s) && s.ValueKind == JsonValueKind.Number) sl = s.GetDecimal();
+                    if (levels.TryGetProperty("take_profit_1", out var t1) && t1.ValueKind == JsonValueKind.Number) tp1 = t1.GetDecimal();
+                    else if (levels.TryGetProperty("take_profit", out var t) && t.ValueKind == JsonValueKind.Number) tp1 = t.GetDecimal();
+                    if (levels.TryGetProperty("take_profit_2", out var t2) && t2.ValueKind == JsonValueKind.Number) tp2 = t2.GetDecimal();
+                    
+                    // Note: We keep entryPrice as LatestPrice (the moment analysis was requested) for accuracy check 
+                    // since the bot uses market entries for tracking. 
+                }
+            }
+            catch { /* Ignore parsing errors */ }
+        }
+
+        // Get OHLCV Klines from Binance API starting from Analysis Creation
+        var formattedSymbol = analysis.Symbol.Replace("/", "").ToUpper(); // e.g., "BTCUSDT"
+        var startTimeMs = new DateTimeOffset(analysis.CreatedAt).ToUnixTimeMilliseconds();
+        
+        var response = await _httpClient.GetAsync($"/api/v3/klines?symbol={formattedSymbol}&interval=5m&startTime={startTimeMs}&limit=500");
+        response.EnsureSuccessStatusCode();
+        
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var klines = doc.RootElement;
+
+        bool hitEntry = true; // Assume entry is hit instantly for market analysis
+        bool hitSl = false;
+        bool hitTp1 = false;
+        bool hitTp2 = false;
+        decimal currentPrice = entryPrice;
+
+        foreach (var kline in klines.EnumerateArray())
+        {
+            if (kline.GetArrayLength() < 5) continue;
+            var high = decimal.Parse(kline[2].GetString()!);
+            var low = decimal.Parse(kline[3].GetString()!);
+            currentPrice = decimal.Parse(kline[4].GetString()!); // Close price
+
+            if (hitEntry && !hitSl)
+            {
+                if (predictedDirection == "bullish")
+                {
+                    if (sl.HasValue && low <= sl.Value) hitSl = true;
+                    if (!hitTp1 && tp1.HasValue && high >= tp1.Value) hitTp1 = true;
+                    if (!hitTp2 && tp2.HasValue && high >= tp2.Value) hitTp2 = true;
+
+                    // Pessimistic execution logic (if both hit in same candle, assume SL hit first)
+                    if (hitSl && hitTp1) hitTp1 = false;
+                    if (hitSl && hitTp2) hitTp2 = false;
+                }
+                else if (predictedDirection == "bearish")
+                {
+                    if (sl.HasValue && high >= sl.Value) hitSl = true;
+                    if (!hitTp1 && tp1.HasValue && low <= tp1.Value) hitTp1 = true;
+                    if (!hitTp2 && tp2.HasValue && low <= tp2.Value) hitTp2 = true;
+
+                    if (hitSl && hitTp1) hitTp1 = false;
+                    if (hitSl && hitTp2) hitTp2 = false;
+                }
+            }
+            if (hitSl) break;
+        }
+
+        // Calculate changes based on final/current price
+        var changePct = ((currentPrice - entryPrice) / entryPrice) * 100m;
 
         bool isAccurate = false;
         bool wasMissedOpp = false;
 
-        if (predictedDirection == "bullish")
+        if (predictedDirection == "bullish" || predictedDirection == "bearish")
         {
-            isAccurate = changePct > 0;
-        }
-        else if (predictedDirection == "bearish")
-        {
-            isAccurate = changePct < 0;
+            // Now accurate if TP1 was hit before SL!
+            isAccurate = hitTp1;
         }
         else // neutral
         {
@@ -79,6 +145,10 @@ public class AccuracyService : IAccuracyService
             accuracyRecord.IsAccurate = isAccurate;
             accuracyRecord.WasMissedOpportunity = wasMissedOpp;
             accuracyRecord.PotentialPnlPct = pnlPct;
+            accuracyRecord.HitEntry = hitEntry;
+            accuracyRecord.HitStopLoss = hitSl;
+            accuracyRecord.HitTakeProfit1 = hitTp1;
+            accuracyRecord.HitTakeProfit2 = hitTp2;
             accuracyRecord.CheckedAt = DateTime.UtcNow;
             _context.Update(accuracyRecord);
         }
@@ -94,6 +164,10 @@ public class AccuracyService : IAccuracyService
                 IsAccurate = isAccurate,
                 WasMissedOpportunity = wasMissedOpp,
                 PotentialPnlPct = pnlPct,
+                HitEntry = hitEntry,
+                HitStopLoss = hitSl,
+                HitTakeProfit1 = hitTp1,
+                HitTakeProfit2 = hitTp2,
                 CheckedAt = DateTime.UtcNow
             };
             _context.Set<AnalysisAccuracy>().Add(accuracyRecord);

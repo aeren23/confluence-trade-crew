@@ -16,6 +16,7 @@ public class TradeResponseDto
     
     public decimal? StopLoss { get; set; }
     public decimal? TakeProfit { get; set; }
+    public decimal? TakeProfit2 { get; set; }
     
     public DateTime EntryAt { get; set; }
     

@@ -30,6 +30,8 @@ TASK_DESCRIPTION = (
     "The downside liquidity pool is the primary target (long squeeze risk).\n"
     "  - If LS ratio is very low (< 0.9) and OI is rising, the crowd is heavily short. "
     "The upside liquidity pool is the primary target (short squeeze risk).\n"
+    "  - CRITICAL LOGIC OVERRIDE: If the LS ratio is heavily skewed (e.g., > 1.5), "
+    "the pool_bias MUST NOT be 'balanced'. It must be 'downside_heavy' because the majority are long.\n"
     "Step 5: Define 'safe zones' for Stop-Loss placement. A safe SL is located BEYOND "
     "the closest large liquidity pool (so it doesn't get swept during a stop hunt).\n"
     "Step 6: Output a concise text report.\n\n"
@@ -48,5 +50,7 @@ TASK_DESCRIPTION = (
 EXPECTED_OUTPUT = (
     "A concise report detailing the current Long/Short positioning, the largest liquidity pools, "
     "the likely direction of the next liquidity sweep (draw target), and recommendations "
-    "for safe SL/TP placement. Must end with the LIQUIDITY_DATA JSON block."
+    "for safe SL/TP placement. Must end with the LIQUIDITY_DATA JSON block.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 200 words excluding JSON). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

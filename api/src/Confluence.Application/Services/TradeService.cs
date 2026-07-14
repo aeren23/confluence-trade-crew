@@ -40,10 +40,45 @@ public class TradeService : ITradeService
             Leverage = request.Leverage,
             StopLoss = request.StopLoss,
             TakeProfit = request.TakeProfit,
+            TakeProfit2 = request.TakeProfit2,
             EntryAt = request.EntryAt,
             Notes = request.Notes,
             Tags = request.Tags
         };
+
+        // Auto-Tagging based on Analysis Phase 8 Metadata
+        if (request.AnalysisId.HasValue)
+        {
+            var analysis = await _context.Set<Analysis>().FindAsync(request.AnalysisId.Value);
+            if (analysis != null)
+            {
+                var tagsList = new List<string>();
+                if (!string.IsNullOrWhiteSpace(trade.Tags))
+                {
+                    tagsList.AddRange(trade.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()));
+                }
+
+                if (analysis.TradeMode?.ToLowerInvariant() == "range")
+                {
+                    tagsList.Add("#RangeBounce");
+                }
+
+                if (analysis.HtfAlignment?.ToLowerInvariant() == "conflict")
+                {
+                    tagsList.Add("#CounterTrend");
+                }
+
+                if (!string.IsNullOrWhiteSpace(analysis.LiquidityPoolBias))
+                {
+                    tagsList.Add("#StopHuntAvoided");
+                }
+
+                if (tagsList.Any())
+                {
+                    trade.Tags = string.Join(", ", tagsList.Distinct());
+                }
+            }
+        }
 
         // Execution Quality
         var plannedEntryPrice = request.PlannedEntryPrice ?? await ExtractPlannedEntryPriceAsync(request.AnalysisId);
@@ -186,6 +221,7 @@ public class TradeService : ITradeService
             Leverage = trade.Leverage,
             StopLoss = trade.StopLoss,
             TakeProfit = trade.TakeProfit,
+            TakeProfit2 = trade.TakeProfit2,
             EntryAt = trade.EntryAt,
             ExitPrice = trade.ExitPrice,
             ExitAt = trade.ExitAt,

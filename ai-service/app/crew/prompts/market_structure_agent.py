@@ -61,5 +61,7 @@ EXPECTED_OUTPUT = (
     "A structured plain-text report with: market structure (bullish/bearish/ranging) "
     "with confidence, BOS and CHoCH events if any, key swing levels, market regime "
     "(trending_up/trending_down/ranging/breakout), ADX/EMA/BB metrics, and a clear "
-    "2-3 sentence structural context block for the TA Agent."
+    "2-3 sentence structural context block for the TA Agent.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 200 words). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

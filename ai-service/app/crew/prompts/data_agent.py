@@ -33,5 +33,7 @@ TASK_DESCRIPTION = (
 
 EXPECTED_OUTPUT = (
     "A detailed text report summarizing the fetched data, the primary `ohlcv_ref` UUID, "
-    "the HTF `ohlcv_ref_1d` UUID, latest price, candle count, and any data quality warnings."
+    "the HTF `ohlcv_ref_1d` UUID, latest price, candle count, and any data quality warnings.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 150 words). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

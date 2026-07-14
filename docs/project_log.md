@@ -12,6 +12,7 @@
 | 2026-06-15 | 11:00:00 | Refactor AI service architecture | `ai-service/app/*` | Implemented Strategy Pattern for LLM providers (Anthropic, OpenAI, GitHub). Removed restrictive Pydantic output schemas from sub-agents to fix ReAct loop errors. Configured Orchestrator to output structured JSON matching the architecture spec. |
 | 2026-06-16 | 13:55:00 | Phase 4.2 Pipeline Reliability Fixes | `ai-service/app/mcp_server/cache.py`, `ai-service/app/mcp_server/tools/news_tools.py`, `ai-service/app/crew/prompts/*`, `ai-service/test_analysis.py`, `ai-service/.env`, `docs/state.md` | Fixed 5 critical pipeline bugs: Replaced in-memory cache with Parquet file cache to survive MCP subprocess restarts. Replaced rate-limited DuckDuckGo search with a multi-source RSS cascading fetcher. Increased max_iter (5 to 15) and added graceful degradation instructions to all agents. Disabled noisy OTEL telemetry. Removed duplicate indicator function. State file updated to reflect completion of Phase 4 and start of Phase 5. |
 | 2026-06-16 | 15:45:00 | Phase 4.3 & 4.4 Logic Hardening | `orchestrator.py`, `news_agent.py`, `risk_agent.py`, `indicator_tools.py` | Fixed agent hallucinations and math errors: Corrected sentiment weighted average formula, redefined conflict logic, forced confidence drop for missing news, implemented dynamic leverage (1 / (StopLoss% * 1.5)), enforced stop-loss offset from TA support levels, and fixed pandas-ta bollinger bands mapping. |
+| 2026-07-14 | 03:30:00 | AI Logic & Frontend UI Fixes | `news_agent.py`, `liquidity_agent.py`, `orchestrator.py`, `SynthesisPanel.jsx` | Fixed News agent logic inversion hallucinations. Fixed Liquidity agent 'balanced' contradiction. Fixed TP parsing in React UI for hypothetical scenarios. |
 | 2026-06-16 | 16:25:00 | Phase 4.5 Real-Time Telemetry | `docker-compose.yml`, `requirements.txt`, `telemetry_publisher.py`, `confluence_crew.py`, `AnalysisHub.cs`, `RedisTelemetrySubscriber.cs`, `Program.cs` | Implemented a highly scalable live-log system using Redis Pub/Sub. The CrewAI agents now push step callbacks to a Redis channel. A .NET BackgroundService subscribes to this channel and broadcasts the messages to the React frontend via SignalR WebSockets, creating a 'ChatGPT-like' transparent agent thought process UI. |
 | 2026-06-16 | 16:40:00 | Phase 5 React Frontend (Clean Architecture) | `frontend/src/` | Refactored the React frontend using strict SOLID principles. Implemented Vanilla CSS Modules instead of Tailwind to fully decouple presentation from logic. Created `apiClient.js` and `signalrClient.js` to isolate HTTP/WebSocket dependencies. Built custom hooks (`useAnalysisLogic`, `useBinanceData`) to orchestrate state via Zustand. Developed smart/dumb components including a live `TelemetryConsole`, interactive `TradingChart` with Binance integration, and a `SynthesisPanel`. |
 | 2026-06-18 | 01:05:00 | Fix Frontend Binance API SSL Error | `frontend/src/hooks/useBinanceData.js`, `docs/state.md` | Changed the Binance public data fetch endpoint from `api.binance.com` to `data-api.binance.vision` to bypass network-level blocking and `ERR_SSL_PROTOCOL_ERROR` commonly encountered with Turkish ISPs or local antiviruses. Updated state checklist. |
@@ -204,3 +205,40 @@
   - Used estimated liquidation clusters based on Long/Short ratio rather than Coinglass API (to save cost and keep within Binance public API).
   - HTF context is seamlessly injected by `DataAgent` making a second call for `1d` data, and `TAAgent` executing structure tools on `ohlcv_ref_1d`.
   - Risk SL placement now explicitly avoids liquidity zones, directly fulfilling the "stop hunt avoidance" goal.
+
+## Execution Log Entry — 2026-07-14 01:15 UTC
+* **Phase:** Phase 8 — AI Pipeline Final Architecture (Real-World Trading Features)
+* **Action/Task:** Implemented Faz 1: DB Expansion (Entities & DTOs)
+* **Files Affected:** `Analysis.cs`, `Trade.cs`, `AnalysisResponseDto.cs`, `TradeCreateDto.cs`, `TradeResponseDto.cs`, `TradeService.cs`, `AnalysisService.cs`, EF Core Migrations
+* **Details/Decisions:** 
+  - Added `TradeMode`, `HtfAlignment`, `LiquidityPoolBias` to `Analysis` entity for DB-level filtering capability.
+  - Added `TakeProfit2` to `Trade` entity to support the AI's graduated exit targets.
+  - Updated mapping logic in `TradeService` and `AnalysisService`.
+  - Generated and applied `AddAiMetadataAndTp2` EF Core Migration.
+
+## Execution Log Entry — 2026-07-14 01:17 UTC
+* **Phase:** Phase 8 — AI Pipeline Final Architecture (Real-World Trading Features)
+* **Action/Task:** Implemented Faz 2: Backend Services and Auto-Tagging
+* **Files Affected:** `AnalysisService.cs`, `TradeService.cs`
+* **Details/Decisions:** 
+  - Updated `AnalysisService.cs` to parse `TradeMode`, `HtfAlignment`, and `LiquidityPoolBias` from Orchestrator's `ResultJson`.
+  - Updated `TradeService.cs` to automatically append `#StopHuntAvoided`, `#CounterTrend`, and `#RangeBounce` tags during Trade creation by evaluating the associated Analysis metadata.
+
+## Execution Log Entry — 2026-07-14 01:24 UTC
+* **Phase:** Phase 8 — AI Pipeline Final Architecture (Real-World Trading Features)
+* **Action/Task:** Implemented Faz 3: Frontend Form and Table Updates
+* **Files Affected:** `TradeForm.jsx`, `TradesPage.jsx`, `AnalysisDetailPage.jsx`, `AnalysisDetailPage.module.css`, `SynthesisPanel.jsx`
+* **Details/Decisions:** 
+  - Added `TakeProfit2` input to `TradeForm.jsx` and auto-populated it from the AI analysis via `SynthesisPanel.jsx`.
+  - Updated the Trades journal table in `TradesPage.jsx` and `AnalysisDetailPage.jsx` to render `TP1 / TP2` together in the StopLoss/TakeProfit column.
+  - Ensured auto-tags correctly render as custom styled chips in the frontend table.
+
+## Execution Log Entry — 2026-07-14 02:00 UTC
+* **Phase:** Phase 8 — AI Pipeline Final Architecture (Real-World Trading Features)
+* **Action/Task:** Implemented Faz 4: Accuracy Service Backtest-Lite
+* **Files Affected:** `AnalysisAccuracy.cs`, `AccuracyService.cs`
+* **Details/Decisions:** 
+  - Upgraded the accuracy tracking model by adding boolean flags (`HitEntry`, `HitStopLoss`, `HitTakeProfit1`, `HitTakeProfit2`) and created the `UpdateAccuracyTracking` EF Core Migration.
+  - Rewrote `AccuracyService.cs` to fetch 5m Klines from Binance API instead of a single tick price.
+  - Implemented a historical simulation loop that evaluates candles to determine if the SL or TP was hit first (resolving intra-candle collisions pessimistically).
+  - Changed `IsAccurate = true` criteria from a naive snapshot of current PnL to actual trade completion logic (TP1 hit before SL).

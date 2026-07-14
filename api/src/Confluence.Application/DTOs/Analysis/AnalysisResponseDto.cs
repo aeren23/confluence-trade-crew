@@ -23,5 +23,10 @@ public class AnalysisResponseDto
     public decimal? ConfluenceScore { get; set; }
     public string? ConfluenceAlignment { get; set; }
     
+    // Phase 8 AI Metadata
+    public string? TradeMode { get; set; }
+    public string? HtfAlignment { get; set; }
+    public string? LiquidityPoolBias { get; set; }
+    
     public DateTime CreatedAt { get; set; }
 }

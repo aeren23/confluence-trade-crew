@@ -407,7 +407,8 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
       entryPrice: levels.entry || levels.entry_reference || '',
       plannedEntryPrice: levels.entry || levels.entry_reference || '',
       stopLoss: levels.stop_loss || '',
-      takeProfit: levels.take_profit || '',
+      takeProfit: levels.take_profit_1 || levels.take_profit || '',
+      takeProfit2: levels.take_profit_2 || levels.take_profit2 || '',
       leverage: leverage.capped_maximum || leverage.recommended_range || 1,
       entryAmount: sizing.suggested_position_size_usdt || sizing.position_size_usdt || '',
       analysisId: meta?.id || null,
@@ -643,15 +644,15 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                   </div>
                 )}
                 {/* HTF Alignment Badge */}
-                {indicators.htf_alignment && indicators.htf_alignment !== 'not_available' && (
+                {taDetails.indicators.htf_alignment && taDetails.indicators.htf_alignment !== 'not_available' && (
                   <div className={styles.htfBadge}>
                     <span className={styles.detailKey}>HTF Alignment:</span>
                     <Pill variant={
-                      indicators.htf_alignment === 'aligned_bullish' ? 'green' :
-                      indicators.htf_alignment === 'aligned_bearish' ? 'red' :
-                      indicators.htf_alignment === 'conflicting' ? 'amber' : 'default'
+                      taDetails.indicators.htf_alignment === 'aligned_bullish' ? 'green' :
+                      taDetails.indicators.htf_alignment === 'aligned_bearish' ? 'red' :
+                      taDetails.indicators.htf_alignment === 'conflicting' ? 'amber' : 'default'
                     }>
-                      {indicators.htf_alignment.replace('_', ' ').toUpperCase()}
+                      {taDetails.indicators.htf_alignment.replace('_', ' ').toUpperCase()}
                     </Pill>
                   </div>
                 )}
@@ -923,7 +924,7 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                         if (!s) return null;
                         return key === 'sl'
                           ? (s.stop_loss ?? s.sl ?? null)
-                          : (s.take_profit ?? s.tp ?? null);
+                          : (s.tp2 ?? s.tp1 ?? s.take_profit ?? s.tp ?? null);
                       };
                       const fmtHypo = (v) => (v != null ? fmt(v) : '—');
                       return (

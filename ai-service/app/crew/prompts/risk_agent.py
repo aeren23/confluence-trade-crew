@@ -19,16 +19,15 @@ BACKSTORY = (
     "on whether the trade is LONG or SHORT:\n"
     "  • LONG trade  → SL is BELOW entry (below nearest support), TP is ABOVE entry (below nearest resistance)\n"
     "  • SHORT trade → SL is ABOVE entry (above nearest resistance), TP is BELOW entry (above nearest support)\n"
-    "Important: Please use the `get_volatility_metrics` tool to fetch actual "
-    "volatility data before making any assessments."
+    "Important: Extract volatility (ATR and low/medium/high classification) "
+    "directly from the Technical Analysis Agent's report."
 )
 
 TASK_DESCRIPTION = (
     "Please follow these steps carefully:\n"
-    "Step 1: Use the `get_volatility_metrics` tool to review the current market volatility.\n"
-    "Step 2: Wait for the tool observation to return.\n"
-    "Step 3: Read BOTH the TA Agent's output AND the News Agent's output. "
-    "Determine TRADE DIRECTION using this 3-tier conflict protocol:\n\n"
+    "Step 1: Read BOTH the TA Agent's output AND the News Agent's output.\n"
+    "Step 2: Extract ATR and volatility data from the TA Agent's report.\n"
+    "Step 3: Determine TRADE DIRECTION using this 3-tier conflict protocol:\n\n"
     "  FIRST — Classify the relationship between TA and News signals:\n"
     "    CONFLICT exists ONLY IF: (TA_score > +0.35 AND News_score < -0.35) "
     "OR (TA_score < -0.35 AND News_score > +0.35).\n"
@@ -149,10 +148,7 @@ TASK_DESCRIPTION = (
     "   - TP1: partial exit at 1:1 R:R (move SL to break-even after hitting)\n"
     "   - TP2: primary target at resistance/support level\n"
     "3. The base quantity, notional position size, required margin, and leverage range\n"
-    "4. Support/resistance levels used\n\n"
-    "Error handling: If `get_volatility_metrics` returns an error (isError: true), "
-    "use ATR data from the TA Agent's text report instead. Set confidence to 0.4 "
-    "and note that live volatility data was unavailable."
+    "4. Support/resistance levels used"
 )
 
 EXPECTED_OUTPUT = (
@@ -162,5 +158,7 @@ EXPECTED_OUTPUT = (
     "and overall risk classification. "
     "TP1 = 1:1 R:R partial exit level. TP2 = primary target at resistance/support. "
     "For MARGINAL tier, include position size reduction note. "
-    "For UNFAVORABLE tier, include both hypothetical LONG and SHORT scenarios with their own TP1/TP2 levels."
+    "For UNFAVORABLE tier, include both hypothetical LONG and SHORT scenarios with their own TP1/TP2 levels.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 200 words). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

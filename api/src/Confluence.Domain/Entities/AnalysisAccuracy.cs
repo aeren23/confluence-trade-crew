@@ -43,6 +43,18 @@ public class AnalysisAccuracy
     /// </summary>
     public decimal? PotentialPnlPct { get; set; }
 
+    /// <summary>True if the entry price was hit during the simulation window.</summary>
+    public bool HitEntry { get; set; }
+
+    /// <summary>True if the stop loss was hit after entry during the simulation window.</summary>
+    public bool HitStopLoss { get; set; }
+
+    /// <summary>True if the TP1 (1:1 R:R) was hit after entry.</summary>
+    public bool HitTakeProfit1 { get; set; }
+
+    /// <summary>True if the TP2 (Primary target) was hit after entry.</summary>
+    public bool HitTakeProfit2 { get; set; }
+
     /// <summary>Timestamp when the accuracy check was performed.</summary>
     public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
 

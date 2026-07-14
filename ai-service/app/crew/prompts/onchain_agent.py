@@ -51,5 +51,7 @@ TASK_DESCRIPTION = (
 EXPECTED_OUTPUT = (
     "A structured plain text derivatives analysis report covering funding rate, "
     "crowd positioning, open interest trend, risk warnings, and a clear signal summary. "
-    "Do NOT output JSON — the Orchestrator agent will synthesize this into the final report."
+    "Do NOT output JSON — the Orchestrator agent will synthesize this into the final report.\n"
+    "CRITICAL: Keep your text report EXTREMELY CONCISE (maximum 150 words). "
+    "Use bullet points and omit verbose explanations to conserve tokens."
 )

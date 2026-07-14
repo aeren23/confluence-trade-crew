@@ -252,3 +252,16 @@
 
 .profitCell { color: var(--green) !important; font-weight: 600; }
 .lossCell   { color: var(--red)   !important; font-weight: 600; }
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.sl {
+  color: var(--color-red);
+}
+
+.tp {
+  color: var(--color-green);
+}

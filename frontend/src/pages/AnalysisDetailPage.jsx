@@ -75,7 +75,8 @@ const AnalysisDetailPage = () => {
       direction:   direction === 'long' ? 'Long' : 'Short',
       entryPrice:  levels.entry || levels.entry_reference || '',
       stopLoss:    levels.stop_loss || '',
-      takeProfit:  levels.take_profit || '',
+      takeProfit:  levels.take_profit_1 || levels.take_profit || '',
+      takeProfit2: levels.take_profit_2 || levels.take_profit2 || '',
       leverage:    leverage.capped_maximum || leverage.recommended_range || 1,
       entryAmount: sizing.suggested_position_size_usdt || sizing.position_size_usdt || '',
       analysisId:  id,
@@ -175,6 +176,7 @@ const AnalysisDetailPage = () => {
               <tr>
                 <th>Direction</th>
                 <th>Entry</th>
+                <th>SL / TP</th>
                 <th>Exit</th>
                 <th>Status</th>
                 <th>PnL</th>
@@ -188,6 +190,12 @@ const AnalysisDetailPage = () => {
                   <tr>
                     <td className={t.direction === 'Long' ? styles.bullish : styles.bearish}>{t.direction}</td>
                     <td>{t.entryPrice}</td>
+                    <td className={styles.mono}>
+                      {t.stopLoss ? <span className={styles.sl}>{t.stopLoss}</span> : '—'}
+                      {' / '}
+                      {t.takeProfit ? <span className={styles.tp}>{t.takeProfit}</span> : '—'}
+                      {t.takeProfit2 && <span> / <span className={styles.tp} title="Primary Target">{t.takeProfit2}</span></span>}
+                    </td>
                     <td>{t.exitPrice ?? '—'}</td>
                     <td>{t.status}</td>
                     <td className={(t.pnlQuote ?? 0) >= 0 ? styles.profitCell : styles.lossCell}>

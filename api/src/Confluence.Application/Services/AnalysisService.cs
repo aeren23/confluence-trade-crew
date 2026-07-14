@@ -67,6 +67,9 @@ public class AnalysisService : IAnalysisService
         var (confluenceScore, confluenceAlignment, timeframesAnalyzed) =
             ExtractMultiTimeframeData(root);
 
+        // 5.5 Extract Phase 8 Metadata
+        var (tradeMode, htfAlignment, liquidityBias) = ExtractPhase8Metadata(root);
+
         // 6. Save Analysis to DB
         var analysis = new Analysis
         {
@@ -83,6 +86,9 @@ public class AnalysisService : IAnalysisService
             TimeframesAnalyzed = timeframesAnalyzed,
             ConfluenceScore = confluenceScore,
             ConfluenceAlignment = confluenceAlignment,
+            TradeMode = tradeMode,
+            HtfAlignment = htfAlignment,
+            LiquidityPoolBias = liquidityBias
         };
 
         _context.Set<Analysis>().Add(analysis);
@@ -105,6 +111,9 @@ public class AnalysisService : IAnalysisService
             TimeframesAnalyzed = analysis.TimeframesAnalyzed,
             ConfluenceScore = analysis.ConfluenceScore,
             ConfluenceAlignment = analysis.ConfluenceAlignment,
+            TradeMode = analysis.TradeMode,
+            HtfAlignment = analysis.HtfAlignment,
+            LiquidityPoolBias = analysis.LiquidityPoolBias,
             CreatedAt = analysis.CreatedAt
         };
     }
@@ -127,6 +136,12 @@ public class AnalysisService : IAnalysisService
             ConflictsDetected = analysis.ConflictsDetected,
             LatestPrice = analysis.LatestPrice,
             ResultJson = analysis.ResultJson,
+            TimeframesAnalyzed = analysis.TimeframesAnalyzed,
+            ConfluenceScore = analysis.ConfluenceScore,
+            ConfluenceAlignment = analysis.ConfluenceAlignment,
+            TradeMode = analysis.TradeMode,
+            HtfAlignment = analysis.HtfAlignment,
+            LiquidityPoolBias = analysis.LiquidityPoolBias,
             CreatedAt = analysis.CreatedAt
         };
     }
@@ -335,5 +350,46 @@ public class AnalysisService : IAnalysisService
         }
 
         return (score, alignment, timeframesJson);
+    }
+
+    /// <summary>
+    /// Extracts Phase 8 AI Metadata (TradeMode, HtfAlignment, LiquidityPoolBias).
+    /// </summary>
+    private static (string? TradeMode, string? HtfAlignment, string? LiquidityPoolBias)
+        ExtractPhase8Metadata(JsonElement root)
+    {
+        string? tradeMode = null;
+        string? htfAlignment = null;
+        string? liquidityBias = null;
+
+        if (root.TryGetProperty("synthesis", out var synthesis))
+        {
+            if (synthesis.TryGetProperty("trade_mode", out var tmElem))
+                tradeMode = tmElem.GetString();
+                
+            if (synthesis.TryGetProperty("agent_summaries", out var summaries))
+            {
+                if (summaries.TryGetProperty("htf_alignment", out var htfElem))
+                    htfAlignment = htfElem.GetString();
+                    
+                if (summaries.TryGetProperty("liquidity", out var liqElem))
+                {
+                    // For legacy analyses this might be a string or object. 
+                    // Phase 4 liquidity agent outputs an object, usually we want liquidity.details.bias or just the string summary.
+                    // For safety, let's just grab the whole thing as a string if we can, or if it's an object, get a field.
+                    if (liqElem.ValueKind == JsonValueKind.Object && liqElem.TryGetProperty("details", out var liqDetails))
+                    {
+                        if (liqDetails.TryGetProperty("bias", out var biasElem))
+                            liquidityBias = biasElem.GetString();
+                    }
+                    else if (liqElem.ValueKind == JsonValueKind.String)
+                    {
+                        liquidityBias = liqElem.GetString();
+                    }
+                }
+            }
+        }
+
+        return (tradeMode, htfAlignment, liquidityBias);
     }
 }

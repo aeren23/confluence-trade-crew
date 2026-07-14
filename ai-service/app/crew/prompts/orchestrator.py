@@ -106,8 +106,8 @@ TASK_DESCRIPTION = (
     "9. If the Risk agent provided hypothetical Long and Short scenarios, "
     "   extract them into the 'hypothetical_scenarios' block under 'risk.details'. "
     "   Use EXACTLY the keys: 'long' and 'short' at the top level, each containing "
-    "   'entry', 'stop_loss', and 'take_profit' as floats. "
-    "   NEVER use abbreviated keys like 'sl' or 'tp'.\n"
+    "   'entry', 'stop_loss', 'tp1', 'tp2', and 'take_profit' as floats. "
+    "   If the Risk agent only provided a generic 'TP', map it to 'take_profit'.\n"
     "10. For news.details, include key_headlines as objects with title, sentiment, impact, and category "
     "    when the News agent provided per-headline analysis.\n"
     "11. RANGE TRADE BLOCK — Only when trade_mode = 'range':\n"
@@ -118,13 +118,13 @@ TASK_DESCRIPTION = (
     "    - current_price = from TA agent or Data agent\n"
     "    - BIAS DETERMINATION:\n"
     "        IF current_price <= range_low * 1.01 (within 1% of low): bias = 'long_at_support'\n"
-    "          trigger = 'Price at/near range low ({range_low}) — potential long entry zone for range bounce'\n"
+    "          trigger = 'Price at/near range low [range_low] — potential long entry zone for range bounce'\n"
     "        ELIF current_price >= range_high * 0.99 (within 1% of high): bias = 'short_at_resistance'\n"
-    "          trigger = 'Price at/near range high ({range_high}) — potential short entry zone for range rejection'\n"
+    "          trigger = 'Price at/near range high [range_high] — potential short entry zone for range rejection'\n"
     "        ELIF current_price < range_midpoint: bias = 'long_at_support'\n"
-    "          trigger = 'Price in lower half of range — bias toward long at ({range_low}) support'\n"
+    "          trigger = 'Price in lower half of range — bias toward long at [range_low] support'\n"
     "        ELSE: bias = 'short_at_resistance'\n"
-    "          trigger = 'Price in upper half of range — bias toward short at ({range_high}) resistance'\n"
+    "          trigger = 'Price in upper half of range — bias toward short at [range_high] resistance'\n"
     "        IF overall_sentiment == 'neutral' AND abs(overall_sentiment_score) < 0.10: bias = 'no_edge'\n"
     "          trigger = 'Price at midrange with no signal edge — wait for range boundary approach'\n"
     "    - breakout_alert:\n"
@@ -208,8 +208,8 @@ TASK_DESCRIPTION = (
     '        "leverage": {{"recommended_range": <string>, "capped_maximum": <number>}},\n'
     '        "levels": {{"entry": <float>, "stop_loss": <float>, "tp1": <float>, "tp2": <float>, "take_profit": <float>, "risk_reward_ratio": <float>}},\n'
     '        "hypothetical_scenarios": {{\n'
-    '          "long":  {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>}},\n'
-    '          "short": {{"entry": <float>, "stop_loss": <float>, "take_profit": <float>}}\n'
+    '          "long":  {{"entry": <float>, "stop_loss": <float>, "tp1": <float or null>, "tp2": <float or null>, "take_profit": <float or null>}},\n'
+    '          "short": {{"entry": <float>, "stop_loss": <float>, "tp1": <float or null>, "tp2": <float or null>, "take_profit": <float or null>}}\n'
     '        }}\n'
     '      }}\n'
     '    }},\n'
