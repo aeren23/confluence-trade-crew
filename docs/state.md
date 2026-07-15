@@ -141,11 +141,19 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
     - Completely rewrote `AccuracyService.cs` to fetch OHLCV (5m Klines) from Binance API instead of single tick prices.
     - Implemented a localized backtest simulation loop that iterates over historical candles, accurately resolving if SL or TP1 was hit first.
     - Upgraded definition of `IsAccurate = true` to accurately reflect hitting TP1 before SL.
-145: 28. ✅ **AI Pipeline Logic & UI Fixes:**
-146:     - Hardcoded explicit bullish/bearish mapping in News Agent to prevent context hallucinations on words like 'panic'.
-147:     - Fixed Liquidity Agent falsely reporting balanced pool when crowd is overwhelmingly leaning one direction.
-148:     - Updated Orchestrator JSON schema to allow `tp1` and `tp2` in hypothetical risk scenarios.
-149:     - Fixed Frontend `SynthesisPanel.jsx` rendering logic to properly extract and display `tp2` or `tp1` instead of showing `—`.
+28. ✅ **AI Pipeline Logic & UI Fixes:**
+    - Hardcoded explicit bullish/bearish mapping in News Agent to prevent context hallucinations on words like 'panic'.
+    - Fixed Liquidity Agent falsely reporting balanced pool when crowd is overwhelmingly leaning one direction.
+    - Updated Orchestrator JSON schema to allow `tp1` and `tp2` in hypothetical risk scenarios.
+    - Fixed Frontend `SynthesisPanel.jsx` rendering logic to properly extract and display `tp2` or `tp1` instead of showing `—`.
+
+### Recently Completed (2026-07-15)
+29. ✅ **AI Pipeline Quality Overhaul (Faz 1-5):**
+    - Refactored `structure_tools.py` with dynamic ATR bands for RSI, MACD signal strength, and volume trend confirmation.
+    - Refactored `liquidity_tools.py` with ATR-based dynamic bounds and order book magnitude.
+    - Deepened Risk Agent TP searches and clarified WAIT recommendations.
+    - Added explicitly forced keyword-scoring (regex) and Chain-of-Thought (CoT) requirements to News Agent to prevent sentiment hallucination.
+    - Updated `SynthesisPanel.jsx` with a new Breakout Watch Alert Card and dynamic "HYPOTHETICAL" position sizing badges for WAIT recommendations.
 
 ---
 
@@ -177,9 +185,9 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
 | **2026-06-21** | **Documentation Update** | Marked Priority 2 features (Multi-Timeframe Confluence, Accuracy Tracking, Compare, Alerts) as completed in gap analysis documentation. | [project_gap_analysis_and_recommendations.md](file:///c:/Users/alihe/OneDrive/Masa%C3%BCst%C3%BC/confluence-trade-crew/docs/project_gap_analysis_and_recommendations.md) |
 | **2026-07-13** | **AI Pipeline Faz 1 — Deterministic TA Scoring & Market Structure** | (1) Created `structure_tools.py` with 3 new MCP tools: `detect_market_structure` (HH/HL/LH/LL, BOS, CHoCH), `detect_market_regime` (trending/ranging/breakout via ADX+EMA+BB), `calculate_ta_composite_score` (deterministic -1.0 to +1.0 score). (2) Created `market_structure_agent.py` prompt. (3) Rewrote `ta_agent.py` to use composite score as authoritative sentiment_score. (4) Updated `confluence_crew.py` pipeline. (5) Updated `llm/config.py` + `.env.example`. | `structure_tools.py`, `market_structure_agent.py`, `ta_agent.py`, `confluence_crew.py`, `config.py`, `.env.example`, `server.py`, `tools/__init__.py` |
 | **2026-07-13** | **TODO — Liquidation Heatmap (Future)** | Binance does not expose real-time liquidation heatmap via public API. Current implementation uses OI+funding+L/S ratio for approximate liquidity pool estimation. Coinglass API (paid) could provide true data in the future. | `state.md` only |
-
-
----
+| **2026-07-15** | **AI Pipeline Quality Overhaul** | Rewrote structure/liquidity tools to use dynamic ATR thresholds rather than static ones, added volume context, refined News Agent CoT, and updated Frontend UI for Breakout Watch and Hypothetical Sizing. | `structure_tools.py`, `liquidity_tools.py`, `news_tools.py`, `SynthesisPanel.jsx`, Agent prompts |
+| **2026-07-15** | **Frontend UI & Pipeline Integration Fixes** | (1) Added server-side TA-score direction gate in `analysis_orchestrator.py` to prevent LLM from hallucinating WAIT on strong signals. (2) Fixed `SynthesisPanel.jsx` to render TP1 and TP2 separately in the Hypothetical grid. (3) Added `MarketStructureCard` to the UI to display Phase 1 regime/BOS data. (4) Integrated AI-generated `annotations` into `TradingChart.jsx` so SL, TP, and BOS lines are drawn on the chart. (5) Added divergence indicators to TA card. | `analysis_orchestrator.py`, `SynthesisPanel.jsx`, `SynthesisPanel.module.css`, `TradingChart.jsx` |
+| **2026-07-15** | **Server-side TP Correction Gate & Risk Profile Threshold Fix** | (1) Added Gate 0 — TP Correction: server recalculates TP1 as true 1:1 R:R and validates TP2 against TA resistance levels, fixing LLM math errors that caused false WAIT signals. (2) Fixed inverted `neutral_hi` semantics: aggressive now has the narrowest neutral zone (0.15, easiest to trigger LONG) and conservative has the widest (0.35, hardest). (3) Aligned `rr_minimum`/`rr_ideal` to each profile's philosophy. (4) Added missing `neutral` profile. (5) Updated `risk_agent.py` EXPECTED_OUTPUT to use dynamic placeholders. (6) Updated `SettingsPage.jsx` profile card descriptions. | `analysis_orchestrator.py`, `risk_agent.py`, `SettingsPage.jsx` |
 
 ## 5. Architectural & Technical Decisions
 

@@ -302,6 +302,7 @@
 
 .hypotheticalGrid {
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   gap: var(--space-3);
   margin-top: var(--space-2);
@@ -309,6 +310,7 @@
 
 .hypoColumn {
   flex: 1;
+  min-width: 250px;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -563,6 +565,28 @@
   overflow: hidden;
 }
 
+.sizingCardDimmed {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  transition: all 0.3s ease;
+}
+.sizingCardDimmed:hover {
+  opacity: 0.95;
+  filter: grayscale(0);
+}
+
+.hypotheticalBadge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  vertical-align: middle;
+}
+
 .sizingHeader {
   display: flex;
   align-items: center;
@@ -798,6 +822,13 @@
 /* Range visualizer bar */
 .rangeBar {
   position: relative;
+
+/* ── Breakout Watch Card (Faz 3/5) ──────────────────────────────────────── */
+.breakoutDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
   height: 10px;
   border-radius: 99px;
   background: rgba(255,255,255,0.06);
@@ -947,4 +978,92 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   vertical-align: middle;
+}
+
+/* ── Position Sizing — Hypothetical / Dimmed mode (Faz 5) ─────────────── */
+.sizingCardDimmed {
+  opacity: 0.55;
+  filter: saturate(0.4);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+.sizingCardDimmed:hover {
+  opacity: 0.85;
+  filter: saturate(0.7);
+}
+
+.hypotheticalBadge {
+  display: inline-block;
+  font-size: 0.58rem;
+  padding: 1px 6px;
+  margin-left: 6px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* ── Market Structure Card — BOS / CHoCH Events (Faz 3) ──────────────── */
+.msEventRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.msEvent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.msEventBull {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.msEventBear {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.msEventChoch {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.msEventLevel {
+  margin-left: 4px;
+  opacity: 0.75;
+  font-size: 0.68rem;
+}
+
+/* ── Divergences section in TA card (Faz 5) ─────────────────────────── */
+.divergenceRow {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.divergenceItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
 }

@@ -242,3 +242,35 @@
   - Rewrote `AccuracyService.cs` to fetch 5m Klines from Binance API instead of a single tick price.
   - Implemented a historical simulation loop that evaluates candles to determine if the SL or TP was hit first (resolving intra-candle collisions pessimistically).
   - Changed `IsAccurate = true` criteria from a naive snapshot of current PnL to actual trade completion logic (TP1 hit before SL).
+
+## Execution Log Entry — 2026-07-15 15:00 UTC
+* **Phase:** AI Pipeline Quality Overhaul (Faz 1-5)
+* **Action/Task:** Overhauled AI tools and frontend presentation to improve signal sensitivity and fix "neutral" bias.
+* **Files Affected:** `structure_tools.py`, `ta_agent.py`, `liquidity_tools.py`, `liquidity_agent.py`, `risk_agent.py`, `orchestrator.py`, `news_tools.py`, `news_agent.py`, `SynthesisPanel.jsx`, `SynthesisPanel.module.css`.
+* **Details/Decisions:** 
+  - Dynamic Volatility: Replaced static thresholds with ATR-adjusted dynamic bands in `structure_tools.py` and `liquidity_tools.py`.
+  - Added volume trend confirmation and deeper TP horizon (depth=5) for risk target search.
+  - Required Step-by-Step Chain-of-Thought in News Agent and implemented regex-based semantic pre-scoring to prevent hallucination.
+  - Enhanced `SynthesisPanel.jsx` to render a `BreakoutWatchCard` for breakout modes and dim `PositionSizingCard` with a "HYPOTHETICAL" badge when the recommendation is WAIT.
+
+## Execution Log Entry — 2026-07-15 16:30 UTC
+* **Phase:** Frontend UI & Pipeline Integration Fixes
+* **Action/Task:** Fixed missing TP1/TP2, added server-side direction gate, created Market Structure UI card, and integrated annotations on the chart.
+* **Files Affected:** `analysis_orchestrator.py`, `SynthesisPanel.jsx`, `SynthesisPanel.module.css`, `TradingChart.jsx`.
+* **Details/Decisions:** 
+  - Created a TA-score-based direction gate in `analysis_orchestrator.py` to prevent LLMs from erroneously calling a WAIT when signals strongly dictate otherwise.
+  - Rewrote Hypothetical Grid in `SynthesisPanel.jsx` to correctly display TP1 (1:1) and TP2 targets in separate rows.
+  - Built a `MarketStructureCard` to display Phase 1's regime, structure, and BOS/CHoCH data in the UI grid.
+  - Exposed AI-generated `annotations` (SL, TP, BOS, range boundaries, divergences) directly onto the lightweight-chart in `TradingChart.jsx`.
+
+## Execution Log Entry — 2026-07-15 20:40 UTC
+* **Phase:** Server-side TP Correction Gate & Risk Profile Threshold Fix
+* **Action/Task:** Added Gate 0 for deterministic TP1/TP2 correction and fixed semantically inverted risk profile thresholds.
+* **Files Affected:** `analysis_orchestrator.py`, `risk_agent.py`, `SettingsPage.jsx`.
+* **Details/Decisions:** 
+  - Gate 0 recalculates TP1 as true 1:1 R:R from SL distance and validates TP2 against TA resistance levels, preventing LLM math errors from triggering false WAIT signals via the R:R gate.
+  - Fixed inverted `neutral_hi` semantics: aggressive (0.15, easiest LONG), moderate (0.25), conservative (0.35, hardest LONG).
+  - Aligned `rr_minimum`/`rr_ideal`: conservative (1.5/2.0), moderate (1.0/1.5), aggressive (0.5/0.8).
+  - Added missing `neutral` profile (1.2/1.8/0.30).
+  - Updated `risk_agent.py` EXPECTED_OUTPUT R:R tiers to use dynamic `{rr_ideal}`/`{rr_minimum}` placeholders.
+  - Updated `SettingsPage.jsx` profile card descriptions to reflect new thresholds.

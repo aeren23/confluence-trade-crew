@@ -10,6 +10,10 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 import httpx
+import pandas as pd
+import pandas_ta as ta
+
+from app.mcp_server.cache import ohlcv_cache
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +25,10 @@ def _symbol_to_futures(symbol: str) -> str:
     """Convert 'BTC/USDT' format to Binance Futures format 'BTCUSDT'."""
     return symbol.replace("/", "").upper()
 
-async def get_liquidation_clusters(symbol: str) -> dict:
+def _get_cached_df(ohlcv_ref: str) -> pd.DataFrame | None:
+    return ohlcv_cache.get(ohlcv_ref)
+
+async def get_liquidation_clusters(symbol: str, ohlcv_ref: str | None = None) -> dict:
     """
     Estimate liquidation clusters (liquidity pools) based on current price,
     recent volatility, and Long/Short ratio.
@@ -57,41 +64,55 @@ async def get_liquidation_clusters(symbol: str) -> dict:
     except Exception as exc:
         return {"isError": True, "content": f"Failed to fetch liquidity data: {exc}"}
 
-    # Estimate liquidation zones for 100x (1%), 50x (2%), 25x (4%) leverage
-    # 100x short liquidation = price * 1.01
+    # Dynamic ATR bands if ohlcv_ref provided
+    atr_pct_val = 0.01  # 1% default base
+    if ohlcv_ref:
+        df = _get_cached_df(ohlcv_ref)
+        if df is not None and len(df) >= 15:
+            atr = ta.atr(df["high"], df["low"], df["close"], length=14)
+            if atr is not None and not atr.empty:
+                atr_val = float(atr.iloc[-1])
+                if current_price > 0:
+                    atr_pct_val = atr_val / current_price
+
+    b1 = atr_pct_val * 0.5
+    b2 = atr_pct_val * 1.0
+    b3 = atr_pct_val * 2.0
+
     upside_pools = [
-        {"leverage": "100x", "price": round(current_price * 1.01, 2)},
-        {"leverage": "50x", "price": round(current_price * 1.02, 2)},
-        {"leverage": "25x", "price": round(current_price * 1.04, 2)},
+        {"leverage": "100x (est)", "price": round(current_price * (1 + b1), 2)},
+        {"leverage": "50x (est)", "price": round(current_price * (1 + b2), 2)},
+        {"leverage": "25x (est)", "price": round(current_price * (1 + b3), 2)},
     ]
     
     downside_pools = [
-        {"leverage": "100x", "price": round(current_price * 0.99, 2)},
-        {"leverage": "50x", "price": round(current_price * 0.98, 2)},
-        {"leverage": "25x", "price": round(current_price * 0.96, 2)},
+        {"leverage": "100x (est)", "price": round(current_price * (1 - b1), 2)},
+        {"leverage": "50x (est)", "price": round(current_price * (1 - b2), 2)},
+        {"leverage": "25x (est)", "price": round(current_price * (1 - b3), 2)},
     ]
 
     # Assess which pool is "heavier" (larger)
-    # If LS ratio > 1.1, market is long-heavy, so downside pools (long liquidations) are larger.
-    # If LS ratio < 0.9, market is short-heavy, so upside pools (short liquidations) are larger.
-    if ls_ratio > 1.1:
+    if ls_ratio > 1.05:
         pool_bias = "downside_heavy"
-        description = "Market is heavily LONG. Downside liquidity pools (long liquidations) are larger. High risk of long squeeze."
+        description = "Market is leaning LONG. Downside liquidity pools (long liquidations) are larger. Risk of long squeeze."
         draw_target = "down"
-    elif ls_ratio < 0.9:
+    elif ls_ratio < 0.95:
         pool_bias = "upside_heavy"
-        description = "Market is heavily SHORT. Upside liquidity pools (short liquidations) are larger. High risk of short squeeze."
+        description = "Market is leaning SHORT. Upside liquidity pools (short liquidations) are larger. Risk of short squeeze."
         draw_target = "up"
     else:
         pool_bias = "balanced"
         description = "Market positioning is balanced. Liquidity pools are evenly distributed."
         draw_target = "neutral"
 
+    pool_magnitude = round(min(1.0, abs(ls_ratio - 1.0) * 5.0), 2)
+
     return {
         "symbol": symbol,
         "current_price": current_price,
         "long_short_ratio": round(ls_ratio, 2),
         "pool_bias": pool_bias,
+        "pool_magnitude": pool_magnitude,
         "draw_target": draw_target,
         "description": description,
         "upside_liquidity": upside_pools,  # Short liquidations

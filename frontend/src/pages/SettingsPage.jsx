@@ -196,20 +196,20 @@ const SettingsPage = () => {
               {
                 value: 'conservative',
                 label: 'Conservative',
-                sub: 'R:R min 1.0 · Full size at 1.5 · Tight neutral zone',
-                detail: 'WAIT-heavy. Only enters with strong setups.',
+                sub: 'R:R min 1.5 · Full size at 2.0 · Wide neutral zone',
+                detail: 'WAIT-heavy. Only enters with strong A+ setups.',
               },
               {
                 value: 'moderate',
                 label: 'Moderate',
-                sub: 'R:R min 0.8 · Full size at 1.2 · Balanced neutral zone',
-                detail: 'Balanced. Allows slightly imperfect R:R at reduced size.',
+                sub: 'R:R min 1.0 · Full size at 1.5 · Balanced neutral zone',
+                detail: 'Balanced. Enters on clear signals, marginals at reduced size.',
               },
               {
                 value: 'aggressive',
                 label: 'Aggressive',
-                sub: 'R:R min 0.6 · Full size at 1.0 · Wide neutral zone',
-                detail: 'Trade-heavy. Enters on momentum even with tight reward.',
+                sub: 'R:R min 0.5 · Full size at 0.8 · Tight neutral zone',
+                detail: 'Trade-heavy. Catches momentum early, enters on weak signals too.',
               },
             ].map(({ value, label, sub, detail }) => (
               <div

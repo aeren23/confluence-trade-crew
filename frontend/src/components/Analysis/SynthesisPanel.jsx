@@ -115,6 +115,60 @@ const RangeTradeCard = ({ rangeTrade, currentPrice }) => {
   );
 };
 
+// ── Breakout Watch Card (Faz 3/5) ────────────────────────────────────────────
+const BreakoutWatchCard = ({ breakoutWatch }) => {
+  if (!breakoutWatch) return null;
+  const { bos_level, bos_direction, confirmation_above, confirmation_below, invalidation, choch_warning, suggested_alert } = breakoutWatch;
+
+  return (
+    <div className={styles.rangeCard}>
+      <div className={styles.rangeCardHeader}>
+        <div className={styles.rangeCardTitle}>
+          <Target size={15} />
+          Breakout Alert
+        </div>
+        <span className={`${styles.rangeBiasTag} ${bos_direction === 'bullish' ? styles.rangeBiasLong : styles.rangeBiasShort}`}>
+          {bos_direction === 'bullish' ? '↑ BULLISH BOS' : '↓ BEARISH BOS'}
+        </span>
+      </div>
+      
+      <div className={styles.breakoutDetails}>
+        <div className={styles.sizingRow}>
+          <span className={styles.sizingLabel}>BOS Level</span>
+          <span className={styles.sizingVal}>{fmt(bos_level)}</span>
+        </div>
+        {confirmation_above && (
+          <div className={styles.sizingRow}>
+            <span className={`${styles.sizingLabel} ${styles.bullish}`}>Confirmation Above</span>
+            <span className={styles.sizingVal}>{fmt(confirmation_above)}</span>
+          </div>
+        )}
+        {confirmation_below && (
+          <div className={styles.sizingRow}>
+            <span className={`${styles.sizingLabel} ${styles.bearish}`}>Confirmation Below</span>
+            <span className={styles.sizingVal}>{fmt(confirmation_below)}</span>
+          </div>
+        )}
+        {invalidation && (
+          <div className={styles.sizingRow}>
+            <span className={styles.sizingLabel}>Invalidation</span>
+            <span className={styles.sizingVal}>{fmt(invalidation)}</span>
+          </div>
+        )}
+      </div>
+
+      {choch_warning && (
+         <div className={styles.conflictBanner} style={{marginTop: '10px', marginBottom: 0, padding: '8px 12px'}}>
+           <AlertTriangle size={14} />
+           <span>Character Change (CHoCH) detected — higher risk of fakeout.</span>
+         </div>
+      )}
+
+      {suggested_alert && <div className={styles.rangeTrigger} style={{marginTop: '8px'}}>{suggested_alert}</div>}
+    </div>
+  );
+};
+
 const ScoreBar = ({ value }) => {
   // value is -1 to +1; map to 0-100% width centred at 50%
   const pct = ((value + 1) / 2) * 100;
@@ -204,14 +258,16 @@ const PositionSizingCard = ({ riskDetails, meta }) => {
 
   if (!balance && !riskAmt && !entry) return null;
 
+  const isHypothetical = direction === 'neutral';
+
   return (
-    <div className={styles.sizingCard}>
+    <div className={`${styles.sizingCard} ${isHypothetical ? styles.sizingCardDimmed : ''}`}>
       <div className={styles.sizingHeader}>
         <DollarSign size={14} />
-        <span>Position Sizing</span>
-        {direction && direction !== 'neutral' && (
-          <span className={`${styles.dirBadgeSmall} ${direction === 'long' ? styles.dirLong : styles.dirShort}`}>
-            {direction === 'long' ? '▲ LONG' : '▼ SHORT'}
+        <span>Position Sizing {isHypothetical && <span className={styles.hypotheticalBadge}>HYPOTHETICAL</span>}</span>
+        {direction && (
+          <span className={`${styles.dirBadgeSmall} ${direction === 'long' ? styles.dirLong : direction === 'short' ? styles.dirShort : styles.dirNeutral}`}>
+            {direction === 'long' ? '▲ LONG' : direction === 'short' ? '▼ SHORT' : '◆ WAIT'}
           </span>
         )}
       </div>
@@ -380,9 +436,10 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
   const data = agents?.data;
   const ms   = agents?.market_structure;  // Faz 1 — Market Structure Agent
 
-  // Trade mode and range trade (Faz 2)
+  // Trade mode and range trade (Faz 2 & Faz 3)
   const tradeMode = synthesis?.trade_mode || 'trend';
   const rangeTrade = synthesis?.range_trade || null;
+  const breakoutWatch = synthesis?.breakout_watch || null;
   const entryTiming = synthesis?.agent_summaries?.entry_timing
     || taDetails?.entry_timing
     || null;
@@ -492,11 +549,16 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
         <RangeTradeCard
           rangeTrade={rangeTrade}
           currentPrice={
-            ta?.details?.indicators?.ema_20?.value
-              ? parseFloat(data?.details?.latest_price || 0)
-              : parseFloat(data?.details?.latest_price || 0)
+            parseFloat(data?.details?.latest_price) || 
+            parseFloat(risk?.details?.levels?.entry) || 
+            0
           }
         />
+      )}
+
+      {/* ── Breakout Watch Card (Faz 3/5) ─── */}
+      {tradeMode === 'breakout_watch' && breakoutWatch && (
+        <BreakoutWatchCard breakoutWatch={breakoutWatch} />
       )}
 
       {/* ── Multi-Timeframe Confluence Gauge ─────────────────────────────── */}
@@ -522,6 +584,94 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
 
       {/* ── Agent Grid ───────────────────────────────────────────────────── */}
       <div className={styles.grid}>
+
+        {/* Market Structure Card (Faz 3) */}
+        {ms && (() => {
+          const msd = ms.details || {};
+          const bos = msd.bos_detected;
+          const bosType = msd.bos_type;
+          const choch = msd.choch_detected;
+          const chochType = msd.choch_type;
+          const structureVariant =
+            msd.structure === 'bullish' ? 'green' :
+            msd.structure === 'bearish' ? 'red' : 'amber';
+          const regimeVariant =
+            msd.regime === 'trending_up' ? 'green' :
+            msd.regime === 'trending_down' ? 'red' :
+            msd.regime === 'breakout' ? 'cyan' : 'amber';
+          return (
+            <div className={styles.agentCard}>
+              <h3><Layers size={15} /> Market Structure</h3>
+              <AgentMeta agentData={ms} />
+              <p className={styles.cardSummary}>{synthesis.agent_summaries?.market_structure}</p>
+
+              <div className={styles.detailGrid}>
+                {msd.structure && (
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailKey}>Structure</span>
+                    <Pill variant={structureVariant}>{msd.structure}</Pill>
+                  </div>
+                )}
+                {msd.regime && (
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailKey}>Regime</span>
+                    <Pill variant={regimeVariant}>{msd.regime?.replace('_', ' ')}</Pill>
+                  </div>
+                )}
+                {msd.ema_alignment && (
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailKey}>EMA Alignment</span>
+                    <Pill variant={
+                      msd.ema_alignment === 'bullish' ? 'green' :
+                      msd.ema_alignment === 'bearish' ? 'red' :
+                      msd.ema_alignment === 'recovering' ? 'cyan' :
+                      msd.ema_alignment === 'weakening' ? 'amber' : 'default'
+                    }>{msd.ema_alignment}</Pill>
+                  </div>
+                )}
+                {msd.adx != null && (
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailKey}>ADX</span>
+                    <span className={styles.detailVal}>{msd.adx}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* BOS / CHoCH Events */}
+              {(bos || choch) && (
+                <div className={styles.msEventRow}>
+                  {bos && (
+                    <div className={`${styles.msEvent} ${
+                      bosType === 'bullish_bos' ? styles.msEventBull : styles.msEventBear
+                    }`}>
+                      <Zap size={12} />
+                      <span>BOS: {bosType === 'bullish_bos' ? '↑ Bullish' : '↓ Bearish'}</span>
+                      {msd.bos_level && <span className={styles.msEventLevel}>{fmt(msd.bos_level)}</span>}
+                    </div>
+                  )}
+                  {choch && (
+                    <div className={`${styles.msEvent} ${styles.msEventChoch}`}>
+                      <AlertTriangle size={12} />
+                      <span>CHoCH: {chochType === 'bullish_choch' ? '↑ Bullish' : '↓ Bearish'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Swing Levels */}
+              {(msd.swing_high != null || msd.swing_low != null) && (
+                <div className={styles.srRow} style={{ marginTop: '0.5rem' }}>
+                  {msd.swing_high != null && (
+                    <Pill variant="red">Swing High {fmt(msd.swing_high)}</Pill>
+                  )}
+                  {msd.swing_low != null && (
+                    <Pill variant="green">Swing Low {fmt(msd.swing_low)}</Pill>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Technical Analysis Card */}
         {ta && (
@@ -670,6 +820,25 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                 ))}
               </div>
             )}
+            {/* Divergences (Faz 5) */}
+            {taDetails.divergences && taDetails.divergences.length > 0 && (
+              <div className={styles.divergenceRow}>
+                <span className={styles.indicatorsHeader}>Divergences</span>
+                {taDetails.divergences.map((d, i) => {
+                  const isBull = typeof d === 'string'
+                    ? d.toLowerCase().includes('bull')
+                    : d?.type?.includes('bull');
+                  const label = typeof d === 'string' ? d : (d?.description ?? d?.type ?? JSON.stringify(d));
+                  return (
+                    <div key={i} className={`${styles.divergenceItem} ${isBull ? styles.bullish : styles.bearish}`}>
+                      {isBull ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                      <span>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
           </div>
         )}
 
@@ -918,13 +1087,18 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                 riskDetails.hypothetical_scenarios && (
                   <div className={styles.hypotheticalGrid}>
                     {(() => {
-                      // Normalise keys: LLM may emit stop_loss/take_profit or sl/tp
-                      const hypoVal = (side, key) => {
+                      // Normalise keys: LLM may emit stop_loss/take_profit or sl/tp/tp1/tp2
+                      const hypoSl  = (side) => {
                         const s = riskDetails.hypothetical_scenarios[side];
-                        if (!s) return null;
-                        return key === 'sl'
-                          ? (s.stop_loss ?? s.sl ?? null)
-                          : (s.tp2 ?? s.tp1 ?? s.take_profit ?? s.tp ?? null);
+                        return s ? (s.stop_loss ?? s.sl ?? null) : null;
+                      };
+                      const hypoTp1 = (side) => {
+                        const s = riskDetails.hypothetical_scenarios[side];
+                        return s ? toNum(s.tp1) : null;
+                      };
+                      const hypoTp2 = (side) => {
+                        const s = riskDetails.hypothetical_scenarios[side];
+                        return s ? toNum(s.tp2 ?? s.take_profit ?? s.tp) : null;
                       };
                       const fmtHypo = (v) => (v != null ? fmt(v) : '—');
                       return (
@@ -934,12 +1108,23 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                             <div className={styles.levelBox}>
                               <ArrowDownRight size={13} className={styles.bearish} />
                               <span className={styles.levelLabel}>SL</span>
-                              <span className={styles.levelVal}>{fmtHypo(hypoVal('long', 'sl'))}</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoSl('long'))}</span>
                             </div>
+                            {hypoTp1('long') && (
+                              <div className={styles.levelBox}>
+                                <ArrowUpRight size={13} className={styles.bullish} />
+                                <span className={styles.levelLabel}>
+                                  TP1 <span className={styles.tp1Tag}>1:1</span>
+                                </span>
+                                <span className={styles.levelVal}>{fmtHypo(hypoTp1('long'))}</span>
+                              </div>
+                            )}
                             <div className={styles.levelBox}>
                               <ArrowUpRight size={13} className={styles.bullish} />
-                              <span className={styles.levelLabel}>TP</span>
-                              <span className={styles.levelVal}>{fmtHypo(hypoVal('long', 'tp'))}</span>
+                              <span className={styles.levelLabel}>
+                                {hypoTp1('long') ? <>TP2 <span className={styles.tp2Tag}>primary</span></> : 'TP'}
+                              </span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoTp2('long'))}</span>
                             </div>
                           </div>
                           <div className={styles.hypoColumn}>
@@ -947,12 +1132,23 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                             <div className={styles.levelBox}>
                               <ArrowUpRight size={13} className={styles.bearish} />
                               <span className={styles.levelLabel}>SL</span>
-                              <span className={styles.levelVal}>{fmtHypo(hypoVal('short', 'sl'))}</span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoSl('short'))}</span>
                             </div>
+                            {hypoTp1('short') && (
+                              <div className={styles.levelBox}>
+                                <ArrowDownRight size={13} className={styles.bullish} />
+                                <span className={styles.levelLabel}>
+                                  TP1 <span className={styles.tp1Tag}>1:1</span>
+                                </span>
+                                <span className={styles.levelVal}>{fmtHypo(hypoTp1('short'))}</span>
+                              </div>
+                            )}
                             <div className={styles.levelBox}>
                               <ArrowDownRight size={13} className={styles.bullish} />
-                              <span className={styles.levelLabel}>TP</span>
-                              <span className={styles.levelVal}>{fmtHypo(hypoVal('short', 'tp'))}</span>
+                              <span className={styles.levelLabel}>
+                                {hypoTp1('short') ? <>TP2 <span className={styles.tp2Tag}>primary</span></> : 'TP'}
+                              </span>
+                              <span className={styles.levelVal}>{fmtHypo(hypoTp2('short'))}</span>
                             </div>
                           </div>
                         </>

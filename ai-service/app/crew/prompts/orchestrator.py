@@ -128,9 +128,19 @@ TASK_DESCRIPTION = (
     "        IF overall_sentiment == 'neutral' AND abs(overall_sentiment_score) < 0.10: bias = 'no_edge'\n"
     "          trigger = 'Price at midrange with no signal edge — wait for range boundary approach'\n"
     "    - breakout_alert:\n"
-    "        bullish_breakout_above = range_high * 1.005 (0.5% above range high)\n"
-    "        bearish_breakdown_below = range_low * 0.995 (0.5% below range low)\n"
-    "    When trade_mode is NOT 'range', set range_trade to null in the JSON.\n\n"
+    "        bullish_breakout_above = from Market Structure Agent's 'Bullish Breakout Above'\n"
+    "        bearish_breakdown_below = from Market Structure Agent's 'Bearish Breakdown Below'\n"
+    "    When trade_mode is NOT 'range', set range_trade to null in the JSON.\n"
+    "12. BREAKOUT WATCH BLOCK — Only when trade_mode = 'breakout_watch':\n"
+    "    Compute the breakout_watch block using this logic:\n"
+    "    - bos_level = from Market Structure Agent's bos_level or swing extreme\n"
+    "    - bos_direction = 'bullish' if market structure implies bullish breakout, else 'bearish'\n"
+    "    - confirmation_above = from Market Structure Agent's 'Confirmation Above'\n"
+    "    - confirmation_below = from Market Structure Agent's 'Confirmation Below'\n"
+    "    - invalidation = swing_low if bullish else swing_high\n"
+    "    - choch_warning = true if choch_detected else false\n"
+    "    - suggested_alert = 'Set price alert at ' + confirmation level + ' for breakout confirmation'\n"
+    "    When trade_mode is NOT 'breakout_watch', set breakout_watch to null in the JSON.\n\n"
     "Your output MUST be valid JSON matching this schema exactly:\n"
     '{{\n'
     '  "agents": {{\n'
@@ -268,7 +278,16 @@ TASK_DESCRIPTION = (
     '        "bullish_breakout_above": <float>,\n'
     '        "bearish_breakdown_below": <float>\n'
     '      }}\n'
-    '    }} // SET TO null WHEN trade_mode != "range"\n'
+    '    }},\n'
+    '    "breakout_watch": {{\n'
+    '      "bos_level": <float>,\n'
+    '      "bos_direction": "bullish | bearish",\n'
+    '      "confirmation_above": <float or null>,\n'
+    '      "confirmation_below": <float or null>,\n'
+    '      "invalidation": <float or null>,\n'
+    '      "choch_warning": <boolean>,\n'
+    '      "suggested_alert": "<string>"\n'
+    '    }}\n'
     '  }},\n'
     '  "annotations": [\n'
     '    {{\n'

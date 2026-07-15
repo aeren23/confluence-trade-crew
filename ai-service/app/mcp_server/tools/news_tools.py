@@ -164,12 +164,23 @@ def _calculate_news_score(item: dict, keywords: set[str] | None = None) -> dict:
     composite = (recency * 0.25) + (impact_val * 0.35) + (credibility * 0.20) + (relevance * 0.20)
     composite = round(min(1.0, max(0.0, composite)), 3)
 
-    # Directional hint from keywords (agent refines with full article)
+    # Directional hint from keywords (Faz 4 enhancement)
     text_lower = f"{title} {snippet}".lower()
-    bearish_kw = ("crash", "drop", "fall", "bear", "hack", "ban", "sell", "decline", "loss")
-    bullish_kw = ("surge", "rally", "rise", "bull", "approval", "adoption", "record", "gain")
-    bearish_hits = sum(1 for kw in bearish_kw if kw in text_lower)
-    bullish_hits = sum(1 for kw in bullish_kw if kw in text_lower)
+    
+    bullish_patterns = [
+        r"panic.*ending", r"selling.*over", r"recovery", r"rebound", 
+        r"adoption", r"etf approved", r"institutional buying", 
+        r"surge", r"rally", r"rise", r"bull", r"approval", r"record", r"gain"
+    ]
+    bearish_patterns = [
+        r"hostilities", r"war", r"crash", r"hack", r"sec.*sue", 
+        r"ban", r"liquidation", r"sends.*lower", r"drop", r"fall", 
+        r"bear", r"sell", r"decline", r"loss"
+    ]
+    
+    bearish_hits = sum(1 for p in bearish_patterns if re.search(p, text_lower))
+    bullish_hits = sum(1 for p in bullish_patterns if re.search(p, text_lower))
+    
     if bullish_hits > bearish_hits:
         directional_hint = "bullish"
     elif bearish_hits > bullish_hits:

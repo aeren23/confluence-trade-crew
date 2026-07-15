@@ -243,6 +243,16 @@ async def detect_market_structure(
         for s in all_swings[-6:]
     ]
 
+    bos_level = bos["level"] if bos else None
+    bos_type = bos["type"] if bos else None
+    
+    computed_levels = {
+        "bullish_breakout_above": _smart_round(last_swing_high * 1.005) if last_swing_high else None,
+        "bearish_breakdown_below": _smart_round(last_swing_low * 0.995) if last_swing_low else None,
+        "confirmation_above": _smart_round(bos_level * 1.005) if (bos_type == "bullish_bos" and bos_level) else None,
+        "confirmation_below": _smart_round(bos_level * 0.995) if (bos_type == "bearish_bos" and bos_level) else None,
+    }
+
     return {
         "ohlcv_ref": ohlcv_ref,
         "structure": structure,
@@ -252,6 +262,7 @@ async def detect_market_structure(
         "bos": bos,
         "choch": choch,
         "key_levels": key_levels,
+        "computed_levels": computed_levels,
         "swing_sequence": swing_sequence,
         "current_price": _smart_round(current_price),
     }
@@ -445,6 +456,7 @@ async def calculate_ta_composite_score(
     close = df["close"]
     high = df["high"]
     low = df["low"]
+    volume = df["volume"]
 
     # ── Compute all indicators ────────────────────────────────────────────
     try:
@@ -484,17 +496,21 @@ async def calculate_ta_composite_score(
     score = 0.0
     components: dict[str, float] = {}
 
-    # 1. EMA Trend Alignment (weight 0.30)
-    # Price position relative to EMAs and EMA crossover
+    # 1. EMA Trend Alignment & Bollinger Band Weights (Regime-aware)
+    is_ranging = adx < 25
+    ema_weight = 0.18 if is_ranging else 0.35
+    bb_weight = 0.22 if is_ranging else 0.10
+
     ema_score = 0.0
+    ema_step = ema_weight / 2.0
     if current_price > ema_20:
-        ema_score += 0.15
+        ema_score += ema_step
     else:
-        ema_score -= 0.15
+        ema_score -= ema_step
     if ema_20 > ema_50:
-        ema_score += 0.15
+        ema_score += ema_step
     else:
-        ema_score -= 0.15
+        ema_score -= ema_step
     components["ema_trend"] = round(ema_score, 3)
     score += ema_score
 
@@ -505,19 +521,26 @@ async def calculate_ta_composite_score(
         rsi_score = 0.15
     elif rsi < 40:
         # Near oversold — mildly bullish
-        rsi_score = 0.07
-    elif rsi > 70:
+        rsi_score = 0.10
+    elif rsi < 50:
+        # Lower neutral zone
+        rsi_score = 0.03
+    elif rsi < 60:
+        # Upper neutral zone
+        rsi_score = -0.03
+    elif rsi <= 70:
+        # Near overbought — mildly bearish
+        rsi_score = -0.10
+    else:
         # Overbought — bearish reversal risk
         rsi_score = -0.15
-    elif rsi > 60:
-        # Near overbought — mildly bearish
-        rsi_score = -0.07
-    # 40-60 = neutral = 0
     components["rsi_momentum"] = round(rsi_score, 3)
     score += rsi_score
 
     # 3. MACD Signal (weight 0.10)
     macd_score = 0.0
+    histogram_expanding = abs(histogram) > abs(prev_histogram)
+
     if histogram > 0 and prev_histogram <= 0:
         # Fresh bullish cross — strong signal
         macd_score = 0.10
@@ -525,28 +548,33 @@ async def calculate_ta_composite_score(
         # Fresh bearish cross — strong signal
         macd_score = -0.10
     elif histogram > 0:
-        # Above zero line — mildly bullish
-        macd_score = 0.04
+        # Above zero line — moderately bullish
+        macd_score = 0.06
+        if histogram_expanding:
+            macd_score += 0.03
     elif histogram < 0:
-        # Below zero line — mildly bearish
-        macd_score = -0.04
+        # Below zero line — moderately bearish
+        macd_score = -0.06
+        if histogram_expanding:
+            macd_score -= 0.03
     components["macd_signal"] = round(macd_score, 3)
     score += macd_score
 
-    # 4. Bollinger Band position (weight 0.15)
+    # 4. Bollinger Band position (Regime-aware weight)
     bb_score = 0.0
+    bb_mild = bb_weight * 0.25
     if current_price <= bb_lower:
         # At or below lower band — mean reversion up likely
-        bb_score = 0.15
+        bb_score = bb_weight
     elif current_price >= bb_upper:
         # At or above upper band — mean reversion down likely
-        bb_score = -0.15
+        bb_score = -bb_weight
     elif current_price < bb_middle:
         # Below midband — mildly bearish positioning
-        bb_score = -0.04
+        bb_score = -bb_mild
     else:
         # Above midband — mildly bullish positioning
-        bb_score = 0.04
+        bb_score = bb_mild
     components["bollinger_position"] = round(bb_score, 3)
     score += bb_score
 
@@ -603,16 +631,26 @@ async def calculate_ta_composite_score(
         sentiment = "neutral"
 
     # ── Confidence calibration ────────────────────────────────────────────
-    # Base confidence on ADX and signal agreement
+    # Base confidence on ADX, Volume, and signal agreement
     base_confidence = 0.60
+    
+    vol_20_avg = float(volume.tail(20).mean())
+    vol_latest = float(volume.iloc[-1])
+    volume_increasing = vol_latest > vol_20_avg
 
     # Boost when EMA and MACD agree on direction
     if (ema_score > 0 and macd_score >= 0) or (ema_score < 0 and macd_score <= 0):
         base_confidence += 0.10  # signals aligned
 
-    # Boost for strong trend
-    if adx >= 25:
+    # Boost for strong trend and volume
+    if adx >= 25 and volume_increasing:
+        base_confidence += 0.12
+    elif adx >= 25:
         base_confidence += 0.08
+        
+    # Penalty for dropping volume
+    if vol_latest < vol_20_avg * 0.7:
+        base_confidence -= 0.08
 
     # Boost for divergence
     if divergence_found:

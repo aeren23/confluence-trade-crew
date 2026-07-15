@@ -6,6 +6,7 @@ and ensures proper cleanup of the OHLCV cache.
 """
 
 import json
+import logging
 from datetime import datetime, timezone
 
 from app.crew import ConfluenceTradeCrew
@@ -22,10 +23,14 @@ from app.schemas.response import (
 )
 
 # Risk profile → R:R thresholds and TA neutral zone width
+# neutral_hi: higher = wider WAIT zone = fewer trades
+# rr_minimum:  minimum Risk:Reward to allow a directional trade
+# rr_ideal:    R:R threshold for full position size (below = reduced size)
 _RISK_PROFILES = {
-    "conservative": {"rr_minimum": 1.0, "rr_ideal": 1.5, "neutral_lo": -0.2, "neutral_hi": 0.2},
-    "moderate":     {"rr_minimum": 0.8, "rr_ideal": 1.2, "neutral_lo": -0.3, "neutral_hi": 0.3},
-    "aggressive":   {"rr_minimum": 0.6, "rr_ideal": 1.0, "neutral_lo": -0.4, "neutral_hi": 0.4},
+    "conservative": {"rr_minimum": 1.5, "rr_ideal": 2.0, "neutral_lo": -0.35, "neutral_hi": 0.35},
+    "moderate":     {"rr_minimum": 1.0, "rr_ideal": 1.5, "neutral_lo": -0.25, "neutral_hi": 0.25},
+    "aggressive":   {"rr_minimum": 0.5, "rr_ideal": 0.8, "neutral_lo": -0.15, "neutral_hi": 0.15},
+    "neutral":      {"rr_minimum": 1.2, "rr_ideal": 1.8, "neutral_lo": -0.30, "neutral_hi": 0.30},
 }
 
 
@@ -122,19 +127,123 @@ class AnalysisOrchestrator:
 
             parsed_synthesis = json.loads(raw_json.strip())
 
-            # Server-side R:R gate: override direction to neutral if R:R is below
-            # the profile's minimum. Acts as a safety net when the LLM ignores the prompt.
-            _rr_gate = _RISK_PROFILES.get(request.risk_profile, _RISK_PROFILES["moderate"])["rr_minimum"]
+            # ── Server-side safety gates ────────────────────────────────────────
+            # These act as a deterministic backstop when the LLM ignores prompt rules.
+            _log          = logging.getLogger(__name__)
+            _profile      = _RISK_PROFILES.get(request.risk_profile, _RISK_PROFILES["moderate"])
+            _rr_gate      = _profile["rr_minimum"]
+            _rr_ideal     = _profile["rr_ideal"]
+            _neutral_hi   = _profile["neutral_hi"]
             _risk_details = parsed_synthesis.get("agents", {}).get("risk", {}).get("details", {})
-            _levels = _risk_details.get("levels", {})
-            _entry = _levels.get("entry")
-            _sl = _levels.get("stop_loss")
-            _tp = _levels.get("take_profit")
-            if _entry and _sl and _tp:
+            _ta_agent     = parsed_synthesis.get("agents", {}).get("technical_analysis", {})
+            _ta_score     = float(_ta_agent.get("sentiment_score", 0.0) or 0.0)
+            _ta_details   = _ta_agent.get("details", {})
+            _levels       = _risk_details.get("levels", {})
+            _entry        = _levels.get("entry")
+            _sl           = _levels.get("stop_loss")
+            _direction    = _risk_details.get("position_direction", "neutral")
+
+            # ── Gate 0 — TP Correction ──────────────────────────────────────────
+            # LLMs frequently miscalculate TP1 (should be exact 1:1 from SL distance)
+            # and TP2 (primary target; must be FARTHER than TP1, not closer).
+            # We recompute both server-side using deterministic math.
+            _tp1 = _levels.get("tp1")
+            _tp2 = _levels.get("tp2") or _levels.get("take_profit")
+
+            if _entry and _sl:
                 _sl_dist = abs(_entry - _sl)
-                _rr = abs(_tp - _entry) / _sl_dist if _sl_dist > 0 else 0
-                if _rr < _rr_gate and _risk_details.get("position_direction") in ("long", "short"):
+
+                # True 1:1 TP1 based on direction
+                if _direction in ("long", "neutral"):
+                    _tp1_correct = _entry + _sl_dist
+                else:  # short
+                    _tp1_correct = _entry - _sl_dist
+
+                # Validate LLM's TP1: if it deviates more than 5% from the true 1:1, correct it
+                if _tp1 is None or abs(_tp1 - _tp1_correct) / max(_sl_dist, 1) > 0.05:
+                    _log.warning(
+                        "[Gate0] TP1 corrected: LLM_tp1=%s → true_1:1=%.2f (entry=%.2f, sl_dist=%.2f)",
+                        _tp1, _tp1_correct, _entry, _sl_dist,
+                    )
+                    _tp1 = _tp1_correct
+                    _levels["tp1"] = _tp1
+
+                # Validate TP2: must be farther from entry than TP1
+                # If TP2 is between entry and TP1, pick from TA resistance/support levels
+                _tp2_invalid = (
+                    _tp2 is None
+                    or (_direction != "short" and _tp2 <= _tp1)      # Long: tp2 must be > tp1
+                    or (_direction == "short" and _tp2 >= _tp1)      # Short: tp2 must be < tp1
+                )
+
+                if _tp2_invalid:
+                    # Try to pick a better TP2 from TA resistance (long) or support (short) levels
+                    sr = _ta_details.get("support_resistance", {})
+                    candidates = sr.get("resistance", []) if _direction != "short" else sr.get("support", [])
+                    # Sort ascending (long) or descending (short) relative to entry
+                    if _direction != "short":
+                        candidates = sorted([c for c in candidates if c > _tp1], key=lambda x: x)
+                    else:
+                        candidates = sorted([c for c in candidates if c < _tp1], key=lambda x: -x)
+
+                    _tp2_new = None
+                    for lvl in candidates:
+                        candidate = lvl * 0.995 if _direction != "short" else lvl * 1.005
+                        cand_rr = abs(candidate - _entry) / _sl_dist if _sl_dist > 0 else 0
+                        if cand_rr >= _rr_gate:
+                            _tp2_new = candidate
+                            break
+
+                    # ATR fallback: 2.5 × ATR if no resistance passes
+                    if _tp2_new is None:
+                        _atr = _ta_details.get("atr") or (_sl_dist / 1.5)
+                        _tp2_new = (_entry + 2.5 * _atr) if _direction != "short" else (_entry - 2.5 * _atr)
+
+                    _log.warning(
+                        "[Gate0] TP2 corrected: LLM_tp2=%s → corrected=%.2f (tp1=%.2f, dir=%s)",
+                        _tp2, _tp2_new, _tp1, _direction,
+                    )
+                    _tp2 = _tp2_new
+                    _levels["tp2"] = _tp2
+
+            # ── Gate 1 — R:R Gate ───────────────────────────────────────────────
+            # Override to neutral if R:R (using corrected TP2) is below profile minimum.
+            _rr = None
+            if _entry and _sl and _tp2:
+                _sl_dist = abs(_entry - _sl)
+                _rr = abs(_tp2 - _entry) / _sl_dist if _sl_dist > 0 else 0
+                if _rr < _rr_gate and _direction in ("long", "short"):
+                    _log.warning(
+                        "[Gate1] R:R gate triggered: R:R=%.2f < threshold=%.2f — "
+                        "overriding direction '%s' → 'neutral'",
+                        _rr, _rr_gate, _direction,
+                    )
                     _risk_details["position_direction"] = "neutral"
+                    _direction = "neutral"
+                elif _rr >= _rr_gate:
+                    _log.info(
+                        "[Gate1] R:R=%.2f passes threshold=%.2f — direction '%s' kept.",
+                        _rr, _rr_gate, _direction,
+                    )
+
+            # ── Gate 2 — TA-Score Direction Gate ────────────────────────────────
+            # If LLM said WAIT but TA score clearly exceeds neutral threshold,
+            # AND R:R is viable (gate 1 did NOT fire), override to correct direction.
+            if _direction == "neutral" and (_rr is None or _rr >= _rr_gate):
+                if _ta_score > _neutral_hi:
+                    _log.warning(
+                        "[Gate2] TA-score gate triggered: TA_score=%.3f > neutral_hi=%.2f — "
+                        "overriding 'neutral' → 'long'",
+                        _ta_score, _neutral_hi,
+                    )
+                    _risk_details["position_direction"] = "long"
+                elif _ta_score < -_neutral_hi:
+                    _log.warning(
+                        "[Gate2] TA-score gate triggered: TA_score=%.3f < -neutral_hi=%.2f — "
+                        "overriding 'neutral' → 'short'",
+                        _ta_score, _neutral_hi,
+                    )
+                    _risk_details["position_direction"] = "short"
 
             # The other tasks (Data, TA, News, Risk) output plain text now.
             # The Orchestrator converts their plain text into the 'agents' dictionary.

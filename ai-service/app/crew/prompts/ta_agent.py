@@ -154,8 +154,9 @@ TASK_DESCRIPTION = (
     "6. Support and resistance levels\n"
     "7. Your sentiment, score, and final confidence\n"
     "8. The INDICATOR_DATA JSON block\n\n"
-    "Error handling: If `calculate_ta_composite_score` returns an error (isError: true), "
-    "fall back to manually estimating the score from indicators. "
+    "Error handling: If `calculate_ta_composite_score` returns an error (isError: true) or you could not call it, "
+    "you MUST explicitly write: `TOOL_ERROR: calculate_ta_composite_score failed — [reason]` at the very top of your report. "
+    "Only then may you fall back to manually estimating the score from indicators. "
     "If any other tool returns an error, proceed with available data and note which failed."
 )
 

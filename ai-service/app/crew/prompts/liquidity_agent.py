@@ -21,8 +21,9 @@ BACKSTORY = (
 
 TASK_DESCRIPTION = (
     "Please follow these steps:\n"
-    "Step 1: Call `get_liquidation_clusters` with the symbol ({symbol}).\n"
-    "Step 2: Note the current price, Long/Short ratio, and pool bias (upside_heavy vs downside_heavy).\n"
+    "Step 1: Obtain the `ohlcv_ref` from the Data Agent context.\n"
+    "Step 2: Call `get_liquidation_clusters` with the symbol ({symbol}) AND the `ohlcv_ref`.\n"
+    "Step 3: Note the current price, Long/Short ratio, pool bias (upside_heavy vs downside_heavy), and pool_magnitude.\n"
     "Step 3: Call `get_open_interest` (from onchain tools) with the symbol ({symbol}) "
     "to check if OI is rising or falling.\n"
     "Step 4: Combine the LS ratio bias and OI trend to formulate a 'Liquidity Draw' thesis.\n"
@@ -32,6 +33,8 @@ TASK_DESCRIPTION = (
     "The upside liquidity pool is the primary target (short squeeze risk).\n"
     "  - CRITICAL LOGIC OVERRIDE: If the LS ratio is heavily skewed (e.g., > 1.5), "
     "the pool_bias MUST NOT be 'balanced'. It must be 'downside_heavy' because the majority are long.\n"
+    "  - MAGNITUDE OVERRIDE: Always report pool_magnitude. If magnitude > 0.5, explicitly warn: "
+    "'HIGH MAGNITUDE — SL must be placed BEYOND this pool.'\n"
     "Step 5: Define 'safe zones' for Stop-Loss placement. A safe SL is located BEYOND "
     "the closest large liquidity pool (so it doesn't get swept during a stop hunt).\n"
     "Step 6: Output a concise text report.\n\n"
@@ -40,6 +43,7 @@ TASK_DESCRIPTION = (
     "LIQUIDITY_DATA\n"
     "{{\n"
     "  \"pool_bias\": \"upside_heavy|downside_heavy|balanced\",\n"
+    "  \"pool_magnitude\": <float>,\n"
     "  \"draw_target\": \"up|down|neutral\",\n"
     "  \"upside_pool_closest\": <float>,\n"
     "  \"downside_pool_closest\": <float>\n"

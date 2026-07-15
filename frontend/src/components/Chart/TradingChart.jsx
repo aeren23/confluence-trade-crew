@@ -372,11 +372,15 @@ const TradingChart = () => {
   }, [showEMA, showBB]);
 
   // ── Annotation price lines ───────────────────────────────────────────────
+  // Renders horizontal_line annotations from the AI pipeline onto the chart.
+  // Styles map to colour + line style so traders can visually distinguish
+  // SL, TP1, TP2, BOS levels, and range boundaries at a glance.
 
   useEffect(() => {
     const series = csRef.current;
     if (!series) return;
 
+    // Remove all previous price lines
     priceLinesRef.current.forEach(line => {
       try { series.removePriceLine(line); } catch { /* noop */ }
     });
@@ -384,21 +388,50 @@ const TradingChart = () => {
 
     if (!finalAnalysis?.annotations?.length) return;
 
-    finalAnalysis.annotations.forEach(ann => {
-      let color = '#a1a1aa';
-      let lineStyle = 2;
-      if (ann.style === 'support')     { color = '#4ade80'; lineStyle = 0; }
-      else if (ann.style === 'resistance') { color = '#f87171'; lineStyle = 0; }
-      else if (ann.style === 'stop_loss')  { color = '#ef4444'; }
-      else if (ann.style === 'take_profit'){ color = '#22c55e'; }
+    finalAnalysis.annotations
+      .filter(ann => ann.type === 'horizontal_line' && ann.value != null)
+      .forEach(ann => {
+        // Default appearance
+        let color     = 'rgba(161,161,170,0.5)';  // muted grey
+        let lineStyle = 2;  // dashed
+        let lineWidth = 1;
 
-      const line = series.createPriceLine({
-        price: ann.value, color, lineWidth: 2, lineStyle,
-        axisLabelVisible: true, title: ann.label,
+        switch (ann.style) {
+          case 'support':
+            color = '#4ade80'; lineStyle = 0; lineWidth = 1; break;
+          case 'resistance':
+            color = '#f87171'; lineStyle = 0; lineWidth = 1; break;
+          case 'stop_loss':
+            color = '#ef4444'; lineStyle = 0; lineWidth = 2; break;
+          case 'take_profit':
+          case 'take_profit_1':
+            color = '#22c55e'; lineStyle = 1; lineWidth = 2; break;
+          case 'take_profit_2':
+            color = 'rgba(74,222,128,0.55)'; lineStyle = 2; lineWidth = 1; break;
+          case 'bos_level':
+            color = '#22d3ee'; lineStyle = 2; lineWidth = 1; break;
+          case 'range_boundary':
+            color = '#fbbf24'; lineStyle = 2; lineWidth = 1; break;
+          case 'divergence_bullish':
+            color = '#a78bfa'; lineStyle = 3; lineWidth = 1; break;
+          case 'divergence_bearish':
+            color = '#f472b6'; lineStyle = 3; lineWidth = 1; break;
+          default:
+            break;
+        }
+
+        const line = series.createPriceLine({
+          price: ann.value,
+          color,
+          lineWidth,
+          lineStyle,
+          axisLabelVisible: true,
+          title: ann.label ?? '',
+        });
+        priceLinesRef.current.push(line);
       });
-      priceLinesRef.current.push(line);
-    });
   }, [finalAnalysis]);
+
 
   return (
     <div className={`glass-card ${styles.chartWrapper}`}>
