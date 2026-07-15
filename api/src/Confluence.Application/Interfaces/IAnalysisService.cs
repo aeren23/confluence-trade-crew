@@ -13,5 +13,8 @@ public interface IAnalysisService
         int pageSize,
         string? direction = null,
         bool conflictsOnly = false,
-        decimal? minConfidence = null);
+        decimal? minConfidence = null,
+        string? tradeModes = null,
+        string? htfAlignments = null,
+        string? liquidityBiases = null);
 }

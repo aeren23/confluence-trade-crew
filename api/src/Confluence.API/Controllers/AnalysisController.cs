@@ -29,9 +29,12 @@ public class AnalysisController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? direction = null,
         [FromQuery] bool conflictsOnly = false,
-        [FromQuery] decimal? minConfidence = null)
+        [FromQuery] decimal? minConfidence = null,
+        [FromQuery] string? tradeModes = null,
+        [FromQuery] string? htfAlignments = null,
+        [FromQuery] string? liquidityBiases = null)
     {
-        var result = await _analysisService.GetAnalysesAsync(symbol, page, pageSize, direction, conflictsOnly, minConfidence);
+        var result = await _analysisService.GetAnalysesAsync(symbol, page, pageSize, direction, conflictsOnly, minConfidence, tradeModes, htfAlignments, liquidityBiases);
         return Ok(result);
     }
 

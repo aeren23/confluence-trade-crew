@@ -58,6 +58,47 @@
   background: #161b22;
 }
 
+.multiSelectContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.multiSelectDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #1e293b;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.multiSelectLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.multiSelectLabel:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.multiSelectLabel input {
+  accent-color: var(--accent-primary, #00f0ff);
+}
+
 .filterBtn, .clearBtn, .refreshBtn {
   display: flex;
   align-items: center;

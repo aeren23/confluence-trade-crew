@@ -138,6 +138,7 @@ TASK_DESCRIPTION = (
     "    - ADX < 15 (trend too weak — wait for ADX to build above 20)\n\n"
     "  'avoid' — Do NOT enter. Setup is compromised:\n"
     "    Applies when ANY of these is true:\n"
+    "    - ADX < 12 (Strict rule: Market is completely dead. Regardless of any other signals, return AVOID and wait for volatility).\n"
     "    - Composite TA score is between -0.20 and +0.20 (no directional edge)\n"
     "    - Volume trend is 'decreasing' AND ADX < 20 (fading momentum, no trend)\n"
     "    - Conflicting signals: bullish score BUT RSI overbought AND price at upper BB\n"

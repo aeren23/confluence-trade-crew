@@ -25,9 +25,13 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-USER appuser
 
 COPY --from=build /app/publish .
+
+# Create directory for snapshots and set permissions for appuser
+RUN mkdir -p wwwroot/snapshots && chown -R appuser:appgroup wwwroot
+
+USER appuser
 
 EXPOSE 5000
 

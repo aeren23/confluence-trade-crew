@@ -51,9 +51,12 @@ public class AccuracyService : IAccuracyService
                     details.TryGetProperty("levels", out var levels))
                 {
                     if (levels.TryGetProperty("stop_loss", out var s) && s.ValueKind == JsonValueKind.Number) sl = s.GetDecimal();
-                    if (levels.TryGetProperty("take_profit_1", out var t1) && t1.ValueKind == JsonValueKind.Number) tp1 = t1.GetDecimal();
+                    if (levels.TryGetProperty("tp1", out var t1) && t1.ValueKind == JsonValueKind.Number) tp1 = t1.GetDecimal();
+                    else if (levels.TryGetProperty("take_profit_1", out var to1) && to1.ValueKind == JsonValueKind.Number) tp1 = to1.GetDecimal();
                     else if (levels.TryGetProperty("take_profit", out var t) && t.ValueKind == JsonValueKind.Number) tp1 = t.GetDecimal();
-                    if (levels.TryGetProperty("take_profit_2", out var t2) && t2.ValueKind == JsonValueKind.Number) tp2 = t2.GetDecimal();
+
+                    if (levels.TryGetProperty("tp2", out var t2) && t2.ValueKind == JsonValueKind.Number) tp2 = t2.GetDecimal();
+                    else if (levels.TryGetProperty("take_profit_2", out var to2) && to2.ValueKind == JsonValueKind.Number) tp2 = to2.GetDecimal();
                     
                     // Note: We keep entryPrice as LatestPrice (the moment analysis was requested) for accuracy check 
                     // since the bot uses market entries for tracking. 

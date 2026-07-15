@@ -72,6 +72,8 @@ services:
       # NO_PROXY: "localhost,127.0.0.1,redis,db,api,ai-service,frontend"
     ports:
       - "${API_PORT:-5000}:5000"
+    volumes:
+      - snapshots:/app/wwwroot/snapshots
 
   frontend:
     build:
@@ -87,3 +89,4 @@ services:
 
 volumes:
   pgdata:
+  snapshots:

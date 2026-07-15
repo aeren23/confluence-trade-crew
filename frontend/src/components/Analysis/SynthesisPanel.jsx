@@ -464,8 +464,8 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
       entryPrice: levels.entry || levels.entry_reference || '',
       plannedEntryPrice: levels.entry || levels.entry_reference || '',
       stopLoss: levels.stop_loss || '',
-      takeProfit: levels.take_profit_1 || levels.take_profit || '',
-      takeProfit2: levels.take_profit_2 || levels.take_profit2 || '',
+      takeProfit: levels.tp1 || levels.take_profit || '',
+      takeProfit2: levels.tp2 || '',
       leverage: leverage.capped_maximum || leverage.recommended_range || 1,
       entryAmount: sizing.suggested_position_size_usdt || sizing.position_size_usdt || '',
       analysisId: meta?.id || null,
@@ -1072,12 +1072,21 @@ const SynthesisPanel = ({ onViewAnalysis, injectData } = {}) => {
                       </span>
                     </div>
                   )}
-                  {(levels.take_profit || levels.nearest_resistance) && (
+                  {(levels.tp1 || levels.take_profit) && (
                     <div className={styles.levelBox}>
                       <ArrowUpRight size={13} className={styles.bullish} />
-                      <span className={styles.levelLabel}>Take Profit</span>
+                      <span className={styles.levelLabel}>TP1 (1:1)</span>
                       <span className={styles.levelVal}>
-                        {levels.take_profit ?? levels.nearest_resistance}
+                        {levels.tp1 ?? levels.take_profit}
+                      </span>
+                    </div>
+                  )}
+                  {levels.tp2 && (
+                    <div className={styles.levelBox}>
+                      <ArrowUpRight size={13} className={styles.bullish} />
+                      <span className={styles.levelLabel}>TP2 (Primary)</span>
+                      <span className={styles.levelVal}>
+                        {levels.tp2}
                       </span>
                     </div>
                   )}

@@ -155,6 +155,24 @@ All Phase 6 tasks are complete. The project is in steady-state maintenance mode.
     - Added explicitly forced keyword-scoring (regex) and Chain-of-Thought (CoT) requirements to News Agent to prevent sentiment hallucination.
     - Updated `SynthesisPanel.jsx` with a new Breakout Watch Alert Card and dynamic "HYPOTHETICAL" position sizing badges for WAIT recommendations.
 
+### Recently Completed (2026-07-16)
+30. ✅ **Phase 8 Faz 5 (End-to-End TP1/TP2 Fixes):**
+    - Fixed missing `tp2` field mapping in frontend `TradeForm` pre-fills via `SynthesisPanel.jsx` and `AnalysisDetailPage.jsx`.
+    - Resolved `AccuracyService.cs` JSON parsing bug where model accuracy tracking was failing to register TP2 hits due to legacy schema properties (`take_profit_1`). Service now prioritizes `tp1`/`tp2` while gracefully falling back to old properties for historical data.
+    - Corrected a front-running bug in `analysis_orchestrator.py` Gate 0 where 0.5% resistance offset pushed TP2 closer than TP1 on long trades.
+31. ✅ **Phase 8 Faz 6 (End-to-End API Filters & Kademeli Kar Alma):**
+    - Updated `IAnalysisService.cs` and `AnalysisController.cs` to support filtering by multiple comma-separated `tradeModes`, `htfAlignments`, and `liquidityBiases`.
+    - Implemented custom `MultiSelectDropdown` in `HistoryPage.jsx` to apply these filters seamlessly to the frontend grid.
+    - Introduced "Trade Splitting" architecture for partial closes: added `ParentTradeId` to `Trade.cs`, automatically duplicating the original trade for the remaining open amount to preserve Portfolio calculation logic.
+    - Added `Close Amount` field, and TP1/TP2 + 50%/100% quick fill buttons to the close trade modal in `TradesPage.jsx`.
+32. ✅ **Multi-Timeframe Cache Race Condition Fix:**
+    - Resolved widespread "Structure data unavailable" and "Unknown OHLCV" errors during Multi-Timeframe analysis.
+    - Refactored `OHLCVCache.clear()` in `cache.py` to act as a Garbage Collector (only deleting Parquet files older than 1 hour) instead of indiscriminately wiping the entire cache directory.
+    - This successfully eliminates race conditions where fast-finishing parallel secondary timeframe tasks would delete the cache actively being used by other running timeframe tasks.
+33. ✅ **Scalp Mode Optimizations:**
+    - **Strict ADX Filter**: Added a strict rule in `ta_agent.py` to immediately return `AVOID` for entry timing if ADX < 12, regardless of any other bullish or bearish signals. This prevents the system from triggering setups in completely dead/ranging markets.
+    - **Dynamic Conflict Detection**: Updated `risk_agent.py` to scale the raw News Score based on `{news_weight}` (Effective_News_Score = News_score * ({news_weight} / 0.20)). This prevents macro news from triggering false "Conflict" alarms during short-timeframe (scalp) analyses where news influence is intentionally minimized.
+
 ---
 
 ## 4. Solved Problems & Challenge Log

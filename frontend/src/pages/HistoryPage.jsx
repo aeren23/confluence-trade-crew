@@ -46,6 +46,33 @@ const Pagination = ({ page, totalPages, onPage }) => {
   );
 };
 
+const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const toggle = (val) => {
+    if (selected.includes(val)) onChange(selected.filter(v => v !== val));
+    else onChange([...selected, val]);
+  };
+  
+  // Close when clicking outside can be done by a simple blur or overlay, but for simplicity:
+  return (
+    <div className={styles.multiSelectContainer} onMouseLeave={() => setOpen(false)}>
+      <button type="button" className={styles.selectInput} onClick={() => setOpen(!open)}>
+        {label} {selected.length > 0 ? `(${selected.length})` : ''}
+      </button>
+      {open && (
+        <div className={styles.multiSelectDropdown}>
+          {options.map(o => (
+            <label key={o.value} className={styles.multiSelectLabel}>
+              <input type="checkbox" checked={selected.includes(o.value)} onChange={() => toggle(o.value)} />
+              {o.label}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const HistoryPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,6 +82,9 @@ const HistoryPage = () => {
   const currentDirection = searchParams.get('direction') || '';
   const currentConflictsOnly = searchParams.get('conflictsOnly') === 'true';
   const currentMinConfidence = searchParams.get('minConfidence') || '';
+  const currentTradeModes = searchParams.get('tradeModes') ? searchParams.get('tradeModes').split(',') : [];
+  const currentHtfAlignments = searchParams.get('htfAlignments') ? searchParams.get('htfAlignments').split(',') : [];
+  const currentLiquidityBiases = searchParams.get('liquidityBiases') ? searchParams.get('liquidityBiases').split(',') : [];
 
   const [items,      setItems]      = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -66,6 +96,9 @@ const HistoryPage = () => {
   const [directionFilter, setDirectionFilter] = useState(currentDirection);
   const [conflictsOnly, setConflictsOnly] = useState(currentConflictsOnly);
   const [minConfidence, setMinConfidence] = useState(currentMinConfidence);
+  const [tradeModesFilter, setTradeModesFilter] = useState(currentTradeModes);
+  const [htfAlignmentsFilter, setHtfAlignmentsFilter] = useState(currentHtfAlignments);
+  const [liquidityBiasesFilter, setLiquidityBiasesFilter] = useState(currentLiquidityBiases);
 
   const [selectedForCompare, setSelectedForCompare] = useState([]);
 
@@ -94,8 +127,12 @@ const HistoryPage = () => {
       ...(currentDirection ? { direction: currentDirection } : {}),
       ...(currentConflictsOnly ? { conflictsOnly: true } : {}),
       ...(currentMinConfidence ? { minConfidence: currentMinConfidence } : {}),
+      ...(currentTradeModes.length ? { tradeModes: currentTradeModes.join(',') } : {}),
+      ...(currentHtfAlignments.length ? { htfAlignments: currentHtfAlignments.join(',') } : {}),
+      ...(currentLiquidityBiases.length ? { liquidityBiases: currentLiquidityBiases.join(',') } : {}),
     });
-  }, [currentPage, currentSymbol, currentDirection, currentConflictsOnly, currentMinConfidence, fetchPage]);
+  }, [currentPage, currentSymbol, currentDirection, currentConflictsOnly, currentMinConfidence, 
+      JSON.stringify(currentTradeModes), JSON.stringify(currentHtfAlignments), JSON.stringify(currentLiquidityBiases), fetchPage]);
 
   const goPage = (p) => {
     const params = {};
@@ -104,6 +141,9 @@ const HistoryPage = () => {
     if (currentDirection) params.direction = currentDirection;
     if (currentConflictsOnly) params.conflictsOnly = 'true';
     if (currentMinConfidence) params.minConfidence = currentMinConfidence;
+    if (currentTradeModes.length) params.tradeModes = currentTradeModes.join(',');
+    if (currentHtfAlignments.length) params.htfAlignments = currentHtfAlignments.join(',');
+    if (currentLiquidityBiases.length) params.liquidityBiases = currentLiquidityBiases.join(',');
     setSearchParams(params);
   };
 
@@ -114,6 +154,9 @@ const HistoryPage = () => {
     if (directionFilter) params.direction = directionFilter;
     if (conflictsOnly) params.conflictsOnly = 'true';
     if (minConfidence) params.minConfidence = minConfidence;
+    if (tradeModesFilter.length) params.tradeModes = tradeModesFilter.join(',');
+    if (htfAlignmentsFilter.length) params.htfAlignments = htfAlignmentsFilter.join(',');
+    if (liquidityBiasesFilter.length) params.liquidityBiases = liquidityBiasesFilter.join(',');
     setSearchParams(params);
   };
 
@@ -122,10 +165,14 @@ const HistoryPage = () => {
     setDirectionFilter('');
     setConflictsOnly(false);
     setMinConfidence('');
+    setTradeModesFilter([]);
+    setHtfAlignmentsFilter([]);
+    setLiquidityBiasesFilter([]);
     setSearchParams({});
   };
 
-  const hasActiveFilters = currentSymbol || currentDirection || currentConflictsOnly || currentMinConfidence;
+  const hasActiveFilters = currentSymbol || currentDirection || currentConflictsOnly || currentMinConfidence || 
+                           currentTradeModes.length > 0 || currentHtfAlignments.length > 0 || currentLiquidityBiases.length > 0;
 
   const relativeTime = (iso) => {
     const diff = Date.now() - new Date(iso).getTime();
@@ -214,6 +261,36 @@ const HistoryPage = () => {
             <option value="0.7">≥ 70%</option>
             <option value="0.85">≥ 85%</option>
           </select>
+          <MultiSelectDropdown 
+            label="Trade Mode"
+            options={[
+              { label: 'Trend', value: 'trend' },
+              { label: 'Range', value: 'range' },
+              { label: 'Breakout Watch', value: 'breakout_watch' },
+            ]}
+            selected={tradeModesFilter}
+            onChange={setTradeModesFilter}
+          />
+          <MultiSelectDropdown 
+            label="HTF Alignment"
+            options={[
+              { label: 'Aligned', value: 'aligned' },
+              { label: 'Mixed', value: 'mixed' },
+              { label: 'Conflict', value: 'conflict' },
+            ]}
+            selected={htfAlignmentsFilter}
+            onChange={setHtfAlignmentsFilter}
+          />
+          <MultiSelectDropdown 
+            label="Liquidity Bias"
+            options={[
+              { label: 'Bid Heavy', value: 'bid_heavy' },
+              { label: 'Ask Heavy', value: 'ask_heavy' },
+              { label: 'Balanced', value: 'balanced' },
+            ]}
+            selected={liquidityBiasesFilter}
+            onChange={setLiquidityBiasesFilter}
+          />
           <label className={styles.checkboxFilter}>
             <input
               type="checkbox"
@@ -237,6 +314,9 @@ const HistoryPage = () => {
               ...(currentDirection ? { direction: currentDirection } : {}),
               ...(currentConflictsOnly ? { conflictsOnly: true } : {}),
               ...(currentMinConfidence ? { minConfidence: currentMinConfidence } : {}),
+              ...(currentTradeModes.length ? { tradeModes: currentTradeModes.join(',') } : {}),
+              ...(currentHtfAlignments.length ? { htfAlignments: currentHtfAlignments.join(',') } : {}),
+              ...(currentLiquidityBiases.length ? { liquidityBiases: currentLiquidityBiases.join(',') } : {}),
             })}
             disabled={loading}
           >

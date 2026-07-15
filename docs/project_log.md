@@ -274,3 +274,59 @@
   - Added missing `neutral` profile (1.2/1.8/0.30).
   - Updated `risk_agent.py` EXPECTED_OUTPUT R:R tiers to use dynamic `{rr_ideal}`/`{rr_minimum}` placeholders.
   - Updated `SettingsPage.jsx` profile card descriptions to reflect new thresholds.
+
+## Execution Log Entry — 2026-07-16 00:10 UTC
+* **Phase:** End-to-End TP1/TP2 Integration Fix
+* **Action/Task:** Fixed missing `tp2` field mapping in frontend trade form pre-fills and resolved `AccuracyService.cs` JSON parsing bug. Fixed TP2 front-running bug in `analysis_orchestrator.py` Gate 0.
+* **Files Affected:** `SynthesisPanel.jsx`, `AnalysisDetailPage.jsx`, `AccuracyService.cs`, `analysis_orchestrator.py`.
+* **Details/Decisions:**
+  - Updated `openTradeForm` payload mapping in frontend to read `levels.tp1` and `levels.tp2` directly instead of old schema names.
+  - Refactored `AccuracyService.cs` JSON extraction logic to look for `tp1`/`tp2` first, gracefully falling back to `take_profit_1`/`take_profit` for historical compatibility.
+  - Corrected the `0.995` front-running logic in Gate 0 to ensure it does not push TP2 below TP1 for long trades.
+
+## Execution Log Entry — 2026-07-16 00:25 UTC
+* **Phase:** End-to-End API Filters & Kademeli Kar Alma
+* **Action/Task:** Implemented UI/API filtering for AI metadata and 'Trade Splitting' for partial closes.
+* **Files Affected:** `IAnalysisService.cs`, `AnalysisService.cs`, `AnalysisController.cs`, `HistoryPage.jsx`, `Trade.cs`, `TradeCloseDto.cs`, `TradeService.cs`, `TradesPage.jsx`, `EF Core Migrations`.
+* **Details/Decisions:**
+  - Added support for multiple value (comma-separated) filtering for `TradeMode`, `HtfAlignment`, and `LiquidityPoolBias` on `AnalysisService.cs`.
+  - Built a custom `MultiSelectDropdown` in `HistoryPage.jsx` to select these parameters without relying on external libraries.
+  - Resolved the complex Partial Close challenge by implementing a "Trade Splitting" pattern in `TradeService.cs`.
+  - The trade splitting pattern clones the existing trade for the remaining unclosed amount (maintaining status `Open`) and fully closes the original trade for the requested close amount. This completely avoids breaking existing `PortfolioService` PnL logic.
+  - Added `ParentTradeId` to `Trade.cs` and applied the database migration to track split lineage.
+  - Added `CloseAmount` and Quick Fill (TP1/TP2, 50%/100%) buttons to `TradesPage.jsx` Close Trade Modal.
+
+## Execution Log Entry — 2026-07-16 00:34 UTC
+* **Phase:** Bug Fix
+* **Action/Task:** Fixed broken/missing trade snapshots on the Trades Page.
+* **Files Affected:** `api/Dockerfile`, `docker-compose.yml`.
+* **Details/Decisions:**
+  - Issue: `SnapshotService` was failing silently because `appuser` did not have write permissions to `/app/wwwroot` which was owned by root from the build stage. Furthermore, snapshots were lost every time the container was restarted because they were not mapped to a volume.
+  - Fix: Added a `snapshots` named volume in `docker-compose.yml`.
+  - Fix: Added `RUN mkdir -p wwwroot/snapshots && chown -R appuser:appgroup wwwroot` to the API Dockerfile to ensure write access.
+
+## Execution Log Entry — 2026-07-16 01:00 UTC
+* **Phase:** Bug Fix
+* **Action/Task:** Fixed Multi-Timeframe OHLCV Cache Race Condition causing "Unknown" indicator values.
+* **Files Affected:** `ai-service/app/mcp_server/cache.py`.
+* **Details/Decisions:**
+  - Issue: In Multi-Timeframe mode, `multi_tf_orchestrator.py` runs secondary timeframes concurrently. When a fast-finishing timeframe completed, its `finally` block called `OHLCVCache.clear()`, which indiscriminately wiped the entire directory. This deleted the Parquet files currently being accessed by the still-running timeframes, causing "Structure data unavailable" errors and completely empty Technical Analysis charts.
+  - Fix: Refactored `OHLCVCache.clear()` into a Garbage Collection pattern. Instead of deleting all files, it checks `os.stat().st_mtime` and only unlinks files older than `max_age_seconds` (default: 3600). This perfectly preserves active session data while still protecting the disk from unbounded growth.
+
+## Execution Log Entry — 2026-07-16 01:33 UTC
+* **Phase:** Bug Fix
+* **Action/Task:** Fixed Range Trade bias mathematical hallucination in Orchestrator prompt.
+* **Files Affected:** `ai-service/app/crew/prompts/orchestrator.py`.
+* **Details/Decisions:**
+  - Issue: The Orchestrator prompt calculated "near support" as `current_price <= range_low * 1.01`. Since 1% of a $580 asset is $5.80, and the entire range was only $1.00 wide, the LLM mathematically categorized the absolute top of the range (resistance) as being "near support". This caused the UI to show "LONG BIAS" when the price was at resistance.
+  - Fix: Changed the prompt logic to use `range_span = range_high - range_low` and threshold checking based on `20%` of the span (`range_low + (range_span * 0.20)`). This ensures range calculations are relative to the actual range width, regardless of the asset's nominal price.
+
+## Execution Log Entry — 2026-07-16 01:48 UTC
+* **Phase:** Logic Enhancement
+* **Action/Task:** Scalp Mode Optimizations (Strict ADX & Dynamic Conflict Detection).
+* **Files Affected:** `ai-service/app/crew/prompts/ta_agent.py`, `ai-service/app/crew/prompts/risk_agent.py`.
+* **Details/Decisions:**
+  - Issue 1 (ADX): Scalp trades were being permitted (or triggering 'wait_for_confirmation') even when ADX was extremely low (e.g. 9.68), which implies a completely dead market.
+  - Fix 1: Added a strict prompt rule to `ta_agent.py` forcing an immediate `AVOID` entry timing if ADX < 12.
+  - Issue 2 (Conflict): Risk Agent was using raw News Score to determine conflicts. In scalp mode (where news weight is only 5%), a strong macro news event would still trigger a false "Conflict" flag, adding noise to the analysis.
+  - Fix 2: Changed `risk_agent.py` to use an `Effective_News_Score` (scaled by `{news_weight} / 0.20`). This prevents macro news from triggering conflict alarms when its actual weight in the confluence score is intentionally minimized.

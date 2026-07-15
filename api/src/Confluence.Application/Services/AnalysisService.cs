@@ -152,7 +152,10 @@ public class AnalysisService : IAnalysisService
         int pageSize,
         string? direction = null,
         bool conflictsOnly = false,
-        decimal? minConfidence = null)
+        decimal? minConfidence = null,
+        string? tradeModes = null,
+        string? htfAlignments = null,
+        string? liquidityBiases = null)
     {
         var query = _context.Set<Analysis>().AsQueryable();
 
@@ -169,6 +172,24 @@ public class AnalysisService : IAnalysisService
         if (minConfidence.HasValue)
         {
             query = query.Where(a => a.Confidence >= minConfidence.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(tradeModes))
+        {
+            var modes = tradeModes.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(m => m.Trim().ToLowerInvariant()).ToList();
+            query = query.Where(a => a.TradeMode != null && modes.Contains(a.TradeMode.ToLower()));
+        }
+
+        if (!string.IsNullOrWhiteSpace(htfAlignments))
+        {
+            var alignments = htfAlignments.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(h => h.Trim().ToLowerInvariant()).ToList();
+            query = query.Where(a => a.HtfAlignment != null && alignments.Contains(a.HtfAlignment.ToLower()));
+        }
+
+        if (!string.IsNullOrWhiteSpace(liquidityBiases))
+        {
+            var biases = liquidityBiases.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(b => b.Trim().ToLowerInvariant()).ToList();
+            query = query.Where(a => a.LiquidityPoolBias != null && biases.Contains(a.LiquidityPoolBias.ToLower()));
         }
 
         var normalizedDirection = NormalizeDirectionFilter(direction);

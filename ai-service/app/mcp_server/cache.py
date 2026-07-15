@@ -14,6 +14,7 @@ See mcp_tools.md § 2 for the ohlcv_ref pattern.
 
 import logging
 import tempfile
+import time
 import uuid
 from pathlib import Path
 
@@ -78,21 +79,27 @@ class OHLCVCache:
         logger.debug("OHLCVCache: loaded %d rows ← %s", len(df), cache_path)
         return df
 
-    def clear(self) -> None:
+    def clear(self, max_age_seconds: int = 3600) -> None:
         """
-        Delete all cached Parquet files.
+        Garbage collect cached Parquet files older than max_age_seconds.
 
-        Called after each analysis session to prevent unbounded disk growth.
+        Called after each analysis session to prevent unbounded disk growth
+        while preserving files that are actively being used by concurrent
+        multi-timeframe or multi-tenant analysis tasks.
         """
         cache_dir = _get_cache_dir()
         deleted_count = 0
+        current_time = time.time()
+        
         for parquet_file in cache_dir.glob("*.parquet"):
             try:
-                parquet_file.unlink()
-                deleted_count += 1
+                # Check if file is older than max_age_seconds
+                if current_time - parquet_file.stat().st_mtime > max_age_seconds:
+                    parquet_file.unlink()
+                    deleted_count += 1
             except OSError as exc:
                 logger.warning("OHLCVCache: failed to delete %s: %s", parquet_file, exc)
-        logger.debug("OHLCVCache: cleared %d file(s)", deleted_count)
+        logger.debug("OHLCVCache: garbage collected %d old file(s)", deleted_count)
 
     @property
     def size(self) -> int:

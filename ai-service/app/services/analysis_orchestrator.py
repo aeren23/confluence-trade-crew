@@ -189,6 +189,10 @@ class AnalysisOrchestrator:
                     _tp2_new = None
                     for lvl in candidates:
                         candidate = lvl * 0.995 if _direction != "short" else lvl * 1.005
+                        # Ensure the 0.5% front-running didn't push TP2 closer than TP1
+                        if (_direction != "short" and candidate <= _tp1) or (_direction == "short" and candidate >= _tp1):
+                            candidate = lvl  # fallback to exact level without front-running
+                            
                         cand_rr = abs(candidate - _entry) / _sl_dist if _sl_dist > 0 else 0
                         if cand_rr >= _rr_gate:
                             _tp2_new = candidate

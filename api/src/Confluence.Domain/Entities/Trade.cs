@@ -49,4 +49,7 @@ public class Trade
     // Navigation properties
     public Analysis? Analysis { get; set; }
     public ICollection<TradeReview> Reviews { get; set; } = new List<TradeReview>();
+    
+    // Trade Splitting
+    public Guid? ParentTradeId { get; set; }
 }

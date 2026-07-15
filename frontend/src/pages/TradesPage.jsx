@@ -36,16 +36,24 @@ const Pagination = ({ page, totalPages, onPage }) => {
 const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
   const { captureChartSnapshot } = useAppStore();
   const [exitPrice, setExitPrice] = useState(String(trade?.entryPrice || ''));
+  const [closeAmount, setCloseAmount] = useState(String(trade?.entryAmount || ''));
   const [exitNotes, setExitNotes] = useState('');
   const [snapshotPreview, setSnapshotPreview] = useState(null);
 
   useEffect(() => {
     if (trade) {
+      setExitPrice(String(trade?.entryPrice || ''));
+      setCloseAmount(String(trade?.entryAmount || ''));
       setSnapshotPreview(captureChartSnapshot());
     } else {
       setSnapshotPreview(null);
     }
   }, [trade, captureChartSnapshot]);
+
+  const fillTP1 = () => { if (trade?.takeProfit) setExitPrice(String(trade.takeProfit)); };
+  const fillTP2 = () => { if (trade?.takeProfit2) setExitPrice(String(trade.takeProfit2)); };
+  const fillHalfAmount = () => { if (trade?.entryAmount) setCloseAmount(String((trade.entryAmount / 2).toFixed(4))); };
+  const fillFullAmount = () => { if (trade?.entryAmount) setCloseAmount(String(trade.entryAmount)); };
 
   if (!trade) return null;
   return (
@@ -54,8 +62,24 @@ const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
         <h3 className={styles.modalTitle}>Close Trade</h3>
         <p className={styles.modalSub}>{trade.symbol} {trade.direction === 0 || trade.direction === 'Long' ? 'Long' : 'Short'} · Entry {fmt(trade.entryPrice)}</p>
         <div className={styles.modalField}>
-          <label>Exit Price</label>
+          <label>
+            Exit Price
+            <div style={{ display: 'inline-flex', gap: '5px', marginLeft: '10px' }}>
+              <button type="button" onClick={fillTP1} style={{ fontSize: '0.65rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '3px', color: '#ccc', cursor: 'pointer' }}>TP1</button>
+              <button type="button" onClick={fillTP2} style={{ fontSize: '0.65rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '3px', color: '#ccc', cursor: 'pointer' }}>TP2</button>
+            </div>
+          </label>
           <input type="number" step="any" value={exitPrice} onChange={e => setExitPrice(e.target.value)} className={styles.modalInput} autoFocus />
+        </div>
+        <div className={styles.modalField}>
+          <label>
+            Close Amount (Max: {fmt(trade.entryAmount, 4)})
+            <div style={{ display: 'inline-flex', gap: '5px', marginLeft: '10px' }}>
+              <button type="button" onClick={fillHalfAmount} style={{ fontSize: '0.65rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '3px', color: '#ccc', cursor: 'pointer' }}>50%</button>
+              <button type="button" onClick={fillFullAmount} style={{ fontSize: '0.65rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '3px', color: '#ccc', cursor: 'pointer' }}>100%</button>
+            </div>
+          </label>
+          <input type="number" step="any" value={closeAmount} onChange={e => setCloseAmount(e.target.value)} className={styles.modalInput} />
         </div>
         <div className={styles.modalField}>
           <label>Exit Notes</label>
@@ -87,9 +111,9 @@ const CloseTradeModal = ({ trade, onClose, onConfirm, loading }) => {
             className={styles.confirmCloseBtn}
             onClick={() => {
               const exitSnapshotBase64 = snapshotPreview ? snapshotPreview.replace(/^data:image\/[a-zA-Z]+;base64,/, '') : null;
-              onConfirm(trade.id, parseFloat(exitPrice), exitNotes, exitSnapshotBase64);
+              onConfirm(trade.id, parseFloat(exitPrice), parseFloat(closeAmount), exitNotes, exitSnapshotBase64);
             }}
-            disabled={loading || !exitPrice}
+            disabled={loading || !exitPrice || !closeAmount}
           >
             {loading ? <><Loader2 size={12} className={styles.spin} /> Closing...</> : 'Close Position'}
           </button>
@@ -162,12 +186,18 @@ const TradesPage = () => {
     return trades.filter((t) => t.tags && t.tags.split(',').map((s) => s.trim()).includes(activeTagFilter));
   }, [trades, activeTagFilter]);
 
-  const handleCloseConfirm = async (id, exitPrice, exitNotes, exitSnapshotBase64) => {
+  const handleCloseConfirm = async (id, exitPrice, closeAmount, exitNotes, exitSnapshotBase64) => {
     setClosingLoading(true);
     try {
-      const updated = await TradeService.close(id, { exitPrice, exitNotes: exitNotes || null, exitSnapshotBase64 });
-      setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
-      updateOpenTrade(id, updated);
+      const updated = await TradeService.close(id, { exitPrice, closeAmount, exitNotes: exitNotes || null, exitSnapshotBase64 });
+      
+      // If trade split happened, fetch trades again to show the remaining active trade
+      if (closeAmount < trades.find(t => t.id === id)?.entryAmount) {
+        await fetchTrades(activeTab, currentPage);
+      } else {
+        setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
+        updateOpenTrade(id, updated);
+      }
       setClosingTrade(null);
     } catch {
       setError('Failed to close trade.');

@@ -148,6 +148,42 @@ public class TradeService : ITradeService
         if (trade.Status == TradeStatus.Closed)
             throw new InvalidOperationException("Trade is already closed.");
 
+        var closeAmount = request.CloseAmount.HasValue && request.CloseAmount.Value > 0 
+            ? Math.Min(request.CloseAmount.Value, trade.EntryAmount)
+            : trade.EntryAmount;
+
+        var isPartialClose = closeAmount < trade.EntryAmount;
+        
+        if (isPartialClose)
+        {
+            var remainingAmount = trade.EntryAmount - closeAmount;
+            var splitTrade = new Trade
+            {
+                AnalysisId = trade.AnalysisId,
+                Symbol = trade.Symbol,
+                Direction = trade.Direction,
+                Status = TradeStatus.Open,
+                EntryPrice = trade.EntryPrice,
+                EntryAmount = remainingAmount,
+                Leverage = trade.Leverage,
+                StopLoss = trade.StopLoss,
+                TakeProfit = trade.TakeProfit,
+                TakeProfit2 = trade.TakeProfit2,
+                EntryAt = trade.EntryAt,
+                Notes = trade.Notes,
+                Tags = trade.Tags,
+                PlannedEntryPrice = trade.PlannedEntryPrice,
+                EntrySlippagePct = trade.EntrySlippagePct,
+                ExecutionQuality = trade.ExecutionQuality,
+                ParentTradeId = trade.Id // Link to parent
+            };
+            
+            _context.Set<Trade>().Add(splitTrade);
+            
+            // Update original trade amount to the closed portion
+            trade.EntryAmount = closeAmount;
+        }
+
         trade.ExitPrice = request.ExitPrice;
         trade.ExitAt = request.ExitAt;
         trade.Status = TradeStatus.Closed;
